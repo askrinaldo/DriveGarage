@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Vintage Garage"
+version = "1.0.0"
+id = "artifacts/vintage-garage"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21432
+
+[services.development]
+run = "pnpm --filter @workspace/vintage-garage run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/vintage-garage", "run", "build" ]
+publicDir = "artifacts/vintage-garage/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21432"
+BASE_PATH = "/"
