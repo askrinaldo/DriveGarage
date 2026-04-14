@@ -6,25 +6,24 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Receipt {
+export interface TripLog {
   id: number;
   vehicleId: number;
+  tripDate: Date;
+  fromLocation: string;
+  toLocation: string;
   /** @nullable */
-  serviceRecordId: number | null;
-  title: string;
+  distanceKm: number | null;
   /** @nullable */
-  amount: number | null;
-  receiptDate: Date;
+  mileageStart: number | null;
   /** @nullable */
-  vendor: string | null;
+  mileageEnd: number | null;
   /** @nullable */
-  fileUrl: string | null;
-  /**
-   * Scanned image of receipt
-   * @nullable
-   */
-  imageUrl: string | null;
+  fuelUsedLiters: number | null;
   /** @nullable */
   notes: string | null;
+  /** @nullable */
+  weather: string | null;
   createdAt: Date;
+  updatedAt: Date;
 }

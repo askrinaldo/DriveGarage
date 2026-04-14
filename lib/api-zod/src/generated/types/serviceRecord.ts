@@ -24,6 +24,11 @@ export interface ServiceRecord {
   performedBy: string | null;
   /** oil-change, brakes, tires, engine, electrical, bodywork, other */
   category: string;
+  /**
+   * Specific area of the vehicle: front-wheel, rear-wheel, engine, exhaust, brakes-front, brakes-rear, suspension-front, suspension-rear, electrical, frame, other
+   * @nullable
+   */
+  bodyArea: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

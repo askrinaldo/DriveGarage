@@ -12,5 +12,6 @@ export interface DashboardStats {
   totalServiceRecords: number;
   totalSpent: number;
   vehiclesWithFinnUrl: number;
+  totalTripKm: number;
   servicesByCategory: CategoryCount[];
 }

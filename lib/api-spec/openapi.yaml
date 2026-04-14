@@ -16,6 +16,8 @@ tags:
     description: Service record operations
   - name: receipts
     description: Receipt operations
+  - name: tripLogs
+    description: Trip log operations
   - name: stats
     description: Dashboard statistics
 paths:
@@ -123,6 +125,27 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /vehicles/{id}/export:
+    get:
+      operationId: exportVehicleData
+      tags: [vehicles]
+      summary: Export all vehicle data for new owner
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Full vehicle export with all history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VehicleExport"
+        "404":
+          description: Not found
 
   /vehicles/{vehicleId}/service-records:
     get:
@@ -306,6 +329,124 @@ paths:
         "204":
           description: Deleted
 
+  /vehicles/{vehicleId}/trip-logs:
+    get:
+      operationId: listTripLogs
+      tags: [tripLogs]
+      summary: List trip logs for a vehicle
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trip logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TripLog"
+    post:
+      operationId: createTripLog
+      tags: [tripLogs]
+      summary: Create a trip log entry
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTripLogBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripLog"
+
+  /vehicles/{vehicleId}/trip-logs/{id}:
+    get:
+      operationId: getTripLog
+      tags: [tripLogs]
+      summary: Get a trip log
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trip log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripLog"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateTripLog
+      tags: [tripLogs]
+      summary: Update a trip log
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTripLogBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripLog"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteTripLog
+      tags: [tripLogs]
+      summary: Delete a trip log
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /stats/dashboard:
     get:
       operationId: getDashboardStats
@@ -445,6 +586,39 @@ components:
         imageUrl:
           type: ["string", "null"]
 
+    VehicleExport:
+      type: object
+      properties:
+        vehicle:
+          $ref: "#/components/schemas/Vehicle"
+        serviceRecords:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceRecord"
+        receipts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Receipt"
+        tripLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/TripLog"
+        exportedAt:
+          type: string
+          format: date-time
+        totalServiceCost:
+          type: number
+        totalTripKm:
+          type: number
+      required:
+        - vehicle
+        - serviceRecords
+        - receipts
+        - tripLogs
+        - exportedAt
+        - totalServiceCost
+        - totalTripKm
+
     ServiceRecord:
       type: object
       properties:
@@ -469,6 +643,9 @@ components:
         category:
           type: string
           description: "oil-change, brakes, tires, engine, electrical, bodywork, other"
+        bodyArea:
+          type: ["string", "null"]
+          description: "Specific area of the vehicle: front-wheel, rear-wheel, engine, exhaust, brakes-front, brakes-rear, suspension-front, suspension-rear, electrical, frame, other"
         createdAt:
           type: string
           format: date-time
@@ -485,6 +662,7 @@ components:
         - cost
         - performedBy
         - category
+        - bodyArea
         - createdAt
         - updatedAt
 
@@ -506,6 +684,8 @@ components:
           type: ["string", "null"]
         category:
           type: string
+        bodyArea:
+          type: ["string", "null"]
       required:
         - title
         - category
@@ -529,6 +709,8 @@ components:
           type: ["string", "null"]
         category:
           type: string
+        bodyArea:
+          type: ["string", "null"]
 
     Receipt:
       type: object
@@ -550,6 +732,9 @@ components:
           type: ["string", "null"]
         fileUrl:
           type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+          description: Scanned image of receipt
         notes:
           type: ["string", "null"]
         createdAt:
@@ -564,6 +749,7 @@ components:
         - receiptDate
         - vendor
         - fileUrl
+        - imageUrl
         - notes
         - createdAt
 
@@ -583,11 +769,110 @@ components:
           type: ["string", "null"]
         fileUrl:
           type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
         notes:
           type: ["string", "null"]
       required:
         - title
         - receiptDate
+
+    TripLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        tripDate:
+          type: string
+          format: date-time
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        distanceKm:
+          type: ["number", "null"]
+        mileageStart:
+          type: ["integer", "null"]
+        mileageEnd:
+          type: ["integer", "null"]
+        fuelUsedLiters:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        weather:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - vehicleId
+        - tripDate
+        - fromLocation
+        - toLocation
+        - distanceKm
+        - mileageStart
+        - mileageEnd
+        - fuelUsedLiters
+        - notes
+        - weather
+        - createdAt
+        - updatedAt
+
+    CreateTripLogBody:
+      type: object
+      properties:
+        tripDate:
+          type: string
+          format: date-time
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        distanceKm:
+          type: ["number", "null"]
+        mileageStart:
+          type: ["integer", "null"]
+        mileageEnd:
+          type: ["integer", "null"]
+        fuelUsedLiters:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        weather:
+          type: ["string", "null"]
+      required:
+        - tripDate
+        - fromLocation
+        - toLocation
+
+    UpdateTripLogBody:
+      type: object
+      properties:
+        tripDate:
+          type: string
+          format: date-time
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        distanceKm:
+          type: ["number", "null"]
+        mileageStart:
+          type: ["integer", "null"]
+        mileageEnd:
+          type: ["integer", "null"]
+        fuelUsedLiters:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        weather:
+          type: ["string", "null"]
 
     DashboardStats:
       type: object
@@ -600,6 +885,8 @@ components:
           type: number
         vehiclesWithFinnUrl:
           type: integer
+        totalTripKm:
+          type: number
         servicesByCategory:
           type: array
           items:
@@ -609,6 +896,7 @@ components:
         - totalServiceRecords
         - totalSpent
         - vehiclesWithFinnUrl
+        - totalTripKm
         - servicesByCategory
 
     CategoryCount:

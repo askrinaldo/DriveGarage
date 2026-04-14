@@ -18,4 +18,6 @@ export interface UpdateServiceRecordBody {
   /** @nullable */
   performedBy?: string | null;
   category?: string;
+  /** @nullable */
+  bodyArea?: string | null;
 }

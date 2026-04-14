@@ -11,18 +11,18 @@ export default function VehicleList() {
     query: { queryKey: getListVehiclesQueryKey() }
   });
 
-  if (isLoading) return <LoadingState message="Loading garage..." />;
+  if (isLoading) return <LoadingState message="Laster garasjen..." />;
   if (isError) return <ErrorState onRetry={refetch} />;
 
   if (!vehicles || vehicles.length === 0) {
     return (
       <EmptyState
         icon={Car}
-        title="Your garage is empty"
-        description="Add your first vehicle to start tracking its service history and receipts."
+        title="Garasjen din er tom"
+        description="Legg til ditt første kjøretøy for å begynne å spore servicehistorikk og kvitteringer."
         action={
           <Link href="/vehicles/new">
-            <Button><Plus className="w-4 h-4 mr-2" /> Add Vehicle</Button>
+            <Button><Plus className="w-4 h-4 mr-2" /> Legg til kjøretøy</Button>
           </Link>
         }
       />
@@ -33,11 +33,11 @@ export default function VehicleList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Garage</h1>
-          <p className="text-muted-foreground mt-1">Manage your vehicles and their records.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Garasjen min</h1>
+          <p className="text-muted-foreground mt-1">Administrer kjøretøyene dine og deres historikk.</p>
         </div>
         <Link href="/vehicles/new">
-          <Button><Plus className="w-4 h-4 mr-2" /> Add Vehicle</Button>
+          <Button><Plus className="w-4 h-4 mr-2" /> Legg til kjøretøy</Button>
         </Link>
       </div>
 

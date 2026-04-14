@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, vehiclesTable, serviceRecordsTable } from "@workspace/db";
+import { db, vehiclesTable, serviceRecordsTable, tripLogsTable } from "@workspace/db";
 import { sql, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -21,6 +21,12 @@ router.get("/stats/dashboard", async (_req, res): Promise<void> => {
     .from(vehiclesTable)
     .where(sql`finn_url is not null and finn_url != ''`);
 
+  const [tripStats] = await db
+    .select({
+      totalTripKm: sql<number>`coalesce(sum(distance_km::numeric), 0)::float`,
+    })
+    .from(tripLogsTable);
+
   const categoryRows = await db
     .select({
       category: serviceRecordsTable.category,
@@ -34,6 +40,7 @@ router.get("/stats/dashboard", async (_req, res): Promise<void> => {
     totalServiceRecords: serviceStats?.count ?? 0,
     totalSpent: serviceStats?.totalSpent ?? 0,
     vehiclesWithFinnUrl: vehiclesWithFinn?.count ?? 0,
+    totalTripKm: tripStats?.totalTripKm ?? 0,
     servicesByCategory: categoryRows,
   });
 });

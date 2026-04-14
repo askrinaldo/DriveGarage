@@ -118,6 +118,94 @@ export const DeleteVehicleParams = zod.object({
 });
 
 /**
+ * @summary Export all vehicle data for new owner
+ */
+export const ExportVehicleDataParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ExportVehicleDataResponse = zod.object({
+  vehicle: zod.object({
+    id: zod.number(),
+    make: zod.string(),
+    model: zod.string(),
+    year: zod.number(),
+    type: zod.string().describe("car or motorcycle"),
+    registrationNumber: zod.string().nullable(),
+    color: zod.string().nullable(),
+    mileage: zod.number().nullable(),
+    finnUrl: zod.string().nullable().describe("Link to Finn.no listing"),
+    notes: zod.string().nullable(),
+    imageUrl: zod.string().nullable(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+  serviceRecords: zod.array(
+    zod.object({
+      id: zod.number(),
+      vehicleId: zod.number(),
+      title: zod.string(),
+      description: zod.string().nullable(),
+      serviceDate: zod.coerce.date(),
+      mileageAtService: zod.number().nullable(),
+      cost: zod.number().nullable(),
+      performedBy: zod
+        .string()
+        .nullable()
+        .describe('Workshop name or \"self\"'),
+      category: zod
+        .string()
+        .describe(
+          "oil-change, brakes, tires, engine, electrical, bodywork, other",
+        ),
+      bodyArea: zod
+        .string()
+        .nullable()
+        .describe(
+          "Specific area of the vehicle: front-wheel, rear-wheel, engine, exhaust, brakes-front, brakes-rear, suspension-front, suspension-rear, electrical, frame, other",
+        ),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  receipts: zod.array(
+    zod.object({
+      id: zod.number(),
+      vehicleId: zod.number(),
+      serviceRecordId: zod.number().nullable(),
+      title: zod.string(),
+      amount: zod.number().nullable(),
+      receiptDate: zod.coerce.date(),
+      vendor: zod.string().nullable(),
+      fileUrl: zod.string().nullable(),
+      imageUrl: zod.string().nullable().describe("Scanned image of receipt"),
+      notes: zod.string().nullable(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  tripLogs: zod.array(
+    zod.object({
+      id: zod.number(),
+      vehicleId: zod.number(),
+      tripDate: zod.coerce.date(),
+      fromLocation: zod.string(),
+      toLocation: zod.string(),
+      distanceKm: zod.number().nullable(),
+      mileageStart: zod.number().nullable(),
+      mileageEnd: zod.number().nullable(),
+      fuelUsedLiters: zod.number().nullable(),
+      notes: zod.string().nullable(),
+      weather: zod.string().nullable(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  exportedAt: zod.coerce.date(),
+  totalServiceCost: zod.number(),
+  totalTripKm: zod.number(),
+});
+
+/**
  * @summary List service records for a vehicle
  */
 export const ListServiceRecordsParams = zod.object({
@@ -136,6 +224,12 @@ export const ListServiceRecordsResponseItem = zod.object({
   category: zod
     .string()
     .describe("oil-change, brakes, tires, engine, electrical, bodywork, other"),
+  bodyArea: zod
+    .string()
+    .nullable()
+    .describe(
+      "Specific area of the vehicle: front-wheel, rear-wheel, engine, exhaust, brakes-front, brakes-rear, suspension-front, suspension-rear, electrical, frame, other",
+    ),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -158,6 +252,7 @@ export const CreateServiceRecordBody = zod.object({
   cost: zod.number().nullish(),
   performedBy: zod.string().nullish(),
   category: zod.string(),
+  bodyArea: zod.string().nullish(),
 });
 
 /**
@@ -180,6 +275,12 @@ export const GetServiceRecordResponse = zod.object({
   category: zod
     .string()
     .describe("oil-change, brakes, tires, engine, electrical, bodywork, other"),
+  bodyArea: zod
+    .string()
+    .nullable()
+    .describe(
+      "Specific area of the vehicle: front-wheel, rear-wheel, engine, exhaust, brakes-front, brakes-rear, suspension-front, suspension-rear, electrical, frame, other",
+    ),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -200,6 +301,7 @@ export const UpdateServiceRecordBody = zod.object({
   cost: zod.number().nullish(),
   performedBy: zod.string().nullish(),
   category: zod.string().optional(),
+  bodyArea: zod.string().nullish(),
 });
 
 export const UpdateServiceRecordResponse = zod.object({
@@ -214,6 +316,12 @@ export const UpdateServiceRecordResponse = zod.object({
   category: zod
     .string()
     .describe("oil-change, brakes, tires, engine, electrical, bodywork, other"),
+  bodyArea: zod
+    .string()
+    .nullable()
+    .describe(
+      "Specific area of the vehicle: front-wheel, rear-wheel, engine, exhaust, brakes-front, brakes-rear, suspension-front, suspension-rear, electrical, frame, other",
+    ),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -242,6 +350,7 @@ export const ListReceiptsResponseItem = zod.object({
   receiptDate: zod.coerce.date(),
   vendor: zod.string().nullable(),
   fileUrl: zod.string().nullable(),
+  imageUrl: zod.string().nullable().describe("Scanned image of receipt"),
   notes: zod.string().nullable(),
   createdAt: zod.coerce.date(),
 });
@@ -261,6 +370,7 @@ export const CreateReceiptBody = zod.object({
   receiptDate: zod.coerce.date(),
   vendor: zod.string().nullish(),
   fileUrl: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
   notes: zod.string().nullish(),
 });
 
@@ -273,6 +383,117 @@ export const DeleteReceiptParams = zod.object({
 });
 
 /**
+ * @summary List trip logs for a vehicle
+ */
+export const ListTripLogsParams = zod.object({
+  vehicleId: zod.coerce.number(),
+});
+
+export const ListTripLogsResponseItem = zod.object({
+  id: zod.number(),
+  vehicleId: zod.number(),
+  tripDate: zod.coerce.date(),
+  fromLocation: zod.string(),
+  toLocation: zod.string(),
+  distanceKm: zod.number().nullable(),
+  mileageStart: zod.number().nullable(),
+  mileageEnd: zod.number().nullable(),
+  fuelUsedLiters: zod.number().nullable(),
+  notes: zod.string().nullable(),
+  weather: zod.string().nullable(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListTripLogsResponse = zod.array(ListTripLogsResponseItem);
+
+/**
+ * @summary Create a trip log entry
+ */
+export const CreateTripLogParams = zod.object({
+  vehicleId: zod.coerce.number(),
+});
+
+export const CreateTripLogBody = zod.object({
+  tripDate: zod.coerce.date(),
+  fromLocation: zod.string(),
+  toLocation: zod.string(),
+  distanceKm: zod.number().nullish(),
+  mileageStart: zod.number().nullish(),
+  mileageEnd: zod.number().nullish(),
+  fuelUsedLiters: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  weather: zod.string().nullish(),
+});
+
+/**
+ * @summary Get a trip log
+ */
+export const GetTripLogParams = zod.object({
+  vehicleId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const GetTripLogResponse = zod.object({
+  id: zod.number(),
+  vehicleId: zod.number(),
+  tripDate: zod.coerce.date(),
+  fromLocation: zod.string(),
+  toLocation: zod.string(),
+  distanceKm: zod.number().nullable(),
+  mileageStart: zod.number().nullable(),
+  mileageEnd: zod.number().nullable(),
+  fuelUsedLiters: zod.number().nullable(),
+  notes: zod.string().nullable(),
+  weather: zod.string().nullable(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update a trip log
+ */
+export const UpdateTripLogParams = zod.object({
+  vehicleId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const UpdateTripLogBody = zod.object({
+  tripDate: zod.coerce.date().optional(),
+  fromLocation: zod.string().optional(),
+  toLocation: zod.string().optional(),
+  distanceKm: zod.number().nullish(),
+  mileageStart: zod.number().nullish(),
+  mileageEnd: zod.number().nullish(),
+  fuelUsedLiters: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  weather: zod.string().nullish(),
+});
+
+export const UpdateTripLogResponse = zod.object({
+  id: zod.number(),
+  vehicleId: zod.number(),
+  tripDate: zod.coerce.date(),
+  fromLocation: zod.string(),
+  toLocation: zod.string(),
+  distanceKm: zod.number().nullable(),
+  mileageStart: zod.number().nullable(),
+  mileageEnd: zod.number().nullable(),
+  fuelUsedLiters: zod.number().nullable(),
+  notes: zod.string().nullable(),
+  weather: zod.string().nullable(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a trip log
+ */
+export const DeleteTripLogParams = zod.object({
+  vehicleId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary Get dashboard summary statistics
  */
 export const GetDashboardStatsResponse = zod.object({
@@ -280,6 +501,7 @@ export const GetDashboardStatsResponse = zod.object({
   totalServiceRecords: zod.number(),
   totalSpent: zod.number(),
   vehiclesWithFinnUrl: zod.number(),
+  totalTripKm: zod.number(),
   servicesByCategory: zod.array(
     zod.object({
       category: zod.string(),

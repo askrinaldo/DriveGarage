@@ -18,5 +18,7 @@ export interface CreateReceiptBody {
   /** @nullable */
   fileUrl?: string | null;
   /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
   notes?: string | null;
 }

@@ -10,8 +10,8 @@ export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/vehicles", label: "My Garage", icon: Car },
+    { href: "/", label: "Oversikt", icon: LayoutDashboard },
+    { href: "/vehicles", label: "Garasjen min", icon: Car },
   ];
 
   return (
@@ -51,7 +51,7 @@ export function Layout({ children }: LayoutProps) {
           <Link href="/vehicles/new">
             <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors cursor-pointer text-sm font-medium">
               <Plus className="w-4 h-4" />
-              Add Vehicle
+              Legg til kjøretøy
             </div>
           </Link>
         </div>

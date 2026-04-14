@@ -18,4 +18,6 @@ export interface CreateServiceRecordBody {
   /** @nullable */
   performedBy?: string | null;
   category: string;
+  /** @nullable */
+  bodyArea?: string | null;
 }

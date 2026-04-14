@@ -30,16 +30,16 @@ import {
 } from "@/components/ui/form";
 
 const vehicleSchema = z.object({
-  make: z.string().min(1, "Make is required"),
-  model: z.string().min(1, "Model is required"),
-  year: z.coerce.number().min(1886, "Invalid year").max(new Date().getFullYear() + 1, "Invalid year"),
+  make: z.string().min(1, "Merke er påkrevd"),
+  model: z.string().min(1, "Modell er påkrevd"),
+  year: z.coerce.number().min(1886, "Ugyldig år").max(new Date().getFullYear() + 1, "Ugyldig år"),
   type: z.enum(["car", "motorcycle"]),
   registrationNumber: z.string().optional().nullable(),
   color: z.string().optional().nullable(),
   mileage: z.coerce.number().min(0).optional().nullable(),
-  finnUrl: z.string().url("Must be a valid URL").optional().nullable().or(z.literal('')),
+  finnUrl: z.string().url("Må være en gyldig URL").optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable(),
-  imageUrl: z.string().url("Must be a valid URL").optional().nullable().or(z.literal('')),
+  imageUrl: z.string().url("Må være en gyldig URL").optional().nullable().or(z.literal('')),
 });
 
 type VehicleFormValues = z.infer<typeof vehicleSchema>;
@@ -107,28 +107,28 @@ export default function VehicleForm() {
     if (isNew) {
       createMutation.mutate({ data: formattedData as any }, {
         onSuccess: (newVehicle) => {
-          toast({ title: "Vehicle added successfully" });
+          toast({ title: "Kjøretøy lagt til" });
           setLocation(`/vehicles/${newVehicle.id}`);
         },
         onError: () => {
-          toast({ title: "Failed to add vehicle", variant: "destructive" });
+          toast({ title: "Kunne ikke legge til kjøretøy", variant: "destructive" });
         }
       });
     } else {
       updateMutation.mutate({ id: id!, data: formattedData as any }, {
         onSuccess: () => {
-          toast({ title: "Vehicle updated successfully" });
+          toast({ title: "Kjøretøy oppdatert" });
           queryClient.invalidateQueries({ queryKey: getGetVehicleQueryKey(id!) });
           setLocation(`/vehicles/${id}`);
         },
         onError: () => {
-          toast({ title: "Failed to update vehicle", variant: "destructive" });
+          toast({ title: "Kunne ikke oppdatere kjøretøy", variant: "destructive" });
         }
       });
     }
   };
 
-  if (!isNew && isLoading) return <LoadingState message="Loading vehicle details..." />;
+  if (!isNew && isLoading) return <LoadingState message="Laster kjøretøydetaljer..." />;
   if (!isNew && isError) return <ErrorState onRetry={() => window.location.reload()} />;
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -140,8 +140,8 @@ export default function VehicleForm() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{isNew ? "Add Vehicle" : "Edit Vehicle"}</h1>
-          <p className="text-muted-foreground mt-1">Enter your vehicle's details below.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{isNew ? "Legg til kjøretøy" : "Rediger kjøretøy"}</h1>
+          <p className="text-muted-foreground mt-1">Skriv inn kjøretøyets detaljer nedenfor.</p>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export default function VehicleForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Card className="bg-card">
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Grunnleggende informasjon</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -157,7 +157,7 @@ export default function VehicleForm() {
                 name="type"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Vehicle Type</FormLabel>
+                    <FormLabel>Kjøretøytype</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -169,14 +169,14 @@ export default function VehicleForm() {
                             <RadioGroupItem value="car" className="sr-only" />
                           </FormControl>
                           <Car className="w-5 h-5 text-muted-foreground" />
-                          <FormLabel className="font-normal cursor-pointer w-full">Car</FormLabel>
+                          <FormLabel className="font-normal cursor-pointer w-full">Bil</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md bg-sidebar flex-1 cursor-pointer [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5 transition-colors">
                           <FormControl>
                             <RadioGroupItem value="motorcycle" className="sr-only" />
                           </FormControl>
                           <Bike className="w-5 h-5 text-muted-foreground" />
-                          <FormLabel className="font-normal cursor-pointer w-full">Motorcycle</FormLabel>
+                          <FormLabel className="font-normal cursor-pointer w-full">Motorsykkel</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -191,7 +191,7 @@ export default function VehicleForm() {
                   name="year"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Year</FormLabel>
+                      <FormLabel>Årsmodell</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -204,9 +204,9 @@ export default function VehicleForm() {
                   name="make"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Make</FormLabel>
+                      <FormLabel>Merke</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Porsche" {...field} />
+                        <Input placeholder="f.eks. Porsche" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -217,9 +217,9 @@ export default function VehicleForm() {
                   name="model"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Model</FormLabel>
+                      <FormLabel>Modell</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 911" {...field} />
+                        <Input placeholder="f.eks. 911" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -233,9 +233,9 @@ export default function VehicleForm() {
                   name="registrationNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Registration Number</FormLabel>
+                      <FormLabel>Registreringsnummer</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. AB12345" className="font-mono uppercase" {...field} value={field.value || ''} />
+                        <Input placeholder="f.eks. AB12345" className="font-mono uppercase" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -246,9 +246,9 @@ export default function VehicleForm() {
                   name="color"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Color</FormLabel>
+                      <FormLabel>Farge</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Silver" {...field} value={field.value || ''} />
+                        <Input placeholder="f.eks. Sølv" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -259,7 +259,7 @@ export default function VehicleForm() {
                   name="mileage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mileage (km)</FormLabel>
+                      <FormLabel>Kilometerstand (km)</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} value={field.value || ''} />
                       </FormControl>
@@ -273,7 +273,7 @@ export default function VehicleForm() {
 
           <Card className="bg-card">
             <CardHeader>
-              <CardTitle>Links & Media</CardTitle>
+              <CardTitle>Lenker & Notater</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -281,11 +281,11 @@ export default function VehicleForm() {
                 name="finnUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Finn.no Listing URL</FormLabel>
+                    <FormLabel>Finn.no annonse (URL)</FormLabel>
                     <FormControl>
                       <Input placeholder="https://www.finn.no/..." type="url" {...field} value={field.value || ''} />
                     </FormControl>
-                    <FormDescription>Link to the original listing</FormDescription>
+                    <FormDescription>Lenke til den opprinnelige annonsen</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -295,7 +295,7 @@ export default function VehicleForm() {
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Image URL</FormLabel>
+                    <FormLabel>Bilde (URL)</FormLabel>
                     <FormControl>
                       <Input placeholder="https://..." type="url" {...field} value={field.value || ''} />
                     </FormControl>
@@ -308,9 +308,9 @@ export default function VehicleForm() {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Additional Notes</FormLabel>
+                    <FormLabel>Notater</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Chassis numbers, key codes, special traits..." className="min-h-[100px]" {...field} value={field.value || ''} />
+                      <Textarea placeholder="Understellsnummer, nøkkelkoder, spesielle egenskaper..." className="min-h-[100px]" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -321,13 +321,13 @@ export default function VehicleForm() {
 
           <div className="flex justify-end gap-4">
             <Button variant="outline" type="button" onClick={() => setLocation(isNew ? "/vehicles" : `/vehicles/${id}`)}>
-              Cancel
+              Avbryt
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : (
+              {isPending ? "Lagrer..." : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Save Vehicle
+                  Lagre kjøretøy
                 </>
               )}
             </Button>

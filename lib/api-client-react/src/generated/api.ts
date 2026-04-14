@@ -20,14 +20,18 @@ import type {
   ActivityItem,
   CreateReceiptBody,
   CreateServiceRecordBody,
+  CreateTripLogBody,
   CreateVehicleBody,
   DashboardStats,
   HealthStatus,
   Receipt,
   ServiceRecord,
+  TripLog,
   UpdateServiceRecordBody,
+  UpdateTripLogBody,
   UpdateVehicleBody,
   Vehicle,
+  VehicleExport,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -533,6 +537,93 @@ export const useDeleteVehicle = <
 > => {
   return useMutation(getDeleteVehicleMutationOptions(options));
 };
+
+/**
+ * @summary Export all vehicle data for new owner
+ */
+export const getExportVehicleDataUrl = (id: number) => {
+  return `/api/vehicles/${id}/export`;
+};
+
+export const exportVehicleData = async (
+  id: number,
+  options?: RequestInit,
+): Promise<VehicleExport> => {
+  return customFetch<VehicleExport>(getExportVehicleDataUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getExportVehicleDataQueryKey = (id: number) => {
+  return [`/api/vehicles/${id}/export`] as const;
+};
+
+export const getExportVehicleDataQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportVehicleData>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof exportVehicleData>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportVehicleDataQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof exportVehicleData>>
+  > = ({ signal }) => exportVehicleData(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportVehicleData>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ExportVehicleDataQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportVehicleData>>
+>;
+export type ExportVehicleDataQueryError = ErrorType<void>;
+
+/**
+ * @summary Export all vehicle data for new owner
+ */
+
+export function useExportVehicleData<
+  TData = Awaited<ReturnType<typeof exportVehicleData>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof exportVehicleData>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getExportVehicleDataQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List service records for a vehicle
@@ -1232,6 +1323,444 @@ export const useDeleteReceipt = <
   TContext
 > => {
   return useMutation(getDeleteReceiptMutationOptions(options));
+};
+
+/**
+ * @summary List trip logs for a vehicle
+ */
+export const getListTripLogsUrl = (vehicleId: number) => {
+  return `/api/vehicles/${vehicleId}/trip-logs`;
+};
+
+export const listTripLogs = async (
+  vehicleId: number,
+  options?: RequestInit,
+): Promise<TripLog[]> => {
+  return customFetch<TripLog[]>(getListTripLogsUrl(vehicleId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTripLogsQueryKey = (vehicleId: number) => {
+  return [`/api/vehicles/${vehicleId}/trip-logs`] as const;
+};
+
+export const getListTripLogsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTripLogs>>,
+  TError = ErrorType<unknown>,
+>(
+  vehicleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listTripLogs>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTripLogsQueryKey(vehicleId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTripLogs>>> = ({
+    signal,
+  }) => listTripLogs(vehicleId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!vehicleId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTripLogs>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTripLogsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTripLogs>>
+>;
+export type ListTripLogsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List trip logs for a vehicle
+ */
+
+export function useListTripLogs<
+  TData = Awaited<ReturnType<typeof listTripLogs>>,
+  TError = ErrorType<unknown>,
+>(
+  vehicleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listTripLogs>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTripLogsQueryOptions(vehicleId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a trip log entry
+ */
+export const getCreateTripLogUrl = (vehicleId: number) => {
+  return `/api/vehicles/${vehicleId}/trip-logs`;
+};
+
+export const createTripLog = async (
+  vehicleId: number,
+  createTripLogBody: CreateTripLogBody,
+  options?: RequestInit,
+): Promise<TripLog> => {
+  return customFetch<TripLog>(getCreateTripLogUrl(vehicleId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createTripLogBody),
+  });
+};
+
+export const getCreateTripLogMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTripLog>>,
+    TError,
+    { vehicleId: number; data: BodyType<CreateTripLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTripLog>>,
+  TError,
+  { vehicleId: number; data: BodyType<CreateTripLogBody> },
+  TContext
+> => {
+  const mutationKey = ["createTripLog"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTripLog>>,
+    { vehicleId: number; data: BodyType<CreateTripLogBody> }
+  > = (props) => {
+    const { vehicleId, data } = props ?? {};
+
+    return createTripLog(vehicleId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTripLogMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTripLog>>
+>;
+export type CreateTripLogMutationBody = BodyType<CreateTripLogBody>;
+export type CreateTripLogMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a trip log entry
+ */
+export const useCreateTripLog = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTripLog>>,
+    TError,
+    { vehicleId: number; data: BodyType<CreateTripLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTripLog>>,
+  TError,
+  { vehicleId: number; data: BodyType<CreateTripLogBody> },
+  TContext
+> => {
+  return useMutation(getCreateTripLogMutationOptions(options));
+};
+
+/**
+ * @summary Get a trip log
+ */
+export const getGetTripLogUrl = (vehicleId: number, id: number) => {
+  return `/api/vehicles/${vehicleId}/trip-logs/${id}`;
+};
+
+export const getTripLog = async (
+  vehicleId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<TripLog> => {
+  return customFetch<TripLog>(getGetTripLogUrl(vehicleId, id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTripLogQueryKey = (vehicleId: number, id: number) => {
+  return [`/api/vehicles/${vehicleId}/trip-logs/${id}`] as const;
+};
+
+export const getGetTripLogQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTripLog>>,
+  TError = ErrorType<void>,
+>(
+  vehicleId: number,
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTripLog>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetTripLogQueryKey(vehicleId, id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTripLog>>> = ({
+    signal,
+  }) => getTripLog(vehicleId, id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(vehicleId && id),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTripLog>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTripLogQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTripLog>>
+>;
+export type GetTripLogQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a trip log
+ */
+
+export function useGetTripLog<
+  TData = Awaited<ReturnType<typeof getTripLog>>,
+  TError = ErrorType<void>,
+>(
+  vehicleId: number,
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTripLog>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTripLogQueryOptions(vehicleId, id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a trip log
+ */
+export const getUpdateTripLogUrl = (vehicleId: number, id: number) => {
+  return `/api/vehicles/${vehicleId}/trip-logs/${id}`;
+};
+
+export const updateTripLog = async (
+  vehicleId: number,
+  id: number,
+  updateTripLogBody: UpdateTripLogBody,
+  options?: RequestInit,
+): Promise<TripLog> => {
+  return customFetch<TripLog>(getUpdateTripLogUrl(vehicleId, id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateTripLogBody),
+  });
+};
+
+export const getUpdateTripLogMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateTripLog>>,
+    TError,
+    { vehicleId: number; id: number; data: BodyType<UpdateTripLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateTripLog>>,
+  TError,
+  { vehicleId: number; id: number; data: BodyType<UpdateTripLogBody> },
+  TContext
+> => {
+  const mutationKey = ["updateTripLog"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateTripLog>>,
+    { vehicleId: number; id: number; data: BodyType<UpdateTripLogBody> }
+  > = (props) => {
+    const { vehicleId, id, data } = props ?? {};
+
+    return updateTripLog(vehicleId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateTripLogMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateTripLog>>
+>;
+export type UpdateTripLogMutationBody = BodyType<UpdateTripLogBody>;
+export type UpdateTripLogMutationError = ErrorType<void>;
+
+/**
+ * @summary Update a trip log
+ */
+export const useUpdateTripLog = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateTripLog>>,
+    TError,
+    { vehicleId: number; id: number; data: BodyType<UpdateTripLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateTripLog>>,
+  TError,
+  { vehicleId: number; id: number; data: BodyType<UpdateTripLogBody> },
+  TContext
+> => {
+  return useMutation(getUpdateTripLogMutationOptions(options));
+};
+
+/**
+ * @summary Delete a trip log
+ */
+export const getDeleteTripLogUrl = (vehicleId: number, id: number) => {
+  return `/api/vehicles/${vehicleId}/trip-logs/${id}`;
+};
+
+export const deleteTripLog = async (
+  vehicleId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTripLogUrl(vehicleId, id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTripLogMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTripLog>>,
+    TError,
+    { vehicleId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTripLog>>,
+  TError,
+  { vehicleId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTripLog"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTripLog>>,
+    { vehicleId: number; id: number }
+  > = (props) => {
+    const { vehicleId, id } = props ?? {};
+
+    return deleteTripLog(vehicleId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTripLogMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTripLog>>
+>;
+
+export type DeleteTripLogMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a trip log
+ */
+export const useDeleteTripLog = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTripLog>>,
+    TError,
+    { vehicleId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTripLog>>,
+  TError,
+  { vehicleId: number; id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTripLogMutationOptions(options));
 };
 
 /**

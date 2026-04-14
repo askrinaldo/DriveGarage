@@ -1,13 +1,15 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, vehiclesTable } from "@workspace/db";
+import { db, vehiclesTable, serviceRecordsTable, receiptsTable, tripLogsTable } from "@workspace/db";
 import {
   CreateVehicleBody,
   UpdateVehicleBody,
   GetVehicleParams,
   UpdateVehicleParams,
   DeleteVehicleParams,
+  ExportVehicleDataParams,
 } from "@workspace/api-zod";
+import { sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -41,6 +43,38 @@ router.get("/vehicles/:id", async (req, res): Promise<void> => {
     return;
   }
   res.json(vehicle);
+});
+
+router.get("/vehicles/:id/export", async (req, res): Promise<void> => {
+  const params = ExportVehicleDataParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, params.data.id));
+  if (!vehicle) {
+    res.status(404).json({ error: "Vehicle not found" });
+    return;
+  }
+
+  const [serviceRecords, receipts, tripLogs] = await Promise.all([
+    db.select().from(serviceRecordsTable).where(eq(serviceRecordsTable.vehicleId, params.data.id)),
+    db.select().from(receiptsTable).where(eq(receiptsTable.vehicleId, params.data.id)),
+    db.select().from(tripLogsTable).where(eq(tripLogsTable.vehicleId, params.data.id)),
+  ]);
+
+  const totalServiceCost = serviceRecords.reduce((sum, r) => sum + parseFloat(r.cost ?? "0"), 0);
+  const totalTripKm = tripLogs.reduce((sum, t) => sum + parseFloat(t.distanceKm ?? "0"), 0);
+
+  res.json({
+    vehicle,
+    serviceRecords,
+    receipts,
+    tripLogs,
+    exportedAt: new Date().toISOString(),
+    totalServiceCost,
+    totalTripKm,
+  });
 });
 
 router.patch("/vehicles/:id", async (req, res): Promise<void> => {

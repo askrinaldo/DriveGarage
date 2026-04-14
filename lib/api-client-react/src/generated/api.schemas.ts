@@ -91,36 +91,13 @@ export interface ServiceRecord {
   performedBy: string | null;
   /** oil-change, brakes, tires, engine, electrical, bodywork, other */
   category: string;
+  /**
+   * Specific area of the vehicle: front-wheel, rear-wheel, engine, exhaust, brakes-front, brakes-rear, suspension-front, suspension-rear, electrical, frame, other
+   * @nullable
+   */
+  bodyArea: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface CreateServiceRecordBody {
-  title: string;
-  /** @nullable */
-  description?: string | null;
-  serviceDate: string;
-  /** @nullable */
-  mileageAtService?: number | null;
-  /** @nullable */
-  cost?: number | null;
-  /** @nullable */
-  performedBy?: string | null;
-  category: string;
-}
-
-export interface UpdateServiceRecordBody {
-  title?: string;
-  /** @nullable */
-  description?: string | null;
-  serviceDate?: string;
-  /** @nullable */
-  mileageAtService?: number | null;
-  /** @nullable */
-  cost?: number | null;
-  /** @nullable */
-  performedBy?: string | null;
-  category?: string;
 }
 
 export interface Receipt {
@@ -136,9 +113,78 @@ export interface Receipt {
   vendor: string | null;
   /** @nullable */
   fileUrl: string | null;
+  /**
+   * Scanned image of receipt
+   * @nullable
+   */
+  imageUrl: string | null;
   /** @nullable */
   notes: string | null;
   createdAt: string;
+}
+
+export interface TripLog {
+  id: number;
+  vehicleId: number;
+  tripDate: string;
+  fromLocation: string;
+  toLocation: string;
+  /** @nullable */
+  distanceKm: number | null;
+  /** @nullable */
+  mileageStart: number | null;
+  /** @nullable */
+  mileageEnd: number | null;
+  /** @nullable */
+  fuelUsedLiters: number | null;
+  /** @nullable */
+  notes: string | null;
+  /** @nullable */
+  weather: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VehicleExport {
+  vehicle: Vehicle;
+  serviceRecords: ServiceRecord[];
+  receipts: Receipt[];
+  tripLogs: TripLog[];
+  exportedAt: string;
+  totalServiceCost: number;
+  totalTripKm: number;
+}
+
+export interface CreateServiceRecordBody {
+  title: string;
+  /** @nullable */
+  description?: string | null;
+  serviceDate: string;
+  /** @nullable */
+  mileageAtService?: number | null;
+  /** @nullable */
+  cost?: number | null;
+  /** @nullable */
+  performedBy?: string | null;
+  category: string;
+  /** @nullable */
+  bodyArea?: string | null;
+}
+
+export interface UpdateServiceRecordBody {
+  title?: string;
+  /** @nullable */
+  description?: string | null;
+  serviceDate?: string;
+  /** @nullable */
+  mileageAtService?: number | null;
+  /** @nullable */
+  cost?: number | null;
+  /** @nullable */
+  performedBy?: string | null;
+  category?: string;
+  /** @nullable */
+  bodyArea?: string | null;
 }
 
 export interface CreateReceiptBody {
@@ -153,7 +199,45 @@ export interface CreateReceiptBody {
   /** @nullable */
   fileUrl?: string | null;
   /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
   notes?: string | null;
+}
+
+export interface CreateTripLogBody {
+  tripDate: string;
+  fromLocation: string;
+  toLocation: string;
+  /** @nullable */
+  distanceKm?: number | null;
+  /** @nullable */
+  mileageStart?: number | null;
+  /** @nullable */
+  mileageEnd?: number | null;
+  /** @nullable */
+  fuelUsedLiters?: number | null;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  weather?: string | null;
+}
+
+export interface UpdateTripLogBody {
+  tripDate?: string;
+  fromLocation?: string;
+  toLocation?: string;
+  /** @nullable */
+  distanceKm?: number | null;
+  /** @nullable */
+  mileageStart?: number | null;
+  /** @nullable */
+  mileageEnd?: number | null;
+  /** @nullable */
+  fuelUsedLiters?: number | null;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  weather?: string | null;
 }
 
 export interface CategoryCount {
@@ -166,6 +250,7 @@ export interface DashboardStats {
   totalServiceRecords: number;
   totalSpent: number;
   vehiclesWithFinnUrl: number;
+  totalTripKm: number;
   servicesByCategory: CategoryCount[];
 }
 

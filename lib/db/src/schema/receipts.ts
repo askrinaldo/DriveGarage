@@ -13,6 +13,7 @@ export const receiptsTable = pgTable("receipts", {
   receiptDate: timestamp("receipt_date", { withTimezone: true }).notNull().defaultNow(),
   vendor: text("vendor"),
   fileUrl: text("file_url"),
+  imageUrl: text("image_url"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

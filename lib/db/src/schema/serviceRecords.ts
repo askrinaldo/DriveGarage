@@ -13,6 +13,7 @@ export const serviceRecordsTable = pgTable("service_records", {
   cost: numeric("cost", { precision: 10, scale: 2 }),
   performedBy: text("performed_by"),
   category: text("category").notNull().default("other"),
+  bodyArea: text("body_area"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -11,6 +11,7 @@ import VehicleForm from "@/pages/vehicle-form";
 import VehicleDetail from "@/pages/vehicle-detail";
 import ServiceForm from "@/pages/service-form";
 import ReceiptForm from "@/pages/receipt-form";
+import TripForm from "@/pages/trip-form";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,8 @@ function Router() {
         <Route path="/vehicles/:id/service/new" component={ServiceForm} />
         <Route path="/vehicles/:id/service/:serviceId/edit" component={ServiceForm} />
         <Route path="/vehicles/:id/receipts/new" component={ReceiptForm} />
+        <Route path="/vehicles/:id/trips/new" component={TripForm} />
+        <Route path="/vehicles/:id/trips/:tripId/edit" component={TripForm} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

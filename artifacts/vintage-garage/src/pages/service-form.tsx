@@ -31,13 +31,17 @@ import {
 import { format } from "date-fns";
 
 const serviceSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Tittel er påkrevd"),
   description: z.string().optional().nullable(),
-  serviceDate: z.string().min(1, "Date is required"),
+  serviceDate: z.string().min(1, "Dato er påkrevd"),
   mileageAtService: z.coerce.number().min(0).optional().nullable(),
   cost: z.coerce.number().min(0).optional().nullable(),
   performedBy: z.string().optional().nullable(),
   category: z.enum(["oil-change", "brakes", "tires", "engine", "electrical", "bodywork", "other"]),
+  bodyArea: z.enum([
+    "front-wheel", "rear-wheel", "engine", "exhaust", "brakes-front", "brakes-rear", 
+    "suspension-front", "suspension-rear", "electrical", "frame", "other"
+  ]).optional().nullable(),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;
@@ -73,6 +77,7 @@ export default function ServiceForm() {
       cost: null,
       performedBy: "",
       category: "other",
+      bodyArea: "other",
     },
   });
 
@@ -86,6 +91,7 @@ export default function ServiceForm() {
         cost: service.cost,
         performedBy: service.performedBy || "",
         category: service.category as any,
+        bodyArea: (service.bodyArea as any) || "other",
       });
     } else if (vehicle && isNew && vehicle.mileage) {
       // Pre-fill mileage if we have it
@@ -98,6 +104,7 @@ export default function ServiceForm() {
       ...data,
       description: data.description || null,
       performedBy: data.performedBy || null,
+      bodyArea: data.bodyArea || null,
       // API expects ISO string date, our input type="date" gives YYYY-MM-DD
       // Append time to make it valid ISO 8601
       serviceDate: new Date(data.serviceDate).toISOString(),
@@ -106,30 +113,30 @@ export default function ServiceForm() {
     if (isNew) {
       createMutation.mutate({ vehicleId, data: formattedData as any }, {
         onSuccess: () => {
-          toast({ title: "Service record added" });
+          toast({ title: "Servicepost lagt til" });
           queryClient.invalidateQueries({ queryKey: getListServiceRecordsQueryKey(vehicleId) });
           setLocation(`/vehicles/${vehicleId}`);
         },
         onError: () => {
-          toast({ title: "Failed to add service record", variant: "destructive" });
+          toast({ title: "Kunne ikke legge til servicepost", variant: "destructive" });
         }
       });
     } else {
       updateMutation.mutate({ id: serviceId!, data: formattedData as any }, {
         onSuccess: () => {
-          toast({ title: "Service record updated" });
+          toast({ title: "Servicepost oppdatert" });
           queryClient.invalidateQueries({ queryKey: getListServiceRecordsQueryKey(vehicleId) });
           queryClient.invalidateQueries({ queryKey: getGetServiceRecordQueryKey(vehicleId, serviceId!) });
           setLocation(`/vehicles/${vehicleId}`);
         },
         onError: () => {
-          toast({ title: "Failed to update record", variant: "destructive" });
+          toast({ title: "Kunne ikke oppdatere", variant: "destructive" });
         }
       });
     }
   };
 
-  if (vehicleLoading || (!isNew && serviceLoading)) return <LoadingState message="Loading details..." />;
+  if (vehicleLoading || (!isNew && serviceLoading)) return <LoadingState message="Laster detaljer..." />;
   if (!isNew && isError) return <ErrorState onRetry={() => window.location.reload()} />;
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -141,7 +148,7 @@ export default function ServiceForm() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{isNew ? "Add Service Record" : "Edit Service Record"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{isNew ? "Ny servicepost" : "Rediger servicepost"}</h1>
           <p className="text-muted-foreground mt-1">For {vehicle?.year} {vehicle?.make} {vehicle?.model}</p>
         </div>
       </div>
@@ -150,7 +157,7 @@ export default function ServiceForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Card className="bg-card">
             <CardHeader>
-              <CardTitle>Job Details</CardTitle>
+              <CardTitle>Detaljer om jobben</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -159,9 +166,9 @@ export default function ServiceForm() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel>Tittel</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Oil Change & Filter" {...field} />
+                        <Input placeholder="f.eks. Oljeskift & Filter" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -172,21 +179,21 @@ export default function ServiceForm() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>Kategori</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
+                            <SelectValue placeholder="Velg en kategori" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="oil-change">Oil Change / Fluids</SelectItem>
-                          <SelectItem value="brakes">Brakes</SelectItem>
-                          <SelectItem value="tires">Tires & Suspension</SelectItem>
-                          <SelectItem value="engine">Engine & Transmission</SelectItem>
-                          <SelectItem value="electrical">Electrical</SelectItem>
-                          <SelectItem value="bodywork">Bodywork & Interior</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="oil-change">Oljeskift / Væsker</SelectItem>
+                          <SelectItem value="brakes">Bremser</SelectItem>
+                          <SelectItem value="tires">Dekk & Demping</SelectItem>
+                          <SelectItem value="engine">Motor & Girkasse</SelectItem>
+                          <SelectItem value="electrical">Elektro</SelectItem>
+                          <SelectItem value="bodywork">Karosseri & Interiør</SelectItem>
+                          <SelectItem value="other">Annet</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -201,7 +208,7 @@ export default function ServiceForm() {
                   name="serviceDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date</FormLabel>
+                      <FormLabel>Dato</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -214,7 +221,7 @@ export default function ServiceForm() {
                   name="mileageAtService"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mileage at Service (km)</FormLabel>
+                      <FormLabel>Kilometerstand (km)</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} value={field.value || ''} />
                       </FormControl>
@@ -226,12 +233,43 @@ export default function ServiceForm() {
 
               <FormField
                 control={form.control}
+                name="bodyArea"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Kjøretøysområde (for vedlikeholdskart)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || "other"} value={field.value || "other"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Velg område" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="front-wheel">Forhjul</SelectItem>
+                        <SelectItem value="rear-wheel">Bakhjul</SelectItem>
+                        <SelectItem value="engine">Motor</SelectItem>
+                        <SelectItem value="exhaust">Eksos</SelectItem>
+                        <SelectItem value="brakes-front">Bremser foran</SelectItem>
+                        <SelectItem value="brakes-rear">Bremser bak</SelectItem>
+                        <SelectItem value="suspension-front">Demping foran</SelectItem>
+                        <SelectItem value="suspension-rear">Demping bak</SelectItem>
+                        <SelectItem value="electrical">Elektro</SelectItem>
+                        <SelectItem value="frame">Ramme</SelectItem>
+                        <SelectItem value="other">Annet</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Beskrivelse</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Parts used, specific procedures followed, notes..." className="min-h-[100px]" {...field} value={field.value || ''} />
+                      <Textarea placeholder="Deler brukt, spesifikke prosedyrer, notater..." className="min-h-[100px]" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -242,7 +280,7 @@ export default function ServiceForm() {
 
           <Card className="bg-card">
             <CardHeader>
-              <CardTitle>Logistics</CardTitle>
+              <CardTitle>Logistikk</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -251,9 +289,9 @@ export default function ServiceForm() {
                   name="performedBy"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Performed By</FormLabel>
+                      <FormLabel>Utført av</FormLabel>
                       <FormControl>
-                        <Input placeholder="Workshop name or 'Self'" {...field} value={field.value || ''} />
+                        <Input placeholder="Verkstednavn eller 'Selv'" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -264,7 +302,7 @@ export default function ServiceForm() {
                   name="cost"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Total Cost ($)</FormLabel>
+                      <FormLabel>Totalkostnad (kr)</FormLabel>
                       <FormControl>
                         <Input type="number" step="0.01" {...field} value={field.value || ''} />
                       </FormControl>
@@ -278,13 +316,13 @@ export default function ServiceForm() {
 
           <div className="flex justify-end gap-4">
             <Button variant="outline" type="button" onClick={() => setLocation(`/vehicles/${vehicleId}`)}>
-              Cancel
+              Avbryt
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : (
+              {isPending ? "Lagrer..." : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Save Record
+                  Lagre
                 </>
               )}
             </Button>
