@@ -642,6 +642,150 @@ paths:
         "204":
           description: Left/removed
 
+  /clubs/{clubId}/invitations:
+    get:
+      operationId: listClubInvitations
+      tags: [clubs]
+      summary: List invitations for a club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClubInvitation"
+    post:
+      operationId: createClubInvitation
+      tags: [clubs]
+      summary: Create an invitation for a club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClubInvitationBody"
+      responses:
+        "201":
+          description: Created invitation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubInvitation"
+
+  /clubs/{clubId}/invitations/{invitationId}:
+    delete:
+      operationId: revokeClubInvitation
+      tags: [clubs]
+      summary: Revoke a club invitation
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Revoked
+
+  /clubs/invite/{code}:
+    get:
+      operationId: getClubInvitation
+      tags: [clubs]
+      summary: Get invitation details by code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubInvitationPublic"
+        "404":
+          description: Not found or expired
+
+  /clubs/invite/{code}/accept:
+    post:
+      operationId: acceptClubInvitation
+      tags: [clubs]
+      summary: Accept a club invitation
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UseInvitationBody"
+      responses:
+        "200":
+          description: Joined club
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubMember"
+        "400":
+          description: Expired or already used
+        "404":
+          description: Not found
+
+  /clubs/invite/{code}/decline:
+    post:
+      operationId: declineClubInvitation
+      tags: [clubs]
+      summary: Decline a club invitation
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UseInvitationBody"
+      responses:
+        "200":
+          description: Declined
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+
   /stats/dashboard:
     get:
       operationId: getDashboardStats
@@ -1104,6 +1248,90 @@ components:
       required:
         - category
         - count
+
+    ClubInvitation:
+      type: object
+      properties:
+        id:
+          type: integer
+        clubId:
+          type: integer
+        code:
+          type: string
+        email:
+          type: ["string", "null"]
+        createdBy:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        usedAt:
+          type: ["string", "null"]
+          format: date-time
+        usedBy:
+          type: ["string", "null"]
+        status:
+          type: string
+          description: "pending, accepted, declined, revoked"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clubId
+        - code
+        - email
+        - createdBy
+        - expiresAt
+        - usedAt
+        - usedBy
+        - status
+        - createdAt
+
+    ClubInvitationPublic:
+      type: object
+      properties:
+        code:
+          type: string
+        clubId:
+          type: integer
+        clubName:
+          type: string
+        clubType:
+          type: string
+        createdBy:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+      required:
+        - code
+        - clubId
+        - clubName
+        - clubType
+        - createdBy
+        - expiresAt
+        - status
+
+    CreateClubInvitationBody:
+      type: object
+      properties:
+        email:
+          type: ["string", "null"]
+        createdBy:
+          type: string
+      required:
+        - createdBy
+
+    UseInvitationBody:
+      type: object
+      properties:
+        memberName:
+          type: string
+      required:
+        - memberName
 
     ActivityItem:
       type: object

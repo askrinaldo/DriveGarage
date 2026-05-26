@@ -651,6 +651,100 @@ export const LeaveClubParams = zod.object({
 });
 
 /**
+ * @summary List invitations for a club
+ */
+export const ListClubInvitationsParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const ListClubInvitationsResponseItem = zod.object({
+  id: zod.number(),
+  clubId: zod.number(),
+  code: zod.string(),
+  email: zod.string().nullable(),
+  createdBy: zod.string(),
+  expiresAt: zod.coerce.date(),
+  usedAt: zod.coerce.date().nullable(),
+  usedBy: zod.string().nullable(),
+  status: zod.string().describe("pending, accepted, declined, revoked"),
+  createdAt: zod.coerce.date(),
+});
+export const ListClubInvitationsResponse = zod.array(
+  ListClubInvitationsResponseItem,
+);
+
+/**
+ * @summary Create an invitation for a club
+ */
+export const CreateClubInvitationParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const CreateClubInvitationBody = zod.object({
+  email: zod.string().nullish(),
+  createdBy: zod.string(),
+});
+
+/**
+ * @summary Revoke a club invitation
+ */
+export const RevokeClubInvitationParams = zod.object({
+  clubId: zod.coerce.number(),
+  invitationId: zod.coerce.number(),
+});
+
+/**
+ * @summary Get invitation details by code
+ */
+export const GetClubInvitationParams = zod.object({
+  code: zod.coerce.string(),
+});
+
+export const GetClubInvitationResponse = zod.object({
+  code: zod.string(),
+  clubId: zod.number(),
+  clubName: zod.string(),
+  clubType: zod.string(),
+  createdBy: zod.string(),
+  expiresAt: zod.coerce.date(),
+  status: zod.string(),
+});
+
+/**
+ * @summary Accept a club invitation
+ */
+export const AcceptClubInvitationParams = zod.object({
+  code: zod.coerce.string(),
+});
+
+export const AcceptClubInvitationBody = zod.object({
+  memberName: zod.string(),
+});
+
+export const AcceptClubInvitationResponse = zod.object({
+  id: zod.number(),
+  clubId: zod.number(),
+  memberName: zod.string(),
+  role: zod.string().describe("owner, admin, moderator, or member"),
+  joinedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Decline a club invitation
+ */
+export const DeclineClubInvitationParams = zod.object({
+  code: zod.coerce.string(),
+});
+
+export const DeclineClubInvitationBody = zod.object({
+  memberName: zod.string(),
+});
+
+export const DeclineClubInvitationResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
  * @summary Get dashboard summary statistics
  */
 export const GetDashboardStatsResponse = zod.object({

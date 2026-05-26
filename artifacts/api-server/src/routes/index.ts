@@ -6,6 +6,7 @@ import receiptsRouter from "./receipts";
 import tripLogsRouter from "./tripLogs";
 import statsRouter from "./stats";
 import clubsRouter from "./clubs";
+import clubInvitationsRouter from "./clubInvitations";
 
 const router: IRouter = Router();
 
@@ -15,6 +16,7 @@ router.use(serviceRecordsRouter);
 router.use(receiptsRouter);
 router.use(tripLogsRouter);
 router.use(statsRouter);
+router.use(clubInvitationsRouter);
 router.use(clubsRouter);
 
 export default router;

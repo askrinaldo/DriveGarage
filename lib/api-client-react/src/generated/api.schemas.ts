@@ -254,6 +254,43 @@ export interface DashboardStats {
   servicesByCategory: CategoryCount[];
 }
 
+export interface ClubInvitation {
+  id: number;
+  clubId: number;
+  code: string;
+  /** @nullable */
+  email: string | null;
+  createdBy: string;
+  expiresAt: string;
+  /** @nullable */
+  usedAt: string | null;
+  /** @nullable */
+  usedBy: string | null;
+  /** pending, accepted, declined, revoked */
+  status: string;
+  createdAt: string;
+}
+
+export interface ClubInvitationPublic {
+  code: string;
+  clubId: number;
+  clubName: string;
+  clubType: string;
+  createdBy: string;
+  expiresAt: string;
+  status: string;
+}
+
+export interface CreateClubInvitationBody {
+  /** @nullable */
+  email?: string | null;
+  createdBy: string;
+}
+
+export interface UseInvitationBody {
+  memberName: string;
+}
+
 export interface ActivityItem {
   id: number;
   vehicleId: number;
@@ -350,4 +387,8 @@ export interface UpdateClubMemberBody {
 
 export type ListClubsParams = {
   type?: string;
+};
+
+export type DeclineClubInvitation200 = {
+  message: string;
 };
