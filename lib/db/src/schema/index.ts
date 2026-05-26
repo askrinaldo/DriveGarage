@@ -6,3 +6,7 @@ export * from "./clubs";
 export * from "./clubMembers";
 export * from "./clubInvitations";
 export * from "./clubGarage";
+export * from "./forumPosts";
+export * from "./forumComments";
+export * from "./forumLikes";
+export * from "./forumNotifications";

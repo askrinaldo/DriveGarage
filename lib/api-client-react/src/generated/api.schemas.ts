@@ -254,6 +254,93 @@ export interface DashboardStats {
   servicesByCategory: CategoryCount[];
 }
 
+export interface ForumPost {
+  id: number;
+  clubId: number;
+  memberName: string;
+  category: string;
+  postType: string;
+  /** @nullable */
+  title?: string | null;
+  content: string;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  videoUrl?: string | null;
+  likesCount: number;
+  commentsCount: number;
+  isPinned: number;
+  isDeleted: number;
+  liked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ForumComment {
+  id: number;
+  postId: number;
+  memberName: string;
+  content: string;
+  isDeleted: number;
+  createdAt: string;
+}
+
+export type ForumPostDetail = ForumPost & {
+  comments: ForumComment[];
+};
+
+export interface ForumPostPage {
+  posts: ForumPost[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface CreateForumPostBody {
+  memberName: string;
+  category?: string;
+  postType?: string;
+  title?: string;
+  content: string;
+  imageUrl?: string;
+  videoUrl?: string;
+}
+
+export interface UpdateForumPostBody {
+  title?: string;
+  content?: string;
+  isPinned?: number;
+  memberName?: string;
+}
+
+export interface LikeBody {
+  memberName: string;
+}
+
+export interface LikeResponse {
+  liked: boolean;
+  likesCount: number;
+}
+
+export interface CreateCommentBody {
+  memberName: string;
+  content: string;
+}
+
+export interface ForumNotification {
+  id: number;
+  clubId: number;
+  recipientName: string;
+  senderName: string;
+  type: string;
+  /** @nullable */
+  postId?: number | null;
+  message: string;
+  isRead: number;
+  createdAt: string;
+}
+
 export interface ClubGarageVehicle {
   entryId: number;
   vehicleId: number;
@@ -422,6 +509,26 @@ export interface UpdateClubMemberBody {
 
 export type ListClubsParams = {
   type?: string;
+};
+
+export type ListForumPostsParams = {
+  category?: string;
+  postType?: string;
+  page?: number;
+  pageSize?: number;
+  memberName?: string;
+};
+
+export type GetForumPostParams = {
+  memberName?: string;
+};
+
+export type ListForumNotificationsParams = {
+  memberName: string;
+};
+
+export type MarkNotificationsReadBody = {
+  memberName: string;
 };
 
 export type ListClubGarageParams = {

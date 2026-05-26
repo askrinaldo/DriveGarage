@@ -8,6 +8,7 @@ import statsRouter from "./stats";
 import clubsRouter from "./clubs";
 import clubInvitationsRouter from "./clubInvitations";
 import clubGarageRouter from "./clubGarage";
+import forumRouter from "./forum";
 
 const router: IRouter = Router();
 
@@ -19,6 +20,7 @@ router.use(tripLogsRouter);
 router.use(statsRouter);
 router.use(clubInvitationsRouter);
 router.use(clubGarageRouter);
+router.use(forumRouter);
 router.use(clubsRouter);
 
 export default router;

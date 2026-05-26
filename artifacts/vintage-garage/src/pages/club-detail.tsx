@@ -49,7 +49,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Edit, Trash2, Users, MapPin, Car, Bike,
   Crown, Shield, UserCheck, User, UserPlus, Loader2,
-  Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse,
+  Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse, MessageSquare,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -260,6 +260,12 @@ export default function ClubDetail() {
         </Button>
         <h1 className="text-2xl font-bold tracking-tight flex-1 truncate">{club.name}</h1>
         <div className="flex gap-2 shrink-0">
+          <Link href={`/clubs/${clubId}/forum`}>
+            <Button variant="outline" size="sm">
+              <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+              Forum
+            </Button>
+          </Link>
           <Link href={`/clubs/${clubId}/garage`}>
             <Button variant="outline" size="sm">
               <Warehouse className="w-3.5 h-3.5 mr-1.5" />
@@ -363,6 +369,12 @@ export default function ClubDetail() {
                 </div>
               </div>
             </div>
+            <Link href={`/clubs/${clubId}/forum`} className="block">
+              <Button variant="secondary" className="w-full">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Forum
+              </Button>
+            </Link>
             <Link href={`/clubs/${clubId}/garage`} className="block">
               <Button variant="secondary" className="w-full">
                 <Warehouse className="w-4 h-4 mr-2" />

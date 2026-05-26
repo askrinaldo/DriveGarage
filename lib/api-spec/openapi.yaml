@@ -642,6 +642,255 @@ paths:
         "204":
           description: Left/removed
 
+  /clubs/{clubId}/forum/posts:
+    get:
+      operationId: listForumPosts
+      tags: [forum]
+      summary: List forum posts for a club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: category
+          in: query
+          required: false
+          schema: { type: string }
+        - name: postType
+          in: query
+          required: false
+          schema: { type: string }
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer }
+        - name: pageSize
+          in: query
+          required: false
+          schema: { type: integer }
+        - name: memberName
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Forum posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumPostPage"
+    post:
+      operationId: createForumPost
+      tags: [forum]
+      summary: Create a forum post
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateForumPostBody"
+      responses:
+        "201":
+          description: Created post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumPost"
+
+  /clubs/{clubId}/forum/posts/{postId}:
+    get:
+      operationId: getForumPost
+      tags: [forum]
+      summary: Get a single forum post with comments
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: postId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: memberName
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Forum post with comments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumPostDetail"
+    patch:
+      operationId: updateForumPost
+      tags: [forum]
+      summary: Update a forum post (pin, edit)
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: postId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateForumPostBody"
+      responses:
+        "200":
+          description: Updated post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumPost"
+    delete:
+      operationId: deleteForumPost
+      tags: [forum]
+      summary: Delete a forum post
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: postId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /clubs/{clubId}/forum/posts/{postId}/like:
+    post:
+      operationId: toggleForumPostLike
+      tags: [forum]
+      summary: Like or unlike a post
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: postId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LikeBody"
+      responses:
+        "200":
+          description: Like status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResponse"
+
+  /clubs/{clubId}/forum/posts/{postId}/comments:
+    post:
+      operationId: createForumComment
+      tags: [forum]
+      summary: Add a comment to a post
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: postId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentBody"
+      responses:
+        "201":
+          description: Created comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumComment"
+
+  /clubs/{clubId}/forum/comments/{commentId}:
+    delete:
+      operationId: deleteForumComment
+      tags: [forum]
+      summary: Delete a comment
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: commentId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /clubs/{clubId}/notifications:
+    get:
+      operationId: listForumNotifications
+      tags: [forum]
+      summary: List notifications for a member
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: memberName
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ForumNotification"
+
+  /clubs/{clubId}/notifications/read:
+    patch:
+      operationId: markNotificationsRead
+      tags: [forum]
+      summary: Mark all notifications read
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                memberName: { type: string }
+              required: [memberName]
+      responses:
+        "200":
+          description: OK
+
   /clubs/{clubId}/garage:
     get:
       operationId: listClubGarage
@@ -1342,6 +1591,116 @@ components:
       required:
         - category
         - count
+
+    ForumPost:
+      type: object
+      properties:
+        id: { type: integer }
+        clubId: { type: integer }
+        memberName: { type: string }
+        category: { type: string }
+        postType: { type: string }
+        title: { type: ["string", "null"] }
+        content: { type: string }
+        imageUrl: { type: ["string", "null"] }
+        videoUrl: { type: ["string", "null"] }
+        likesCount: { type: integer }
+        commentsCount: { type: integer }
+        isPinned: { type: integer }
+        isDeleted: { type: integer }
+        liked: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, clubId, memberName, category, postType, content, likesCount, commentsCount, isPinned, isDeleted, liked, createdAt, updatedAt]
+
+    ForumComment:
+      type: object
+      properties:
+        id: { type: integer }
+        postId: { type: integer }
+        memberName: { type: string }
+        content: { type: string }
+        isDeleted: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, postId, memberName, content, isDeleted, createdAt]
+
+    ForumPostDetail:
+      allOf:
+        - $ref: "#/components/schemas/ForumPost"
+        - type: object
+          properties:
+            comments:
+              type: array
+              items:
+                $ref: "#/components/schemas/ForumComment"
+          required: [comments]
+
+    ForumPostPage:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForumPost"
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalPages: { type: integer }
+      required: [posts, total, page, pageSize, totalPages]
+
+    CreateForumPostBody:
+      type: object
+      properties:
+        memberName: { type: string }
+        category: { type: string }
+        postType: { type: string }
+        title: { type: string }
+        content: { type: string }
+        imageUrl: { type: string }
+        videoUrl: { type: string }
+      required: [memberName, content]
+
+    UpdateForumPostBody:
+      type: object
+      properties:
+        title: { type: string }
+        content: { type: string }
+        isPinned: { type: integer }
+        memberName: { type: string }
+
+    LikeBody:
+      type: object
+      properties:
+        memberName: { type: string }
+      required: [memberName]
+
+    LikeResponse:
+      type: object
+      properties:
+        liked: { type: boolean }
+        likesCount: { type: integer }
+      required: [liked, likesCount]
+
+    CreateCommentBody:
+      type: object
+      properties:
+        memberName: { type: string }
+        content: { type: string }
+      required: [memberName, content]
+
+    ForumNotification:
+      type: object
+      properties:
+        id: { type: integer }
+        clubId: { type: integer }
+        recipientName: { type: string }
+        senderName: { type: string }
+        type: { type: string }
+        postId: { type: ["integer", "null"] }
+        message: { type: string }
+        isRead: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, clubId, recipientName, senderName, type, message, isRead, createdAt]
 
     ClubGarageVehicle:
       type: object

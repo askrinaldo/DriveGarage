@@ -651,6 +651,228 @@ export const LeaveClubParams = zod.object({
 });
 
 /**
+ * @summary List forum posts for a club
+ */
+export const ListForumPostsParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const ListForumPostsQueryParams = zod.object({
+  category: zod.coerce.string().optional(),
+  postType: zod.coerce.string().optional(),
+  page: zod.coerce.number().optional(),
+  pageSize: zod.coerce.number().optional(),
+  memberName: zod.coerce.string().optional(),
+});
+
+export const ListForumPostsResponse = zod.object({
+  posts: zod.array(
+    zod.object({
+      id: zod.number(),
+      clubId: zod.number(),
+      memberName: zod.string(),
+      category: zod.string(),
+      postType: zod.string(),
+      title: zod.string().nullish(),
+      content: zod.string(),
+      imageUrl: zod.string().nullish(),
+      videoUrl: zod.string().nullish(),
+      likesCount: zod.number(),
+      commentsCount: zod.number(),
+      isPinned: zod.number(),
+      isDeleted: zod.number(),
+      liked: zod.boolean(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  total: zod.number(),
+  page: zod.number(),
+  pageSize: zod.number(),
+  totalPages: zod.number(),
+});
+
+/**
+ * @summary Create a forum post
+ */
+export const CreateForumPostParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const CreateForumPostBody = zod.object({
+  memberName: zod.string(),
+  category: zod.string().optional(),
+  postType: zod.string().optional(),
+  title: zod.string().optional(),
+  content: zod.string(),
+  imageUrl: zod.string().optional(),
+  videoUrl: zod.string().optional(),
+});
+
+/**
+ * @summary Get a single forum post with comments
+ */
+export const GetForumPostParams = zod.object({
+  clubId: zod.coerce.number(),
+  postId: zod.coerce.number(),
+});
+
+export const GetForumPostQueryParams = zod.object({
+  memberName: zod.coerce.string().optional(),
+});
+
+export const GetForumPostResponse = zod
+  .object({
+    id: zod.number(),
+    clubId: zod.number(),
+    memberName: zod.string(),
+    category: zod.string(),
+    postType: zod.string(),
+    title: zod.string().nullish(),
+    content: zod.string(),
+    imageUrl: zod.string().nullish(),
+    videoUrl: zod.string().nullish(),
+    likesCount: zod.number(),
+    commentsCount: zod.number(),
+    isPinned: zod.number(),
+    isDeleted: zod.number(),
+    liked: zod.boolean(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      comments: zod.array(
+        zod.object({
+          id: zod.number(),
+          postId: zod.number(),
+          memberName: zod.string(),
+          content: zod.string(),
+          isDeleted: zod.number(),
+          createdAt: zod.coerce.date(),
+        }),
+      ),
+    }),
+  );
+
+/**
+ * @summary Update a forum post (pin, edit)
+ */
+export const UpdateForumPostParams = zod.object({
+  clubId: zod.coerce.number(),
+  postId: zod.coerce.number(),
+});
+
+export const UpdateForumPostBody = zod.object({
+  title: zod.string().optional(),
+  content: zod.string().optional(),
+  isPinned: zod.number().optional(),
+  memberName: zod.string().optional(),
+});
+
+export const UpdateForumPostResponse = zod.object({
+  id: zod.number(),
+  clubId: zod.number(),
+  memberName: zod.string(),
+  category: zod.string(),
+  postType: zod.string(),
+  title: zod.string().nullish(),
+  content: zod.string(),
+  imageUrl: zod.string().nullish(),
+  videoUrl: zod.string().nullish(),
+  likesCount: zod.number(),
+  commentsCount: zod.number(),
+  isPinned: zod.number(),
+  isDeleted: zod.number(),
+  liked: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a forum post
+ */
+export const DeleteForumPostParams = zod.object({
+  clubId: zod.coerce.number(),
+  postId: zod.coerce.number(),
+});
+
+/**
+ * @summary Like or unlike a post
+ */
+export const ToggleForumPostLikeParams = zod.object({
+  clubId: zod.coerce.number(),
+  postId: zod.coerce.number(),
+});
+
+export const ToggleForumPostLikeBody = zod.object({
+  memberName: zod.string(),
+});
+
+export const ToggleForumPostLikeResponse = zod.object({
+  liked: zod.boolean(),
+  likesCount: zod.number(),
+});
+
+/**
+ * @summary Add a comment to a post
+ */
+export const CreateForumCommentParams = zod.object({
+  clubId: zod.coerce.number(),
+  postId: zod.coerce.number(),
+});
+
+export const CreateForumCommentBody = zod.object({
+  memberName: zod.string(),
+  content: zod.string(),
+});
+
+/**
+ * @summary Delete a comment
+ */
+export const DeleteForumCommentParams = zod.object({
+  clubId: zod.coerce.number(),
+  commentId: zod.coerce.number(),
+});
+
+/**
+ * @summary List notifications for a member
+ */
+export const ListForumNotificationsParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const ListForumNotificationsQueryParams = zod.object({
+  memberName: zod.coerce.string(),
+});
+
+export const ListForumNotificationsResponseItem = zod.object({
+  id: zod.number(),
+  clubId: zod.number(),
+  recipientName: zod.string(),
+  senderName: zod.string(),
+  type: zod.string(),
+  postId: zod.number().nullish(),
+  message: zod.string(),
+  isRead: zod.number(),
+  createdAt: zod.coerce.date(),
+});
+export const ListForumNotificationsResponse = zod.array(
+  ListForumNotificationsResponseItem,
+);
+
+/**
+ * @summary Mark all notifications read
+ */
+export const MarkNotificationsReadParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const MarkNotificationsReadBody = zod.object({
+  memberName: zod.string(),
+});
+
+/**
  * @summary List vehicles in a club garage
  */
 export const ListClubGarageParams = zod.object({

@@ -28,21 +28,35 @@ import type {
   ClubWithMembers,
   CreateClubBody,
   CreateClubInvitationBody,
+  CreateCommentBody,
+  CreateForumPostBody,
   CreateReceiptBody,
   CreateServiceRecordBody,
   CreateTripLogBody,
   CreateVehicleBody,
   DashboardStats,
   DeclineClubInvitation200,
+  ForumComment,
+  ForumNotification,
+  ForumPost,
+  ForumPostDetail,
+  ForumPostPage,
+  GetForumPostParams,
   HealthStatus,
   JoinClubBody,
+  LikeBody,
+  LikeResponse,
   ListClubGarageParams,
   ListClubsParams,
+  ListForumNotificationsParams,
+  ListForumPostsParams,
+  MarkNotificationsReadBody,
   Receipt,
   ServiceRecord,
   TripLog,
   UpdateClubBody,
   UpdateClubMemberBody,
+  UpdateForumPostBody,
   UpdateServiceRecordBody,
   UpdateTripLogBody,
   UpdateVehicleBody,
@@ -2553,6 +2567,972 @@ export const useLeaveClub = <
   TContext
 > => {
   return useMutation(getLeaveClubMutationOptions(options));
+};
+
+/**
+ * @summary List forum posts for a club
+ */
+export const getListForumPostsUrl = (
+  clubId: number,
+  params?: ListForumPostsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/clubs/${clubId}/forum/posts?${stringifiedParams}`
+    : `/api/clubs/${clubId}/forum/posts`;
+};
+
+export const listForumPosts = async (
+  clubId: number,
+  params?: ListForumPostsParams,
+  options?: RequestInit,
+): Promise<ForumPostPage> => {
+  return customFetch<ForumPostPage>(getListForumPostsUrl(clubId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListForumPostsQueryKey = (
+  clubId: number,
+  params?: ListForumPostsParams,
+) => {
+  return [
+    `/api/clubs/${clubId}/forum/posts`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListForumPostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listForumPosts>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  params?: ListForumPostsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumPosts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListForumPostsQueryKey(clubId, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listForumPosts>>> = ({
+    signal,
+  }) => listForumPosts(clubId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!clubId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listForumPosts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListForumPostsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listForumPosts>>
+>;
+export type ListForumPostsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List forum posts for a club
+ */
+
+export function useListForumPosts<
+  TData = Awaited<ReturnType<typeof listForumPosts>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  params?: ListForumPostsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumPosts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListForumPostsQueryOptions(clubId, params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a forum post
+ */
+export const getCreateForumPostUrl = (clubId: number) => {
+  return `/api/clubs/${clubId}/forum/posts`;
+};
+
+export const createForumPost = async (
+  clubId: number,
+  createForumPostBody: CreateForumPostBody,
+  options?: RequestInit,
+): Promise<ForumPost> => {
+  return customFetch<ForumPost>(getCreateForumPostUrl(clubId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createForumPostBody),
+  });
+};
+
+export const getCreateForumPostMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumPost>>,
+    TError,
+    { clubId: number; data: BodyType<CreateForumPostBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createForumPost>>,
+  TError,
+  { clubId: number; data: BodyType<CreateForumPostBody> },
+  TContext
+> => {
+  const mutationKey = ["createForumPost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createForumPost>>,
+    { clubId: number; data: BodyType<CreateForumPostBody> }
+  > = (props) => {
+    const { clubId, data } = props ?? {};
+
+    return createForumPost(clubId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateForumPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createForumPost>>
+>;
+export type CreateForumPostMutationBody = BodyType<CreateForumPostBody>;
+export type CreateForumPostMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a forum post
+ */
+export const useCreateForumPost = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumPost>>,
+    TError,
+    { clubId: number; data: BodyType<CreateForumPostBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createForumPost>>,
+  TError,
+  { clubId: number; data: BodyType<CreateForumPostBody> },
+  TContext
+> => {
+  return useMutation(getCreateForumPostMutationOptions(options));
+};
+
+/**
+ * @summary Get a single forum post with comments
+ */
+export const getGetForumPostUrl = (
+  clubId: number,
+  postId: number,
+  params?: GetForumPostParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/clubs/${clubId}/forum/posts/${postId}?${stringifiedParams}`
+    : `/api/clubs/${clubId}/forum/posts/${postId}`;
+};
+
+export const getForumPost = async (
+  clubId: number,
+  postId: number,
+  params?: GetForumPostParams,
+  options?: RequestInit,
+): Promise<ForumPostDetail> => {
+  return customFetch<ForumPostDetail>(
+    getGetForumPostUrl(clubId, postId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetForumPostQueryKey = (
+  clubId: number,
+  postId: number,
+  params?: GetForumPostParams,
+) => {
+  return [
+    `/api/clubs/${clubId}/forum/posts/${postId}`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetForumPostQueryOptions = <
+  TData = Awaited<ReturnType<typeof getForumPost>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  postId: number,
+  params?: GetForumPostParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getForumPost>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetForumPostQueryKey(clubId, postId, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getForumPost>>> = ({
+    signal,
+  }) => getForumPost(clubId, postId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(clubId && postId),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getForumPost>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetForumPostQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getForumPost>>
+>;
+export type GetForumPostQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get a single forum post with comments
+ */
+
+export function useGetForumPost<
+  TData = Awaited<ReturnType<typeof getForumPost>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  postId: number,
+  params?: GetForumPostParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getForumPost>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetForumPostQueryOptions(
+    clubId,
+    postId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a forum post (pin, edit)
+ */
+export const getUpdateForumPostUrl = (clubId: number, postId: number) => {
+  return `/api/clubs/${clubId}/forum/posts/${postId}`;
+};
+
+export const updateForumPost = async (
+  clubId: number,
+  postId: number,
+  updateForumPostBody: UpdateForumPostBody,
+  options?: RequestInit,
+): Promise<ForumPost> => {
+  return customFetch<ForumPost>(getUpdateForumPostUrl(clubId, postId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateForumPostBody),
+  });
+};
+
+export const getUpdateForumPostMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateForumPost>>,
+    TError,
+    { clubId: number; postId: number; data: BodyType<UpdateForumPostBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateForumPost>>,
+  TError,
+  { clubId: number; postId: number; data: BodyType<UpdateForumPostBody> },
+  TContext
+> => {
+  const mutationKey = ["updateForumPost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateForumPost>>,
+    { clubId: number; postId: number; data: BodyType<UpdateForumPostBody> }
+  > = (props) => {
+    const { clubId, postId, data } = props ?? {};
+
+    return updateForumPost(clubId, postId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateForumPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateForumPost>>
+>;
+export type UpdateForumPostMutationBody = BodyType<UpdateForumPostBody>;
+export type UpdateForumPostMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a forum post (pin, edit)
+ */
+export const useUpdateForumPost = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateForumPost>>,
+    TError,
+    { clubId: number; postId: number; data: BodyType<UpdateForumPostBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateForumPost>>,
+  TError,
+  { clubId: number; postId: number; data: BodyType<UpdateForumPostBody> },
+  TContext
+> => {
+  return useMutation(getUpdateForumPostMutationOptions(options));
+};
+
+/**
+ * @summary Delete a forum post
+ */
+export const getDeleteForumPostUrl = (clubId: number, postId: number) => {
+  return `/api/clubs/${clubId}/forum/posts/${postId}`;
+};
+
+export const deleteForumPost = async (
+  clubId: number,
+  postId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteForumPostUrl(clubId, postId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteForumPostMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForumPost>>,
+    TError,
+    { clubId: number; postId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteForumPost>>,
+  TError,
+  { clubId: number; postId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteForumPost"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteForumPost>>,
+    { clubId: number; postId: number }
+  > = (props) => {
+    const { clubId, postId } = props ?? {};
+
+    return deleteForumPost(clubId, postId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteForumPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteForumPost>>
+>;
+
+export type DeleteForumPostMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a forum post
+ */
+export const useDeleteForumPost = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForumPost>>,
+    TError,
+    { clubId: number; postId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteForumPost>>,
+  TError,
+  { clubId: number; postId: number },
+  TContext
+> => {
+  return useMutation(getDeleteForumPostMutationOptions(options));
+};
+
+/**
+ * @summary Like or unlike a post
+ */
+export const getToggleForumPostLikeUrl = (clubId: number, postId: number) => {
+  return `/api/clubs/${clubId}/forum/posts/${postId}/like`;
+};
+
+export const toggleForumPostLike = async (
+  clubId: number,
+  postId: number,
+  likeBody: LikeBody,
+  options?: RequestInit,
+): Promise<LikeResponse> => {
+  return customFetch<LikeResponse>(getToggleForumPostLikeUrl(clubId, postId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(likeBody),
+  });
+};
+
+export const getToggleForumPostLikeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof toggleForumPostLike>>,
+    TError,
+    { clubId: number; postId: number; data: BodyType<LikeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof toggleForumPostLike>>,
+  TError,
+  { clubId: number; postId: number; data: BodyType<LikeBody> },
+  TContext
+> => {
+  const mutationKey = ["toggleForumPostLike"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof toggleForumPostLike>>,
+    { clubId: number; postId: number; data: BodyType<LikeBody> }
+  > = (props) => {
+    const { clubId, postId, data } = props ?? {};
+
+    return toggleForumPostLike(clubId, postId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ToggleForumPostLikeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof toggleForumPostLike>>
+>;
+export type ToggleForumPostLikeMutationBody = BodyType<LikeBody>;
+export type ToggleForumPostLikeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Like or unlike a post
+ */
+export const useToggleForumPostLike = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof toggleForumPostLike>>,
+    TError,
+    { clubId: number; postId: number; data: BodyType<LikeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof toggleForumPostLike>>,
+  TError,
+  { clubId: number; postId: number; data: BodyType<LikeBody> },
+  TContext
+> => {
+  return useMutation(getToggleForumPostLikeMutationOptions(options));
+};
+
+/**
+ * @summary Add a comment to a post
+ */
+export const getCreateForumCommentUrl = (clubId: number, postId: number) => {
+  return `/api/clubs/${clubId}/forum/posts/${postId}/comments`;
+};
+
+export const createForumComment = async (
+  clubId: number,
+  postId: number,
+  createCommentBody: CreateCommentBody,
+  options?: RequestInit,
+): Promise<ForumComment> => {
+  return customFetch<ForumComment>(getCreateForumCommentUrl(clubId, postId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCommentBody),
+  });
+};
+
+export const getCreateForumCommentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumComment>>,
+    TError,
+    { clubId: number; postId: number; data: BodyType<CreateCommentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createForumComment>>,
+  TError,
+  { clubId: number; postId: number; data: BodyType<CreateCommentBody> },
+  TContext
+> => {
+  const mutationKey = ["createForumComment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createForumComment>>,
+    { clubId: number; postId: number; data: BodyType<CreateCommentBody> }
+  > = (props) => {
+    const { clubId, postId, data } = props ?? {};
+
+    return createForumComment(clubId, postId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateForumCommentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createForumComment>>
+>;
+export type CreateForumCommentMutationBody = BodyType<CreateCommentBody>;
+export type CreateForumCommentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add a comment to a post
+ */
+export const useCreateForumComment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumComment>>,
+    TError,
+    { clubId: number; postId: number; data: BodyType<CreateCommentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createForumComment>>,
+  TError,
+  { clubId: number; postId: number; data: BodyType<CreateCommentBody> },
+  TContext
+> => {
+  return useMutation(getCreateForumCommentMutationOptions(options));
+};
+
+/**
+ * @summary Delete a comment
+ */
+export const getDeleteForumCommentUrl = (clubId: number, commentId: number) => {
+  return `/api/clubs/${clubId}/forum/comments/${commentId}`;
+};
+
+export const deleteForumComment = async (
+  clubId: number,
+  commentId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteForumCommentUrl(clubId, commentId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteForumCommentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForumComment>>,
+    TError,
+    { clubId: number; commentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteForumComment>>,
+  TError,
+  { clubId: number; commentId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteForumComment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteForumComment>>,
+    { clubId: number; commentId: number }
+  > = (props) => {
+    const { clubId, commentId } = props ?? {};
+
+    return deleteForumComment(clubId, commentId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteForumCommentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteForumComment>>
+>;
+
+export type DeleteForumCommentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a comment
+ */
+export const useDeleteForumComment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForumComment>>,
+    TError,
+    { clubId: number; commentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteForumComment>>,
+  TError,
+  { clubId: number; commentId: number },
+  TContext
+> => {
+  return useMutation(getDeleteForumCommentMutationOptions(options));
+};
+
+/**
+ * @summary List notifications for a member
+ */
+export const getListForumNotificationsUrl = (
+  clubId: number,
+  params: ListForumNotificationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/clubs/${clubId}/notifications?${stringifiedParams}`
+    : `/api/clubs/${clubId}/notifications`;
+};
+
+export const listForumNotifications = async (
+  clubId: number,
+  params: ListForumNotificationsParams,
+  options?: RequestInit,
+): Promise<ForumNotification[]> => {
+  return customFetch<ForumNotification[]>(
+    getListForumNotificationsUrl(clubId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListForumNotificationsQueryKey = (
+  clubId: number,
+  params?: ListForumNotificationsParams,
+) => {
+  return [
+    `/api/clubs/${clubId}/notifications`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListForumNotificationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listForumNotifications>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  params: ListForumNotificationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumNotifications>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListForumNotificationsQueryKey(clubId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listForumNotifications>>
+  > = ({ signal }) =>
+    listForumNotifications(clubId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!clubId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listForumNotifications>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListForumNotificationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listForumNotifications>>
+>;
+export type ListForumNotificationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List notifications for a member
+ */
+
+export function useListForumNotifications<
+  TData = Awaited<ReturnType<typeof listForumNotifications>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  params: ListForumNotificationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumNotifications>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListForumNotificationsQueryOptions(
+    clubId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Mark all notifications read
+ */
+export const getMarkNotificationsReadUrl = (clubId: number) => {
+  return `/api/clubs/${clubId}/notifications/read`;
+};
+
+export const markNotificationsRead = async (
+  clubId: number,
+  markNotificationsReadBody: MarkNotificationsReadBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getMarkNotificationsReadUrl(clubId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(markNotificationsReadBody),
+  });
+};
+
+export const getMarkNotificationsReadMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markNotificationsRead>>,
+    TError,
+    { clubId: number; data: BodyType<MarkNotificationsReadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markNotificationsRead>>,
+  TError,
+  { clubId: number; data: BodyType<MarkNotificationsReadBody> },
+  TContext
+> => {
+  const mutationKey = ["markNotificationsRead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markNotificationsRead>>,
+    { clubId: number; data: BodyType<MarkNotificationsReadBody> }
+  > = (props) => {
+    const { clubId, data } = props ?? {};
+
+    return markNotificationsRead(clubId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkNotificationsReadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markNotificationsRead>>
+>;
+export type MarkNotificationsReadMutationBody =
+  BodyType<MarkNotificationsReadBody>;
+export type MarkNotificationsReadMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark all notifications read
+ */
+export const useMarkNotificationsRead = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markNotificationsRead>>,
+    TError,
+    { clubId: number; data: BodyType<MarkNotificationsReadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markNotificationsRead>>,
+  TError,
+  { clubId: number; data: BodyType<MarkNotificationsReadBody> },
+  TContext
+> => {
+  return useMutation(getMarkNotificationsReadMutationOptions(options));
 };
 
 /**
