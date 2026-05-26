@@ -18,6 +18,8 @@ tags:
     description: Receipt operations
   - name: tripLogs
     description: Trip log operations
+  - name: clubs
+    description: Club operations
   - name: stats
     description: Dashboard statistics
 paths:
@@ -446,6 +448,199 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /clubs:
+    get:
+      operationId: listClubs
+      tags: [clubs]
+      summary: List all clubs
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of clubs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Club"
+    post:
+      operationId: createClub
+      tags: [clubs]
+      summary: Create a club
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClubBody"
+      responses:
+        "201":
+          description: Created club
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Club"
+
+  /clubs/{id}:
+    get:
+      operationId: getClub
+      tags: [clubs]
+      summary: Get a club by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Club with members
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubWithMembers"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateClub
+      tags: [clubs]
+      summary: Update a club
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClubBody"
+      responses:
+        "200":
+          description: Updated club
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Club"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteClub
+      tags: [clubs]
+      summary: Delete a club
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /clubs/{clubId}/members:
+    get:
+      operationId: listClubMembers
+      tags: [clubs]
+      summary: List members of a club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Club members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClubMember"
+    post:
+      operationId: joinClub
+      tags: [clubs]
+      summary: Join a club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinClubBody"
+      responses:
+        "201":
+          description: Joined club
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubMember"
+        "409":
+          description: Already a member
+
+  /clubs/{clubId}/members/{memberId}:
+    patch:
+      operationId: updateClubMember
+      tags: [clubs]
+      summary: Update a club member role
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClubMemberBody"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubMember"
+        "404":
+          description: Not found
+    delete:
+      operationId: leaveClub
+      tags: [clubs]
+      summary: Leave or remove a member from a club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Left/removed
 
   /stats/dashboard:
     get:
@@ -936,3 +1131,166 @@ components:
         - category
         - serviceDate
         - cost
+
+    Club:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        bannerUrl:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        clubType:
+          type: string
+          description: "car, motorcycle, or both"
+        ownerName:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - description
+        - logoUrl
+        - bannerUrl
+        - location
+        - clubType
+        - ownerName
+        - memberCount
+        - createdAt
+        - updatedAt
+
+    ClubWithMembers:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        bannerUrl:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        clubType:
+          type: string
+        ownerName:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClubMember"
+      required:
+        - id
+        - name
+        - description
+        - logoUrl
+        - bannerUrl
+        - location
+        - clubType
+        - ownerName
+        - memberCount
+        - createdAt
+        - updatedAt
+        - members
+
+    ClubMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        clubId:
+          type: integer
+        memberName:
+          type: string
+        role:
+          type: string
+          description: "owner, admin, moderator, or member"
+        joinedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clubId
+        - memberName
+        - role
+        - joinedAt
+
+    CreateClubBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        bannerUrl:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        clubType:
+          type: string
+        ownerName:
+          type: string
+      required:
+        - name
+        - clubType
+        - ownerName
+
+    UpdateClubBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        bannerUrl:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        clubType:
+          type: string
+
+    JoinClubBody:
+      type: object
+      properties:
+        memberName:
+          type: string
+      required:
+        - memberName
+
+    UpdateClubMemberBody:
+      type: object
+      properties:
+        role:
+          type: string
+          description: "admin, moderator, or member"
+      required:
+        - role

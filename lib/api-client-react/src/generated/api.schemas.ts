@@ -264,3 +264,90 @@ export interface ActivityItem {
   /** @nullable */
   cost: number | null;
 }
+
+export interface Club {
+  id: number;
+  name: string;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  logoUrl: string | null;
+  /** @nullable */
+  bannerUrl: string | null;
+  /** @nullable */
+  location: string | null;
+  /** car, motorcycle, or both */
+  clubType: string;
+  ownerName: string;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClubMember {
+  id: number;
+  clubId: number;
+  memberName: string;
+  /** owner, admin, moderator, or member */
+  role: string;
+  joinedAt: string;
+}
+
+export interface ClubWithMembers {
+  id: number;
+  name: string;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  logoUrl: string | null;
+  /** @nullable */
+  bannerUrl: string | null;
+  /** @nullable */
+  location: string | null;
+  clubType: string;
+  ownerName: string;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+  members: ClubMember[];
+}
+
+export interface CreateClubBody {
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  logoUrl?: string | null;
+  /** @nullable */
+  bannerUrl?: string | null;
+  /** @nullable */
+  location?: string | null;
+  clubType: string;
+  ownerName: string;
+}
+
+export interface UpdateClubBody {
+  name?: string;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  logoUrl?: string | null;
+  /** @nullable */
+  bannerUrl?: string | null;
+  /** @nullable */
+  location?: string | null;
+  clubType?: string;
+}
+
+export interface JoinClubBody {
+  memberName: string;
+}
+
+export interface UpdateClubMemberBody {
+  /** admin, moderator, or member */
+  role: string;
+}
+
+export type ListClubsParams = {
+  type?: string;
+};

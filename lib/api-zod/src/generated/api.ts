@@ -494,6 +494,163 @@ export const DeleteTripLogParams = zod.object({
 });
 
 /**
+ * @summary List all clubs
+ */
+export const ListClubsQueryParams = zod.object({
+  type: zod.coerce.string().optional(),
+});
+
+export const ListClubsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullable(),
+  logoUrl: zod.string().nullable(),
+  bannerUrl: zod.string().nullable(),
+  location: zod.string().nullable(),
+  clubType: zod.string().describe("car, motorcycle, or both"),
+  ownerName: zod.string(),
+  memberCount: zod.number(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListClubsResponse = zod.array(ListClubsResponseItem);
+
+/**
+ * @summary Create a club
+ */
+export const CreateClubBody = zod.object({
+  name: zod.string(),
+  description: zod.string().nullish(),
+  logoUrl: zod.string().nullish(),
+  bannerUrl: zod.string().nullish(),
+  location: zod.string().nullish(),
+  clubType: zod.string(),
+  ownerName: zod.string(),
+});
+
+/**
+ * @summary Get a club by ID
+ */
+export const GetClubParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetClubResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullable(),
+  logoUrl: zod.string().nullable(),
+  bannerUrl: zod.string().nullable(),
+  location: zod.string().nullable(),
+  clubType: zod.string(),
+  ownerName: zod.string(),
+  memberCount: zod.number(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+  members: zod.array(
+    zod.object({
+      id: zod.number(),
+      clubId: zod.number(),
+      memberName: zod.string(),
+      role: zod.string().describe("owner, admin, moderator, or member"),
+      joinedAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Update a club
+ */
+export const UpdateClubParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateClubBody = zod.object({
+  name: zod.string().optional(),
+  description: zod.string().nullish(),
+  logoUrl: zod.string().nullish(),
+  bannerUrl: zod.string().nullish(),
+  location: zod.string().nullish(),
+  clubType: zod.string().optional(),
+});
+
+export const UpdateClubResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullable(),
+  logoUrl: zod.string().nullable(),
+  bannerUrl: zod.string().nullable(),
+  location: zod.string().nullable(),
+  clubType: zod.string().describe("car, motorcycle, or both"),
+  ownerName: zod.string(),
+  memberCount: zod.number(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a club
+ */
+export const DeleteClubParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List members of a club
+ */
+export const ListClubMembersParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const ListClubMembersResponseItem = zod.object({
+  id: zod.number(),
+  clubId: zod.number(),
+  memberName: zod.string(),
+  role: zod.string().describe("owner, admin, moderator, or member"),
+  joinedAt: zod.coerce.date(),
+});
+export const ListClubMembersResponse = zod.array(ListClubMembersResponseItem);
+
+/**
+ * @summary Join a club
+ */
+export const JoinClubParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const JoinClubBody = zod.object({
+  memberName: zod.string(),
+});
+
+/**
+ * @summary Update a club member role
+ */
+export const UpdateClubMemberParams = zod.object({
+  clubId: zod.coerce.number(),
+  memberId: zod.coerce.number(),
+});
+
+export const UpdateClubMemberBody = zod.object({
+  role: zod.string().describe("admin, moderator, or member"),
+});
+
+export const UpdateClubMemberResponse = zod.object({
+  id: zod.number(),
+  clubId: zod.number(),
+  memberName: zod.string(),
+  role: zod.string().describe("owner, admin, moderator, or member"),
+  joinedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Leave or remove a member from a club
+ */
+export const LeaveClubParams = zod.object({
+  clubId: zod.coerce.number(),
+  memberId: zod.coerce.number(),
+});
+
+/**
  * @summary Get dashboard summary statistics
  */
 export const GetDashboardStatsResponse = zod.object({

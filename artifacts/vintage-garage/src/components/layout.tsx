@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Car, Wrench, Receipt, Plus } from "lucide-react";
+import { LayoutDashboard, Car, Wrench, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -12,6 +12,7 @@ export function Layout({ children }: LayoutProps) {
   const navItems = [
     { href: "/", label: "Oversikt", icon: LayoutDashboard },
     { href: "/vehicles", label: "Garasjen min", icon: Car },
+    { href: "/clubs", label: "Klubber", icon: Users },
   ];
 
   return (
