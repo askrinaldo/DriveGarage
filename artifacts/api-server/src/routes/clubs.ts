@@ -14,6 +14,8 @@ import {
   LeaveClubParams,
   ListClubMembersParams,
 } from "@workspace/api-zod";
+import { requireClubRole } from "../middleware/auth";
+import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -38,6 +40,8 @@ async function getClubWithCount(id: number) {
     .groupBy(clubsTable.id);
   return club ?? null;
 }
+
+// ─── Public routes ────────────────────────────────────────────────────────────
 
 router.get("/clubs", async (req, res): Promise<void> => {
   const { type } = req.query;
@@ -82,6 +86,14 @@ router.post("/clubs", async (req, res): Promise<void> => {
     memberName: ownerName!,
     role: "owner",
   });
+  await audit({
+    clubId: club.id,
+    actorName: ownerName!,
+    action: "club.created",
+    targetType: "club",
+    targetId: club.id,
+    targetName: club.name,
+  });
   const full = await getClubWithCount(club.id);
   res.status(201).json(full);
 });
@@ -105,37 +117,65 @@ router.get("/clubs/:id", async (req, res): Promise<void> => {
   res.json({ ...club, members });
 });
 
-router.patch("/clubs/:id", async (req, res): Promise<void> => {
-  const params = UpdateClubParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
+// ─── Protected: edit club — requires admin ────────────────────────────────────
+router.patch(
+  "/clubs/:id",
+  requireClubRole("admin"),
+  async (req, res): Promise<void> => {
+    const params = UpdateClubParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const parsed = UpdateClubBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
+      return;
+    }
+    const [existing] = await db.select().from(clubsTable).where(eq(clubsTable.id, params.data.id));
+    if (!existing) {
+      res.status(404).json({ error: "Klubb ikke funnet" });
+      return;
+    }
+    await db.update(clubsTable).set(parsed.data).where(eq(clubsTable.id, params.data.id));
+    await audit({
+      clubId: params.data.id,
+      actorName: req.auth!.memberName,
+      action: "club.updated",
+      targetType: "club",
+      targetId: params.data.id,
+      targetName: existing.name,
+    });
+    const updated = await getClubWithCount(params.data.id);
+    res.json(updated);
   }
-  const parsed = UpdateClubBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
-    return;
-  }
-  const [existing] = await db.select().from(clubsTable).where(eq(clubsTable.id, params.data.id));
-  if (!existing) {
-    res.status(404).json({ error: "Klubb ikke funnet" });
-    return;
-  }
-  await db.update(clubsTable).set(parsed.data).where(eq(clubsTable.id, params.data.id));
-  const updated = await getClubWithCount(params.data.id);
-  res.json(updated);
-});
+);
 
-router.delete("/clubs/:id", async (req, res): Promise<void> => {
-  const params = DeleteClubParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
+// ─── Protected: delete club — requires owner ──────────────────────────────────
+router.delete(
+  "/clubs/:id",
+  requireClubRole("owner"),
+  async (req, res): Promise<void> => {
+    const params = DeleteClubParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const [club] = await db.select().from(clubsTable).where(eq(clubsTable.id, params.data.id));
+    await db.delete(clubsTable).where(eq(clubsTable.id, params.data.id));
+    await audit({
+      clubId: params.data.id,
+      actorName: req.auth!.memberName,
+      action: "club.deleted",
+      targetType: "club",
+      targetId: params.data.id,
+      targetName: club?.name ?? String(params.data.id),
+    });
+    res.status(204).send();
   }
-  await db.delete(clubsTable).where(eq(clubsTable.id, params.data.id));
-  res.status(204).send();
-});
+);
 
+// ─── Public: list members ─────────────────────────────────────────────────────
 router.get("/clubs/:clubId/members", async (req, res): Promise<void> => {
   const params = ListClubMembersParams.safeParse(req.params);
   if (!params.success) {
@@ -150,6 +190,7 @@ router.get("/clubs/:clubId/members", async (req, res): Promise<void> => {
   res.json(members);
 });
 
+// ─── Public: join club ────────────────────────────────────────────────────────
 router.post("/clubs/:clubId/members", async (req, res): Promise<void> => {
   const params = JoinClubParams.safeParse(req.params);
   if (!params.success) {
@@ -176,43 +217,117 @@ router.post("/clubs/:clubId/members", async (req, res): Promise<void> => {
     .insert(clubMembersTable)
     .values({ clubId: params.data.clubId, memberName: parsed.data.memberName, role: "member" })
     .returning();
+  await audit({
+    clubId: params.data.clubId,
+    actorName: parsed.data.memberName,
+    action: "member.joined",
+    targetType: "member",
+    targetName: parsed.data.memberName,
+  });
   res.status(201).json(member);
 });
 
-router.patch("/clubs/:clubId/members/:memberId", async (req, res): Promise<void> => {
-  const params = UpdateClubMemberParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdateClubMemberBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
-    return;
-  }
-  const [existing] = await db
-    .select()
-    .from(clubMembersTable)
-    .where(eq(clubMembersTable.id, params.data.memberId));
-  if (!existing) {
-    res.status(404).json({ error: "Medlem ikke funnet" });
-    return;
-  }
-  const [updated] = await db
-    .update(clubMembersTable)
-    .set({ role: parsed.data.role })
-    .where(eq(clubMembersTable.id, params.data.memberId))
-    .returning();
-  res.json(updated);
-});
+// ─── Protected: update member role — requires admin ───────────────────────────
+router.patch(
+  "/clubs/:clubId/members/:memberId",
+  requireClubRole("admin"),
+  async (req, res): Promise<void> => {
+    const params = UpdateClubMemberParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const parsed = UpdateClubMemberBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
+      return;
+    }
 
+    const ROLE_ORDER: Record<string, number> = { owner: 4, admin: 3, moderator: 2, member: 1 };
+    const actorRank = ROLE_ORDER[req.auth!.role] ?? 0;
+    const targetRank = ROLE_ORDER[parsed.data.role] ?? 0;
+
+    // Admins cannot promote to owner or equal/higher than themselves
+    if (req.auth!.role !== "owner" && targetRank >= actorRank) {
+      res.status(403).json({ error: "Du kan ikke gi en rolle som er lik eller høyere enn din egen." });
+      return;
+    }
+
+    const [existing] = await db
+      .select()
+      .from(clubMembersTable)
+      .where(eq(clubMembersTable.id, params.data.memberId));
+    if (!existing) {
+      res.status(404).json({ error: "Medlem ikke funnet" });
+      return;
+    }
+
+    // Cannot change the role of someone with a higher or equal rank
+    const existingRank = ROLE_ORDER[existing.role ?? "member"] ?? 0;
+    if (actorRank <= existingRank && req.auth!.role !== "owner") {
+      res.status(403).json({ error: "Du kan ikke endre rollen til et medlem med høyere eller lik rang." });
+      return;
+    }
+
+    const [updated] = await db
+      .update(clubMembersTable)
+      .set({ role: parsed.data.role })
+      .where(eq(clubMembersTable.id, params.data.memberId))
+      .returning();
+
+    await audit({
+      clubId: params.data.clubId,
+      actorName: req.auth!.memberName,
+      action: "member.role_changed",
+      targetType: "member",
+      targetId: params.data.memberId,
+      targetName: existing.memberName,
+      metadata: { oldRole: existing.role, newRole: parsed.data.role },
+    });
+
+    res.json(updated);
+  }
+);
+
+// ─── Protected: remove member — requires admin (or self-leave) ────────────────
 router.delete("/clubs/:clubId/members/:memberId", async (req, res): Promise<void> => {
   const params = LeaveClubParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
+
+  const [target] = await db
+    .select()
+    .from(clubMembersTable)
+    .where(eq(clubMembersTable.id, params.data.memberId));
+
+  if (!target) {
+    res.status(404).json({ error: "Medlem ikke funnet" });
+    return;
+  }
+
+  // Self-leave is always allowed; removing others requires admin+
+  const isSelf = req.auth && req.auth.memberName === target.memberName && req.auth.clubId === params.data.clubId;
+  if (!isSelf) {
+    const ROLE_ORDER: Record<string, number> = { owner: 4, admin: 3, moderator: 2, member: 1 };
+    const actorRank = ROLE_ORDER[req.auth?.role ?? ""] ?? 0;
+    const targetRank = ROLE_ORDER[target.role ?? "member"] ?? 0;
+    if (actorRank < 3 || actorRank <= targetRank) {
+      res.status(403).json({ error: "Utilstrekkelig tilgang til å fjerne dette medlemmet." });
+      return;
+    }
+  }
+
   await db.delete(clubMembersTable).where(eq(clubMembersTable.id, params.data.memberId));
+  await audit({
+    clubId: params.data.clubId,
+    actorName: req.auth?.memberName ?? "anonym",
+    action: isSelf ? "member.left" : "member.removed",
+    targetType: "member",
+    targetId: params.data.memberId,
+    targetName: target.memberName,
+  });
   res.status(204).send();
 });
 

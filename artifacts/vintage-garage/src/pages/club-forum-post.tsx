@@ -12,6 +12,7 @@ import {
   type ForumComment,
 } from "@workspace/api-client-react";
 import { useClubSocket } from "@/hooks/use-club-socket";
+import { useClubAuth } from "@/hooks/use-club-auth";
 import { LoadingState, ErrorState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ArrowLeft, Heart, MessageSquare, Trash2, Pin,
-  Loader2, Send, Image, Video,
+  Loader2, Send, Image, Video, Shield,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -80,7 +81,8 @@ export default function ClubForumPost() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const myName = localStorage.getItem("forum_member_name") ?? "";
+  const { session, hasRole, isAuthenticated } = useClubAuth(clubId);
+  const myName = session?.memberName ?? "";
 
   const [commentText, setCommentText] = useState("");
 
@@ -89,9 +91,16 @@ export default function ClubForumPost() {
     isLoading,
     isError,
     refetch,
-  } = useGetForumPost(clubId, postId, { memberName: myName || undefined }, {
-    query: { queryKey: getGetForumPostQueryKey(clubId, postId, { memberName: myName || undefined }) },
-  });
+  } = useGetForumPost(
+    clubId,
+    postId,
+    { memberName: myName || undefined },
+    {
+      query: {
+        queryKey: getGetForumPostQueryKey(clubId, postId, { memberName: myName || undefined }),
+      },
+    }
+  );
 
   const createCommentMutation = useCreateForumComment();
   const deleteCommentMutation = useDeleteForumComment();
@@ -118,7 +127,10 @@ export default function ClubForumPost() {
 
   async function handleComment() {
     if (!commentText.trim()) return;
-    if (!myName) { toast({ title: "Angi navn for å kommentere", variant: "destructive" }); return; }
+    if (!isAuthenticated) {
+      toast({ title: "Logg inn for å kommentere", variant: "destructive" });
+      return;
+    }
     try {
       await createCommentMutation.mutateAsync({
         clubId,
@@ -139,13 +151,20 @@ export default function ClubForumPost() {
   }
 
   async function handleLike() {
-    if (!myName) { toast({ title: "Angi navn for å like", variant: "destructive" }); return; }
+    if (!isAuthenticated) {
+      toast({ title: "Logg inn for å like", variant: "destructive" });
+      return;
+    }
     await likeMutation.mutateAsync({ clubId, postId, data: { memberName: myName } });
     invalidatePost();
   }
 
   async function handlePin() {
     if (!post) return;
+    if (!hasRole("moderator")) {
+      toast({ title: "Krever moderatortilgang", variant: "destructive" });
+      return;
+    }
     await pinMutation.mutateAsync({ clubId, postId, data: { isPinned: post.isPinned ? 0 : 1 } });
     invalidatePost();
   }
@@ -160,6 +179,9 @@ export default function ClubForumPost() {
   if (isError || !post) return <ErrorState onRetry={refetch} />;
 
   const isAuthor = myName && post.memberName.toLowerCase() === myName.toLowerCase();
+  const isModerator = hasRole("moderator");
+  const canDelete = isAuthor || isModerator;
+  const canPin = isModerator;
   const comments = (post.comments ?? []) as ForumComment[];
 
   return (
@@ -177,7 +199,6 @@ export default function ClubForumPost() {
       {/* Post */}
       <Card className={`border-border ${post.isPinned ? "border-l-2 border-l-primary" : ""}`}>
         <CardContent className="p-6 space-y-4">
-          {/* Author + meta */}
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-base font-bold text-primary">
               {post.memberName[0]?.toUpperCase()}
@@ -200,53 +221,53 @@ export default function ClubForumPost() {
               </div>
             </div>
 
-            {/* Moderator actions */}
-            <div className="flex gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handlePin}
-                title={post.isPinned ? "Fjern festing" : "Fest innlegg"}
-              >
-                <Pin className={`w-4 h-4 ${post.isPinned ? "text-primary" : "text-muted-foreground"}`} />
-              </Button>
-              {isAuthor && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Slett innlegg?</AlertDialogTitle>
-                      <AlertDialogDescription>Innlegget og alle kommentarer vil bli slettet.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDeletePost}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Slett
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
+            {/* Actions for moderator/author */}
+            {(canPin || canDelete) && (
+              <div className="flex gap-1 shrink-0">
+                {canPin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handlePin}
+                    title={post.isPinned ? "Fjern festing" : "Fest innlegg"}
+                  >
+                    <Pin className={`w-4 h-4 ${post.isPinned ? "text-primary" : "text-muted-foreground"}`} />
+                  </Button>
+                )}
+                {canDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Slett innlegg?</AlertDialogTitle>
+                        <AlertDialogDescription>Innlegget og alle kommentarer vil bli slettet.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeletePost}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Slett
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Title */}
           {post.title && (
             <h1 className="text-2xl font-bold leading-tight">{post.title}</h1>
           )}
-
-          {/* Content */}
           <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{post.content}</p>
 
-          {/* Image */}
           {post.imageUrl && (
             <img
               src={post.imageUrl}
@@ -256,7 +277,6 @@ export default function ClubForumPost() {
             />
           )}
 
-          {/* Video */}
           {post.videoUrl && (
             <a
               href={post.videoUrl}
@@ -269,7 +289,6 @@ export default function ClubForumPost() {
             </a>
           )}
 
-          {/* Like */}
           <div className="flex items-center gap-4 pt-2 border-t border-border">
             <button
               onClick={handleLike}
@@ -296,6 +315,7 @@ export default function ClubForumPost() {
 
         {comments.map((comment) => {
           const isCommentAuthor = myName && comment.memberName.toLowerCase() === myName.toLowerCase();
+          const canDeleteComment = isCommentAuthor || isModerator;
           return (
             <div key={comment.id} className="flex gap-3 group">
               <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 text-xs font-bold text-muted-foreground mt-0.5">
@@ -306,11 +326,16 @@ export default function ClubForumPost() {
                   <div className="flex items-baseline gap-2 mb-1">
                     <span className="font-semibold text-sm">{comment.memberName}</span>
                     <span className="text-xs text-muted-foreground">{timeAgo(comment.createdAt)}</span>
+                    {isModerator && !isCommentAuthor && (
+                      <span className="text-[10px] text-purple-400 flex items-center gap-0.5 ml-1">
+                        <Shield className="w-2.5 h-2.5" />
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
                 </div>
               </div>
-              {isCommentAuthor && (
+              {canDeleteComment && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
@@ -344,38 +369,48 @@ export default function ClubForumPost() {
       </div>
 
       {/* Comment form */}
-      <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-xs font-bold text-primary mt-1">
-          {myName[0]?.toUpperCase() ?? "?"}
-        </div>
-        <div className="flex-1 space-y-2">
-          <Textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder={myName ? "Skriv en kommentar..." : "Angi navn på forumssiden for å kommentere..."}
-            rows={3}
-            disabled={!myName}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleComment();
-            }}
-          />
-          <div className="flex justify-end gap-2">
-            <p className="text-xs text-muted-foreground self-center">Ctrl+Enter for å sende</p>
-            <Button
-              onClick={handleComment}
-              disabled={createCommentMutation.isPending || !commentText.trim() || !myName}
-              size="sm"
-            >
-              {createCommentMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4 mr-2" />
-              )}
-              Send
-            </Button>
+      {isAuthenticated ? (
+        <div className="flex gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-xs font-bold text-primary mt-1">
+            {myName[0]?.toUpperCase()}
+          </div>
+          <div className="flex-1 space-y-2">
+            <Textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Skriv en kommentar..."
+              rows={3}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleComment();
+              }}
+            />
+            <div className="flex justify-end gap-2">
+              <p className="text-xs text-muted-foreground self-center">Ctrl+Enter for å sende</p>
+              <Button
+                onClick={handleComment}
+                disabled={createCommentMutation.isPending || !commentText.trim()}
+                size="sm"
+              >
+                {createCommentMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                Send
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="text-center py-6 text-muted-foreground text-sm border border-border/40 rounded-lg">
+          <p>
+            <Link href={`/clubs/${clubId}/forum`}>
+              <span className="underline hover:text-foreground cursor-pointer">Logg inn i forumet</span>
+            </Link>{" "}
+            for å kommentere.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

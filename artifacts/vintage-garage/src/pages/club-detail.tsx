@@ -49,7 +49,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Edit, Trash2, Users, MapPin, Car, Bike,
   Crown, Shield, UserCheck, User, UserPlus, Loader2,
-  Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse, MessageSquare,
+  Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse, MessageSquare, ClipboardList,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -379,6 +379,12 @@ export default function ClubDetail() {
               <Button variant="secondary" className="w-full">
                 <Warehouse className="w-4 h-4 mr-2" />
                 Se klubbens garasje
+              </Button>
+            </Link>
+            <Link href={`/clubs/${clubId}/audit-log`} className="block">
+              <Button variant="ghost" className="w-full text-muted-foreground">
+                <ClipboardList className="w-4 h-4 mr-2" />
+                Revisjonslogg
               </Button>
             </Link>
             <Button className="w-full" onClick={() => setJoinOpen(true)}>

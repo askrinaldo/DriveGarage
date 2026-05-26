@@ -10,3 +10,4 @@ export * from "./forumPosts";
 export * from "./forumComments";
 export * from "./forumLikes";
 export * from "./forumNotifications";
+export * from "./auditLogs";

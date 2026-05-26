@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,6 +16,7 @@ import {
   type ForumPost,
 } from "@workspace/api-client-react";
 import { useClubSocket } from "@/hooks/use-club-socket";
+import { useClubAuth } from "@/hooks/use-club-auth";
 import { LoadingState, ErrorState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,10 +57,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  ArrowLeft, MessageSquare, Heart, Plus, Filter, Pin,
+  ArrowLeft, MessageSquare, Heart, Plus, Pin,
   Wrench, Hammer, Calendar, Tag, MoreVertical, Trash2,
-  Bell, BellOff, Loader2, Image, Video, ChevronLeft, ChevronRight,
-  Megaphone, HelpCircle, RefreshCw,
+  Bell, Loader2, Image, Video, ChevronLeft, ChevronRight,
+  Megaphone, HelpCircle, RefreshCw, LogIn, LogOut, Shield,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -127,9 +128,12 @@ export default function ClubForum() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [myName, setMyName] = useState(() => localStorage.getItem("forum_member_name") ?? "");
-  const [nameSet, setNameSet] = useState(!!localStorage.getItem("forum_member_name"));
+  const { session, login, logout, hasRole, isAuthenticated } = useClubAuth(clubId);
+  const myName = session?.memberName ?? "";
+
   const [tempName, setTempName] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const [activeCategory, setActiveCategory] = useState("all");
   const [page, setPage] = useState(1);
@@ -166,12 +170,16 @@ export default function ClubForum() {
     query: { queryKey: getListForumPostsQueryKey(clubId, forumParams) },
   });
 
-  const { data: notifications } = useListForumNotifications(clubId, { memberName: myName }, {
-    query: {
-      queryKey: getListForumNotificationsQueryKey(clubId, { memberName: myName }),
-      enabled: !!myName,
-    },
-  });
+  const { data: notifications } = useListForumNotifications(
+    clubId,
+    { memberName: myName },
+    {
+      query: {
+        queryKey: getListForumNotificationsQueryKey(clubId, { memberName: myName }),
+        enabled: isAuthenticated,
+      },
+    }
+  );
 
   const unreadCount = (notifications ?? []).filter((n) => !n.isRead).length;
 
@@ -188,24 +196,24 @@ export default function ClubForum() {
     queryClient.invalidateQueries({ queryKey: [`/api/clubs/${clubId}/notifications`] });
   };
 
-  // Real-time socket
   useClubSocket(clubId, {
     new_post: () => invalidateForum(),
     post_updated: () => invalidateForum(),
     post_deleted: () => invalidateForum(),
     post_liked: () => invalidateForum(),
-    new_comment: () => {
-      invalidateForum();
-      invalidateNotif();
-    },
+    new_comment: () => { invalidateForum(); invalidateNotif(); },
   });
 
-  function saveName() {
+  async function handleLogin() {
     const n = tempName.trim();
     if (!n) return;
-    localStorage.setItem("forum_member_name", n);
-    setMyName(n);
-    setNameSet(true);
+    setLoggingIn(true);
+    setLoginError("");
+    const result = await login(n);
+    setLoggingIn(false);
+    if (!result.ok) {
+      setLoginError(result.error);
+    }
   }
 
   async function handleCreatePost() {
@@ -230,13 +238,13 @@ export default function ClubForum() {
       setNewPostOpen(false);
       setPostForm({ category: "general", postType: "text", title: "", content: "", imageUrl: "", videoUrl: "" });
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const msg = (err as { data?: { error?: string } })?.data?.error;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
     }
   }
 
   async function handleLike(post: ForumPost) {
-    if (!myName) { toast({ title: "Angi navn for å like", variant: "destructive" }); return; }
+    if (!isAuthenticated) { toast({ title: "Logg inn for å like", variant: "destructive" }); return; }
     await likeMutation.mutateAsync({ clubId, postId: post.id, data: { memberName: myName } });
     invalidateForum();
   }
@@ -248,16 +256,12 @@ export default function ClubForum() {
   }
 
   async function handlePin(post: ForumPost) {
-    await pinMutation.mutateAsync({
-      clubId,
-      postId: post.id,
-      data: { isPinned: post.isPinned ? 0 : 1 },
-    });
+    if (!hasRole("moderator")) { toast({ title: "Krever moderatortilgang", variant: "destructive" }); return; }
+    await pinMutation.mutateAsync({ clubId, postId: post.id, data: { isPinned: post.isPinned ? 0 : 1 } });
     invalidateForum();
   }
 
   async function handleMarkRead() {
-    if (!myName) return;
     await markReadMutation.mutateAsync({ clubId, data: { memberName: myName } });
     invalidateNotif();
     setShowNotifications(false);
@@ -266,25 +270,54 @@ export default function ClubForum() {
   const posts = forumData?.posts ?? [];
   const totalPages = forumData?.totalPages ?? 1;
 
-  if (!nameSet) {
+  // ─── Login screen ──────────────────────────────────────────────────────────
+  if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="w-full max-w-md">
           <CardContent className="pt-8 pb-8 space-y-4">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold mb-2">Velkommen til forumet</h2>
-              <p className="text-muted-foreground text-sm">Angi ditt klubbnavn for å delta i diskusjoner.</p>
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-3">
+                <LogIn className="w-5 h-5 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">Logg inn i forumet</h2>
+              <p className="text-muted-foreground text-sm">
+                Skriv inn ditt klubbnavn for å delta i diskusjoner. Du må være registrert som klubbmedlem.
+              </p>
             </div>
-            <Input
-              value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
-              placeholder="Ditt navn i klubben..."
-              onKeyDown={(e) => e.key === "Enter" && saveName()}
-              autoFocus
-            />
-            <Button className="w-full" onClick={saveName} disabled={!tempName.trim()}>
-              Gå til forum
-            </Button>
+            <div className="space-y-3">
+              <Input
+                value={tempName}
+                onChange={(e) => { setTempName(e.target.value); setLoginError(""); }}
+                placeholder="Ditt navn i klubben..."
+                onKeyDown={(e) => e.key === "Enter" && !loggingIn && handleLogin()}
+                autoFocus
+              />
+              {loginError && (
+                <p className="text-sm text-destructive">{loginError}</p>
+              )}
+              <Button
+                className="w-full"
+                onClick={handleLogin}
+                disabled={!tempName.trim() || loggingIn}
+              >
+                {loggingIn ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <LogIn className="w-4 h-4 mr-2" />
+                )}
+                Logg inn
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Ikke medlem ennå?{" "}
+              <button
+                className="underline hover:text-foreground"
+                onClick={() => navigate(`/clubs/${clubId}`)}
+              >
+                Bli med i klubben
+              </button>
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -315,6 +348,12 @@ export default function ClubForum() {
             {cat.label}
           </button>
         ))}
+
+        {/* Role badge in sidebar */}
+        <div className="pt-4 px-2">
+          <div className="text-xs text-muted-foreground/60 uppercase tracking-wide mb-1">Din rolle</div>
+          <RoleBadge role={session!.role} />
+        </div>
       </aside>
 
       {/* Main */}
@@ -403,20 +442,19 @@ export default function ClubForum() {
           </div>
         </div>
 
-        {/* Name indicator */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Innlogget som:</span>
+        {/* Session info bar */}
+        <div className="flex items-center gap-3 text-sm text-muted-foreground border border-border/40 rounded-lg px-3 py-2 bg-muted/20">
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+            {myName[0]?.toUpperCase()}
+          </div>
           <span className="font-medium text-foreground">{myName}</span>
+          <RoleBadge role={session!.role} size="sm" />
           <button
-            className="text-xs underline opacity-60 hover:opacity-100"
-            onClick={() => {
-              localStorage.removeItem("forum_member_name");
-              setMyName("");
-              setNameSet(false);
-              setTempName("");
-            }}
+            className="ml-auto flex items-center gap-1 text-xs opacity-60 hover:opacity-100 hover:text-destructive transition-colors"
+            onClick={() => { logout(); }}
           >
-            Bytt
+            <LogOut className="w-3 h-3" />
+            Logg ut
           </button>
         </div>
 
@@ -442,6 +480,7 @@ export default function ClubForum() {
                 key={post.id}
                 post={post}
                 myName={myName}
+                isModerator={hasRole("moderator")}
                 clubId={clubId}
                 onLike={() => handleLike(post)}
                 onDelete={() => handleDelete(post.id)}
@@ -477,9 +516,7 @@ export default function ClubForum() {
               <div className="space-y-1.5">
                 <Label>Kategori</Label>
                 <Select value={postForm.category} onValueChange={(v) => setPostForm((f) => ({ ...f, category: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.filter((c) => c.value !== "all").map((c) => (
                       <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
@@ -490,9 +527,7 @@ export default function ClubForum() {
               <div className="space-y-1.5">
                 <Label>Type</Label>
                 <Select value={postForm.postType} onValueChange={(v) => setPostForm((f) => ({ ...f, postType: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {POST_TYPES.map((t) => (
                       <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
@@ -550,9 +585,31 @@ export default function ClubForum() {
   );
 }
 
+function RoleBadge({ role, size = "default" }: { role: string; size?: "default" | "sm" }) {
+  const configs: Record<string, { label: string; className: string }> = {
+    owner: { label: "Eier", className: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
+    admin: { label: "Admin", className: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
+    moderator: { label: "Moderator", className: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
+    member: { label: "Medlem", className: "bg-slate-500/20 text-slate-400 border-slate-500/30" },
+  };
+  const cfg = configs[role] ?? configs["member"]!;
+  return (
+    <Badge
+      variant="outline"
+      className={`${cfg.className} ${size === "sm" ? "text-[10px] px-1 py-0" : "text-[11px] px-1.5 py-0"} flex items-center gap-1`}
+    >
+      {(role === "owner" || role === "admin" || role === "moderator") && (
+        <Shield className={size === "sm" ? "w-2 h-2" : "w-2.5 h-2.5"} />
+      )}
+      {cfg.label}
+    </Badge>
+  );
+}
+
 function PostCard({
   post,
   myName,
+  isModerator,
   clubId,
   onLike,
   onDelete,
@@ -560,24 +617,24 @@ function PostCard({
 }: {
   post: ForumPost;
   myName: string;
+  isModerator: boolean;
   clubId: number;
   onLike: () => void;
   onDelete: () => void;
   onPin: () => void;
 }) {
   const isAuthor = myName && post.memberName.toLowerCase() === myName.toLowerCase();
+  const canDelete = isAuthor || isModerator;
+  const canPin = isModerator;
 
   return (
     <Card className={`group transition-all border-border hover:border-primary/30 ${post.isPinned ? "border-l-2 border-l-primary" : ""}`}>
       <CardContent className="p-5">
         <div className="flex gap-3">
-          {/* Avatar */}
           <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-sm font-bold text-primary">
             {post.memberName[0]?.toUpperCase()}
           </div>
-
           <div className="flex-1 min-w-0">
-            {/* Meta */}
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <span className="font-semibold text-sm">{post.memberName}</span>
               <span className="text-muted-foreground text-xs">{timeAgo(post.createdAt)}</span>
@@ -595,13 +652,11 @@ function PostCard({
               )}
             </div>
 
-            {/* Title + content */}
             {post.title && (
               <h3 className="font-bold text-base mb-1 leading-tight">{post.title}</h3>
             )}
             <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap line-clamp-4">{post.content}</p>
 
-            {/* Image */}
             {post.imageUrl && (
               <img
                 src={post.imageUrl}
@@ -611,7 +666,6 @@ function PostCard({
               />
             )}
 
-            {/* Video */}
             {post.videoUrl && (
               <div className="mt-3">
                 <a
@@ -626,7 +680,6 @@ function PostCard({
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex items-center gap-4 mt-4">
               <button
                 onClick={onLike}
@@ -645,53 +698,57 @@ function PostCard({
                 </button>
               </Link>
 
-              <div className="ml-auto">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={onPin}>
-                      <Pin className="w-4 h-4 mr-2" />
-                      {post.isPinned ? "Fjern festing" : "Fest innlegg"}
-                    </DropdownMenuItem>
-                    {isAuthor && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Slett innlegg
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Slett innlegg?</AlertDialogTitle>
-                            <AlertDialogDescription>Innlegget kan ikke gjenopprettes.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={onDelete}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              {(canDelete || canPin) && (
+                <div className="ml-auto">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {canPin && (
+                        <DropdownMenuItem onClick={onPin}>
+                          <Pin className="w-4 h-4 mr-2" />
+                          {post.isPinned ? "Fjern festing" : "Fest innlegg"}
+                        </DropdownMenuItem>
+                      )}
+                      {canDelete && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                              className="text-destructive focus:text-destructive"
                             >
-                              Slett
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Slett innlegg
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Slett innlegg?</AlertDialogTitle>
+                              <AlertDialogDescription>Innlegget kan ikke gjenopprettes.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={onDelete}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Slett
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -3,6 +3,8 @@ import { eq, and, gt } from "drizzle-orm";
 import { db, clubsTable, clubMembersTable, clubInvitationsTable } from "@workspace/db";
 import { randomBytes } from "crypto";
 import { sendInvitationEmail } from "../mailer";
+import { requireClubRole } from "../middleware/auth";
+import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -22,8 +24,9 @@ function getBaseUrl(req: { headers: { host?: string }; protocol: string }): stri
   return `${req.protocol}://${req.headers.host}`;
 }
 
+// ─── Public: list invitations ─────────────────────────────────────────────────
 router.get("/clubs/:clubId/invitations", async (req, res): Promise<void> => {
-  const clubId = parseInt(req.params.clubId, 10);
+  const clubId = parseInt(String(req.params.clubId), 10);
   const invitations = await db
     .select()
     .from(clubInvitationsTable)
@@ -32,84 +35,98 @@ router.get("/clubs/:clubId/invitations", async (req, res): Promise<void> => {
   res.json(invitations);
 });
 
-router.post("/clubs/:clubId/invitations", async (req, res): Promise<void> => {
-  const clubId = parseInt(req.params.clubId, 10);
-  const { email, createdBy } = req.body as { email?: string | null; createdBy: string };
+// ─── Protected: create invitation — requires admin+ ───────────────────────────
+router.post(
+  "/clubs/:clubId/invitations",
+  requireClubRole("admin"),
+  async (req, res): Promise<void> => {
+    const clubId = parseInt(String(req.params.clubId), 10);
+    const actor = req.auth!;
+    const { email } = req.body as { email?: string | null };
 
-  if (!createdBy) {
-    res.status(400).json({ error: "createdBy er påkrevd" });
-    return;
-  }
-
-  const [club] = await db.select().from(clubsTable).where(eq(clubsTable.id, clubId));
-  if (!club) {
-    res.status(404).json({ error: "Klubb ikke funnet" });
-    return;
-  }
-
-  const members = await db
-    .select()
-    .from(clubMembersTable)
-    .where(eq(clubMembersTable.clubId, clubId));
-  const requester = members.find(
-    (m) => m.memberName.toLowerCase() === createdBy.toLowerCase()
-  );
-  if (!requester || !["owner", "admin"].includes(requester.role)) {
-    res.status(403).json({ error: "Kun eier eller administrator kan invitere" });
-    return;
-  }
-
-  const code = generateCode();
-  const expiresAt = sevenDaysFromNow();
-
-  const [invitation] = await db
-    .insert(clubInvitationsTable)
-    .values({
-      clubId,
-      code,
-      email: email ?? null,
-      createdBy,
-      expiresAt,
-      status: "pending",
-    })
-    .returning();
-
-  const inviteUrl = `${getBaseUrl(req)}/clubs/invite/${code}`;
-
-  let emailSent = false;
-  if (email) {
-    try {
-      emailSent = await sendInvitationEmail({
-        to: email,
-        clubName: club.name,
-        createdBy,
-        inviteUrl,
-        expiresAt,
-      });
-    } catch {
-      // e-post feilet, men invitasjonen er fortsatt gyldig
+    const [club] = await db.select().from(clubsTable).where(eq(clubsTable.id, clubId));
+    if (!club) {
+      res.status(404).json({ error: "Klubb ikke funnet" });
+      return;
     }
+
+    const code = generateCode();
+    const expiresAt = sevenDaysFromNow();
+
+    const [invitation] = await db
+      .insert(clubInvitationsTable)
+      .values({
+        clubId,
+        code,
+        email: email ?? null,
+        createdBy: actor.memberName,
+        expiresAt,
+        status: "pending",
+      })
+      .returning();
+
+    const inviteUrl = `${getBaseUrl(req)}/clubs/invite/${code}`;
+
+    let emailSent = false;
+    if (email) {
+      try {
+        emailSent = await sendInvitationEmail({
+          to: email,
+          clubName: club.name,
+          createdBy: actor.memberName,
+          inviteUrl,
+          expiresAt,
+        });
+      } catch {
+        // e-post feilet, men invitasjonen er fortsatt gyldig
+      }
+    }
+
+    await audit({
+      clubId,
+      actorName: actor.memberName,
+      action: "invitation.created",
+      targetType: "invitation",
+      targetId: invitation.id,
+      metadata: { email: email ?? null },
+    });
+
+    res.status(201).json({ ...invitation, inviteUrl, emailSent });
   }
+);
 
-  res.status(201).json({ ...invitation, inviteUrl, emailSent });
-});
+// ─── Protected: revoke invitation — requires admin+ ───────────────────────────
+router.delete(
+  "/clubs/:clubId/invitations/:invitationId",
+  requireClubRole("admin"),
+  async (req, res): Promise<void> => {
+    const invitationId = parseInt(String(req.params.invitationId), 10);
+    const clubId = parseInt(String(req.params.clubId), 10);
+    const actor = req.auth!;
 
-router.delete("/clubs/:clubId/invitations/:invitationId", async (req, res): Promise<void> => {
-  const invitationId = parseInt(req.params.invitationId, 10);
-  const clubId = parseInt(req.params.clubId, 10);
+    await db
+      .update(clubInvitationsTable)
+      .set({ status: "revoked" })
+      .where(
+        and(
+          eq(clubInvitationsTable.id, invitationId),
+          eq(clubInvitationsTable.clubId, clubId)
+        )
+      );
 
-  await db
-    .update(clubInvitationsTable)
-    .set({ status: "revoked" })
-    .where(
-      and(
-        eq(clubInvitationsTable.id, invitationId),
-        eq(clubInvitationsTable.clubId, clubId)
-      )
-    );
-  res.status(204).send();
-});
+    await audit({
+      clubId,
+      actorName: actor.memberName,
+      action: "invitation.revoked",
+      targetType: "invitation",
+      targetId: invitationId,
+    });
 
+    res.status(204).send();
+  }
+);
+
+// ─── Public: look up invite by code ──────────────────────────────────────────
 router.get("/clubs/invite/:code", async (req, res): Promise<void> => {
   const { code } = req.params;
   const [invitation] = await db
@@ -145,6 +162,7 @@ router.get("/clubs/invite/:code", async (req, res): Promise<void> => {
   });
 });
 
+// ─── Public: accept invite ────────────────────────────────────────────────────
 router.post("/clubs/invite/:code/accept", async (req, res): Promise<void> => {
   const { code } = req.params;
   const { memberName } = req.body as { memberName: string };
@@ -201,9 +219,17 @@ router.post("/clubs/invite/:code/accept", async (req, res): Promise<void> => {
     .set({ status: "accepted", usedAt: now, usedBy: memberName.trim() })
     .where(eq(clubInvitationsTable.id, invitation.id));
 
+  await audit({
+    clubId: invitation.clubId,
+    actorName: memberName.trim(),
+    action: "invitation.accepted",
+    metadata: { invitationId: invitation.id },
+  });
+
   res.json(member);
 });
 
+// ─── Public: decline invite ───────────────────────────────────────────────────
 router.post("/clubs/invite/:code/decline", async (req, res): Promise<void> => {
   const { code } = req.params;
   const { memberName } = req.body as { memberName: string };
