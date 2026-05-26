@@ -18,7 +18,10 @@ import type {
 
 import type {
   ActivityItem,
+  AddToClubGarageBody,
   Club,
+  ClubGaragePage,
+  ClubGarageVehicle,
   ClubInvitation,
   ClubInvitationPublic,
   ClubMember,
@@ -33,6 +36,7 @@ import type {
   DeclineClubInvitation200,
   HealthStatus,
   JoinClubBody,
+  ListClubGarageParams,
   ListClubsParams,
   Receipt,
   ServiceRecord,
@@ -2549,6 +2553,287 @@ export const useLeaveClub = <
   TContext
 > => {
   return useMutation(getLeaveClubMutationOptions(options));
+};
+
+/**
+ * @summary List vehicles in a club garage
+ */
+export const getListClubGarageUrl = (
+  clubId: number,
+  params?: ListClubGarageParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/clubs/${clubId}/garage?${stringifiedParams}`
+    : `/api/clubs/${clubId}/garage`;
+};
+
+export const listClubGarage = async (
+  clubId: number,
+  params?: ListClubGarageParams,
+  options?: RequestInit,
+): Promise<ClubGaragePage> => {
+  return customFetch<ClubGaragePage>(getListClubGarageUrl(clubId, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListClubGarageQueryKey = (
+  clubId: number,
+  params?: ListClubGarageParams,
+) => {
+  return [`/api/clubs/${clubId}/garage`, ...(params ? [params] : [])] as const;
+};
+
+export const getListClubGarageQueryOptions = <
+  TData = Awaited<ReturnType<typeof listClubGarage>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  params?: ListClubGarageParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listClubGarage>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListClubGarageQueryKey(clubId, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listClubGarage>>> = ({
+    signal,
+  }) => listClubGarage(clubId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!clubId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listClubGarage>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListClubGarageQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listClubGarage>>
+>;
+export type ListClubGarageQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List vehicles in a club garage
+ */
+
+export function useListClubGarage<
+  TData = Awaited<ReturnType<typeof listClubGarage>>,
+  TError = ErrorType<unknown>,
+>(
+  clubId: number,
+  params?: ListClubGarageParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listClubGarage>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListClubGarageQueryOptions(clubId, params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a vehicle to a club garage
+ */
+export const getAddToClubGarageUrl = (clubId: number) => {
+  return `/api/clubs/${clubId}/garage`;
+};
+
+export const addToClubGarage = async (
+  clubId: number,
+  addToClubGarageBody: AddToClubGarageBody,
+  options?: RequestInit,
+): Promise<ClubGarageVehicle> => {
+  return customFetch<ClubGarageVehicle>(getAddToClubGarageUrl(clubId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(addToClubGarageBody),
+  });
+};
+
+export const getAddToClubGarageMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addToClubGarage>>,
+    TError,
+    { clubId: number; data: BodyType<AddToClubGarageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addToClubGarage>>,
+  TError,
+  { clubId: number; data: BodyType<AddToClubGarageBody> },
+  TContext
+> => {
+  const mutationKey = ["addToClubGarage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addToClubGarage>>,
+    { clubId: number; data: BodyType<AddToClubGarageBody> }
+  > = (props) => {
+    const { clubId, data } = props ?? {};
+
+    return addToClubGarage(clubId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddToClubGarageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addToClubGarage>>
+>;
+export type AddToClubGarageMutationBody = BodyType<AddToClubGarageBody>;
+export type AddToClubGarageMutationError = ErrorType<void>;
+
+/**
+ * @summary Add a vehicle to a club garage
+ */
+export const useAddToClubGarage = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addToClubGarage>>,
+    TError,
+    { clubId: number; data: BodyType<AddToClubGarageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addToClubGarage>>,
+  TError,
+  { clubId: number; data: BodyType<AddToClubGarageBody> },
+  TContext
+> => {
+  return useMutation(getAddToClubGarageMutationOptions(options));
+};
+
+/**
+ * @summary Remove a vehicle from a club garage
+ */
+export const getRemoveFromClubGarageUrl = (clubId: number, entryId: number) => {
+  return `/api/clubs/${clubId}/garage/${entryId}`;
+};
+
+export const removeFromClubGarage = async (
+  clubId: number,
+  entryId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRemoveFromClubGarageUrl(clubId, entryId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getRemoveFromClubGarageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeFromClubGarage>>,
+    TError,
+    { clubId: number; entryId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeFromClubGarage>>,
+  TError,
+  { clubId: number; entryId: number },
+  TContext
+> => {
+  const mutationKey = ["removeFromClubGarage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeFromClubGarage>>,
+    { clubId: number; entryId: number }
+  > = (props) => {
+    const { clubId, entryId } = props ?? {};
+
+    return removeFromClubGarage(clubId, entryId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveFromClubGarageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeFromClubGarage>>
+>;
+
+export type RemoveFromClubGarageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Remove a vehicle from a club garage
+ */
+export const useRemoveFromClubGarage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeFromClubGarage>>,
+    TError,
+    { clubId: number; entryId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof removeFromClubGarage>>,
+  TError,
+  { clubId: number; entryId: number },
+  TContext
+> => {
+  return useMutation(getRemoveFromClubGarageMutationOptions(options));
 };
 
 /**

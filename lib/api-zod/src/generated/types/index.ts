@@ -7,8 +7,11 @@
  */
 
 export * from "./activityItem";
+export * from "./addToClubGarageBody";
 export * from "./categoryCount";
 export * from "./club";
+export * from "./clubGaragePage";
+export * from "./clubGarageVehicle";
 export * from "./clubInvitation";
 export * from "./clubInvitationPublic";
 export * from "./clubMember";
@@ -23,6 +26,7 @@ export * from "./dashboardStats";
 export * from "./declineClubInvitation200";
 export * from "./healthStatus";
 export * from "./joinClubBody";
+export * from "./listClubGarageParams";
 export * from "./listClubsParams";
 export * from "./receipt";
 export * from "./serviceRecord";

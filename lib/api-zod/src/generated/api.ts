@@ -651,6 +651,67 @@ export const LeaveClubParams = zod.object({
 });
 
 /**
+ * @summary List vehicles in a club garage
+ */
+export const ListClubGarageParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const ListClubGarageQueryParams = zod.object({
+  type: zod.coerce.string().optional(),
+  make: zod.coerce.string().optional(),
+  yearFrom: zod.coerce.number().optional(),
+  yearTo: zod.coerce.number().optional(),
+  page: zod.coerce.number().optional(),
+  pageSize: zod.coerce.number().optional(),
+});
+
+export const ListClubGarageResponse = zod.object({
+  vehicles: zod.array(
+    zod.object({
+      entryId: zod.number(),
+      vehicleId: zod.number(),
+      memberName: zod.string(),
+      addedAt: zod.coerce.date(),
+      make: zod.string(),
+      model: zod.string(),
+      year: zod.number(),
+      type: zod.string(),
+      color: zod.string().nullable(),
+      mileage: zod.number().nullable(),
+      imageUrl: zod.string().nullable(),
+      registrationNumber: zod.string().nullable(),
+      lastService: zod.coerce.date().nullable(),
+      updateCount: zod.number(),
+    }),
+  ),
+  total: zod.number(),
+  page: zod.number(),
+  pageSize: zod.number(),
+  totalPages: zod.number(),
+});
+
+/**
+ * @summary Add a vehicle to a club garage
+ */
+export const AddToClubGarageParams = zod.object({
+  clubId: zod.coerce.number(),
+});
+
+export const AddToClubGarageBody = zod.object({
+  vehicleId: zod.number(),
+  memberName: zod.string(),
+});
+
+/**
+ * @summary Remove a vehicle from a club garage
+ */
+export const RemoveFromClubGarageParams = zod.object({
+  clubId: zod.coerce.number(),
+  entryId: zod.coerce.number(),
+});
+
+/**
  * @summary List invitations for a club
  */
 export const ListClubInvitationsParams = zod.object({

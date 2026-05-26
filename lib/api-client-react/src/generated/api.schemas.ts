@@ -254,6 +254,41 @@ export interface DashboardStats {
   servicesByCategory: CategoryCount[];
 }
 
+export interface ClubGarageVehicle {
+  entryId: number;
+  vehicleId: number;
+  memberName: string;
+  addedAt: string;
+  make: string;
+  model: string;
+  year: number;
+  type: string;
+  /** @nullable */
+  color: string | null;
+  /** @nullable */
+  mileage: number | null;
+  /** @nullable */
+  imageUrl: string | null;
+  /** @nullable */
+  registrationNumber: string | null;
+  /** @nullable */
+  lastService: string | null;
+  updateCount: number;
+}
+
+export interface ClubGaragePage {
+  vehicles: ClubGarageVehicle[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface AddToClubGarageBody {
+  vehicleId: number;
+  memberName: string;
+}
+
 export interface ClubInvitation {
   id: number;
   clubId: number;
@@ -387,6 +422,15 @@ export interface UpdateClubMemberBody {
 
 export type ListClubsParams = {
   type?: string;
+};
+
+export type ListClubGarageParams = {
+  type?: string;
+  make?: string;
+  yearFrom?: number;
+  yearTo?: number;
+  page?: number;
+  pageSize?: number;
 };
 
 export type DeclineClubInvitation200 = {

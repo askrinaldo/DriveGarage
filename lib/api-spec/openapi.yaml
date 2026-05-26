@@ -642,6 +642,100 @@ paths:
         "204":
           description: Left/removed
 
+  /clubs/{clubId}/garage:
+    get:
+      operationId: listClubGarage
+      tags: [clubs]
+      summary: List vehicles in a club garage
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: make
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: yearFrom
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: yearTo
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Club garage listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubGaragePage"
+    post:
+      operationId: addToClubGarage
+      tags: [clubs]
+      summary: Add a vehicle to a club garage
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddToClubGarageBody"
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubGarageVehicle"
+        "409":
+          description: Already in garage
+
+  /clubs/{clubId}/garage/{entryId}:
+    delete:
+      operationId: removeFromClubGarage
+      tags: [clubs]
+      summary: Remove a vehicle from a club garage
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
   /clubs/{clubId}/invitations:
     get:
       operationId: listClubInvitations
@@ -1248,6 +1342,88 @@ components:
       required:
         - category
         - count
+
+    ClubGarageVehicle:
+      type: object
+      properties:
+        entryId:
+          type: integer
+        vehicleId:
+          type: integer
+        memberName:
+          type: string
+        addedAt:
+          type: string
+          format: date-time
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        type:
+          type: string
+        color:
+          type: ["string", "null"]
+        mileage:
+          type: ["integer", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        registrationNumber:
+          type: ["string", "null"]
+        lastService:
+          type: ["string", "null"]
+          format: date-time
+        updateCount:
+          type: integer
+      required:
+        - entryId
+        - vehicleId
+        - memberName
+        - addedAt
+        - make
+        - model
+        - year
+        - type
+        - color
+        - mileage
+        - imageUrl
+        - registrationNumber
+        - lastService
+        - updateCount
+
+    ClubGaragePage:
+      type: object
+      properties:
+        vehicles:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClubGarageVehicle"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+      required:
+        - vehicles
+        - total
+        - page
+        - pageSize
+        - totalPages
+
+    AddToClubGarageBody:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+        memberName:
+          type: string
+      required:
+        - vehicleId
+        - memberName
 
     ClubInvitation:
       type: object

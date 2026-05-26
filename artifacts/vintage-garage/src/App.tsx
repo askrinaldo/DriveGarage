@@ -16,6 +16,7 @@ import ClubsList from "@/pages/clubs-list";
 import ClubForm from "@/pages/club-form";
 import ClubDetail from "@/pages/club-detail";
 import ClubInvite from "@/pages/club-invite";
+import ClubGarage from "@/pages/club-garage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +44,7 @@ function Router() {
         <Route path="/clubs" component={ClubsList} />
         <Route path="/clubs/invite/:code" component={ClubInvite} />
         <Route path="/clubs/new" component={ClubForm} />
+        <Route path="/clubs/:id/garage" component={ClubGarage} />
         <Route path="/clubs/:id/edit" component={ClubForm} />
         <Route path="/clubs/:id" component={ClubDetail} />
         <Route component={NotFound} />
