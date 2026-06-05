@@ -20,6 +20,7 @@ import ClubGarage from "@/pages/club-garage";
 import ClubForum from "@/pages/club-forum";
 import ClubForumPost from "@/pages/club-forum-post";
 import ClubAuditLog from "@/pages/club-audit-log";
+import ClubDashboard from "@/pages/club-dashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/clubs/:id/garage" component={ClubGarage} />
         <Route path="/clubs/:id/forum/:postId" component={ClubForumPost} />
         <Route path="/clubs/:id/forum" component={ClubForum} />
+        <Route path="/clubs/:id/dashboard" component={ClubDashboard} />
         <Route path="/clubs/:id/audit-log" component={ClubAuditLog} />
         <Route path="/clubs/:id/edit" component={ClubForm} />
         <Route path="/clubs/:id" component={ClubDetail} />
