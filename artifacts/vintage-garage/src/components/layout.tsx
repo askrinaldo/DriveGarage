@@ -1,19 +1,30 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Car, Wrench, Plus, Users } from "lucide-react";
+import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserAuth } from "@/hooks/use-user-auth";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const { isAuthenticated, isSuperAdmin, name, logout } = useUserAuth();
 
   const navItems = [
     { href: "/", label: "Oversikt", icon: LayoutDashboard },
     { href: "/vehicles", label: "Garasjen min", icon: Car },
     { href: "/clubs", label: "Klubber", icon: Users },
+    { href: "/help", label: "Hjelp", icon: HelpCircle },
   ];
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -46,15 +57,77 @@ export function Layout({ children }: LayoutProps) {
               </div>
             </Link>
           ))}
+
+          {isSuperAdmin && (
+            <Link href="/admin">
+              <div
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium",
+                  location === "/admin"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-primary/80 hover:text-primary hover:bg-primary/10"
+                )}
+              >
+                <Crown className="w-4 h-4" />
+                Admin-panel
+              </div>
+            </Link>
+          )}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-sidebar-border space-y-2">
           <Link href="/vehicles/new">
             <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors cursor-pointer text-sm font-medium">
               <Plus className="w-4 h-4" />
               Legg til kjøretøy
             </div>
           </Link>
+
+          {/* User profile */}
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-sidebar-accent transition-colors cursor-pointer text-sm">
+                  <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-sidebar-foreground truncate">{name}</p>
+                    {isSuperAdmin && <p className="text-[10px] text-primary">Super Admin</p>}
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {isSuperAdmin && (
+                  <>
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <Crown className="w-4 h-4 mr-2" />
+                      Admin-panel
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logg ut
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex gap-2">
+              <Link href="/login" className="flex-1">
+                <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer text-xs font-medium">
+                  Logg inn
+                </div>
+              </Link>
+              <Link href="/register" className="flex-1">
+                <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border hover:bg-sidebar-accent transition-colors cursor-pointer text-xs font-medium text-sidebar-foreground">
+                  Registrer
+                </div>
+              </Link>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -65,11 +138,27 @@ export function Layout({ children }: LayoutProps) {
             <Wrench className="w-5 h-5 text-primary" />
             <span className="font-bold text-lg">Vintage Garage</span>
           </div>
-          <Link href="/vehicles/new">
-            <div className="p-2 rounded-md bg-primary text-primary-foreground">
-              <Plus className="w-4 h-4" />
-            </div>
-          </Link>
+          <div className="flex items-center gap-2">
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-md text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            ) : (
+              <Link href="/login">
+                <div className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium">
+                  Logg inn
+                </div>
+              </Link>
+            )}
+            <Link href="/vehicles/new">
+              <div className="p-2 rounded-md bg-primary text-primary-foreground">
+                <Plus className="w-4 h-4" />
+              </div>
+            </Link>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8">

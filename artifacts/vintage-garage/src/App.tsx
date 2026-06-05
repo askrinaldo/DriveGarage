@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,6 +28,9 @@ import ClubMarketplace from "@/pages/club-marketplace";
 import VehicleReminders from "@/pages/vehicle-reminders";
 import VehiclePrint from "@/pages/vehicle-print";
 import VehicleAiAdvice from "@/pages/vehicle-ai-advice";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
+import Admin from "@/pages/admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +41,21 @@ const queryClient = new QueryClient({
   },
 });
 
-function Router() {
+const AUTH_ROUTES = ["/login", "/register"];
+
+function AppRoutes() {
+  const [location] = useLocation();
+  const isAuthRoute = AUTH_ROUTES.some((r) => location === r || location.startsWith(r + "/"));
+
+  if (isAuthRoute) {
+    return (
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+      </Switch>
+    );
+  }
+
   return (
     <Layout>
       <Switch>
@@ -70,6 +87,7 @@ function Router() {
         <Route path="/clubs/:id/audit-log" component={ClubAuditLog} />
         <Route path="/clubs/:id/edit" component={ClubForm} />
         <Route path="/clubs/:id" component={ClubDetail} />
+        <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -81,7 +99,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AppRoutes />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

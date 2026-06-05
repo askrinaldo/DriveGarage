@@ -16,3 +16,4 @@ export * from "./clubEventRsvps";
 export * from "./badges";
 export * from "./marketplace";
 export * from "./serviceReminders";
+export * from "./users";

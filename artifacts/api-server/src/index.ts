@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import app from "./app";
 import { initSocket } from "./socket";
 import { logger } from "./lib/logger";
+import { seedSuperAdmin } from "./lib/seedAdmin";
 
 const rawPort = process.env["PORT"];
 
@@ -24,4 +25,5 @@ httpServer.listen(port, (err?: Error) => {
     process.exit(1);
   }
   logger.info({ port }, "Server listening");
+  seedSuperAdmin().catch((e) => logger.warn({ err: e }, "seedSuperAdmin failed"));
 });

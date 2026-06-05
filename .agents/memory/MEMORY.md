@@ -1,1 +1,2 @@
 - [API route path prefix](api-route-prefix.md) — Routes inside the router MUST omit /api prefix; app.ts mounts router at /api already.
+- [User auth pattern](user-auth-pattern.md) — JWT in localStorage via x-user-token header; parseUserAuth middleware applied per-route, not globally in app.ts.

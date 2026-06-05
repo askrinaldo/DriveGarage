@@ -6,6 +6,7 @@ import receiptsRouter from "./receipts";
 import tripLogsRouter from "./tripLogs";
 import statsRouter from "./stats";
 import authRouter from "./auth";
+import userAuthRouter from "./userAuth";
 import clubsRouter from "./clubs";
 import clubInvitationsRouter from "./clubInvitations";
 import clubGarageRouter from "./clubGarage";
@@ -21,6 +22,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
+router.use(userAuthRouter);
 router.use(vehiclesRouter);
 router.use(serviceRecordsRouter);
 router.use(receiptsRouter);
