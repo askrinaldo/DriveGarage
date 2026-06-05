@@ -18,6 +18,7 @@ import marketplaceRouter from "./marketplace";
 import serviceRemindersRouter from "./serviceReminders";
 import maintenanceAdviceRouter from "./maintenanceAdvice";
 import supportRouter from "./support";
+import chatRouter from "./chat";
 
 const router: IRouter = Router();
 
@@ -39,6 +40,7 @@ router.use(marketplaceRouter);
 router.use(serviceRemindersRouter);
 router.use(maintenanceAdviceRouter);
 router.use(supportRouter);
+router.use(chatRouter);
 router.use(clubsRouter);
 
 export default router;

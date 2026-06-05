@@ -5,6 +5,7 @@ import { useUserAuth } from "@/hooks/use-user-auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemePanel } from "@/components/theme-panel";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -73,6 +74,8 @@ export function Layout({ children }: LayoutProps) {
               </div>
             </Link>
           )}
+
+          <ThemePanel />
         </nav>
 
         <div className="p-4 border-t border-sidebar-border space-y-2">
