@@ -1,0 +1,288 @@
+Jeg ønsker å gjøre plattformen om til et komplett SaaS-system for veteranbiler og klassiske motorsykler.
+
+Målet er å lage Norges beste digitale plattform for lagring av kjøretøyhistorikk, servicehistorikk, restaureringsprosjekter, klubber og dokumentasjon.
+
+TEKNOLOGI
+
+- React
+- TypeScript
+- Tailwind CSS
+- Node.js
+- Express
+- PostgreSQL
+- Prisma ORM
+- Stripe
+- AWS S3 eller kompatibel objektlagring
+- OpenAI API
+
+------------------------------------------------
+
+SUPER ADMIN PANEL
+
+Lag et eget Super Admin-system.
+
+SUPER_ADMIN skal kunne:
+
+BRUKERE
+
+- Se alle brukere
+- Søke etter brukere
+- Filtrere brukere
+- Se siste innlogging
+- Se registreringsdato
+- Aktivere konto
+- Deaktivere konto
+- Suspendere konto
+- Tilbakestille passord
+- Logge inn som bruker (impersonation)
+
+ABONNEMENTER
+
+- Se aktive abonnementer
+- Opprette abonnement manuelt
+- Endre abonnement
+- Oppgradere abonnement
+- Nedgradere abonnement
+- Gi gratis medlemskap
+- Forlenge abonnement
+- Se betalingshistorikk
+
+FAKTURERING
+
+- Opprette faktura
+- Sende faktura på e-post
+- Registrere manuelle betalinger
+- Kreditere betalinger
+- Se ubetalte fakturaer
+- Se inntekter
+
+LAGRING
+
+- Se lagringsforbruk per bruker
+- Se lagringsforbruk per klubb
+- Se totale filer
+- Se totale bilder
+- Se totale dokumenter
+
+Eksempel:
+
+Ola Hansen
+3.4 GB brukt av 10 GB
+
+Per Olsen
+845 MB brukt av 5 GB
+
+------------------------------------------------
+
+PAKKER
+
+GRATIS
+
+- 1 kjøretøy
+- 500 MB lagring
+
+STANDARD
+
+- 50 kr per måned
+eller
+300 kr per år
+
+- Ubegrenset kjøretøy
+- 10 GB lagring
+- Klubber
+- Arrangementer
+- Historikk
+
+PREMIUM
+
+- 99 kr per måned
+eller
+799 kr per år
+
+- Ubegrenset lagring
+- Prioritert support
+- AI-assistent
+- PDF-rapporter
+- Eksport av historikk
+
+SUPER ADMIN skal kunne oppgradere brukere manuelt.
+
+------------------------------------------------
+
+KUNDEPORTAL
+
+Lag en profesjonell brukerportal.
+
+Brukeren skal kunne:
+
+- Endre profil
+- Endre passord
+- Se abonnement
+- Oppgradere abonnement
+- Se lagringsforbruk
+- Se fakturaer
+- Se betalinger
+- Se supporthenvendelser
+- Endre tema
+- Endre språk
+
+Dashboard skal vise:
+
+- Antall kjøretøy
+- Vedlikehold denne måneden
+- Dokumenter
+- Klubbaktivitet
+- Kommende arrangementer
+
+------------------------------------------------
+
+FORSIDE
+
+Lag en premium landing page.
+
+Hero-seksjon:
+
+Stor bakgrunnsvideo eller bildekarusell med:
+
+- Veteranbiler
+- Klassiske motorsykler
+- Restaureringsprosjekter
+- Kjøretøytreff
+
+Stor overskrift:
+
+"Samle hele historien til kjøretøyet ditt"
+
+Undertittel:
+
+"Lagre servicehistorikk, restaureringer, dokumenter og bilder på ett sted."
+
+Knapper:
+
+- Opprett konto
+- Se funksjoner
+
+------------------------------------------------
+
+FUNKSJONER
+
+Vis flotte kort med animasjoner:
+
+✓ Digital servicebok
+✓ Kvitteringsarkiv
+✓ Restaureringslogg
+✓ Kjøretøyhistorikk
+✓ Klubber
+✓ Forum
+✓ Arrangementer
+✓ Eierskapsoverføring
+✓ AI-assistent
+✓ Skybasert lagring
+
+------------------------------------------------
+
+HVORDAN DET FUNGERER
+
+1. Opprett konto
+
+2. Registrer kjøretøy
+
+3. Last opp dokumentasjon
+
+4. Registrer vedlikehold
+
+5. Bli med i klubber
+
+6. Overfør historikken ved salg
+
+------------------------------------------------
+
+AI ASSISTENT
+
+Lag en flytende AI-chat nederst til høyre.
+
+AI skal kunne:
+
+- Hjelpe brukere
+- Forklare funksjoner
+- Hjelpe med registrering
+- Opprette supporthenvendelser
+- Motta forbedringsforslag
+
+Hvis brukeren sender forbedringsforslag:
+
+- Lagres i databasen
+- Sendes til administrator e-post
+
+------------------------------------------------
+
+ANALYSE
+
+Super Admin Dashboard skal vise:
+
+- Totale brukere
+- Aktive brukere
+- Nye brukere siste måned
+- Inntekt siste måned
+- Inntekt siste år
+- Totalt lagringsforbruk
+- Totalt antall kjøretøy
+- Totalt antall klubber
+- Totalt antall dokumenter
+
+Vis med moderne KPI-kort og grafer.
+
+------------------------------------------------
+
+DESIGN
+
+Designet skal ligne moderne SaaS-løsninger.
+
+Bruk:
+
+- Glassmorphism
+- Moderne kort
+- Fine animasjoner
+- Mørk modus
+- Mobilvennlig design
+- Profesjonell typografi
+- Rask ytelse
+
+------------------------------------------------
+
+SIKKERHET
+
+- JWT
+- To-faktor autentisering
+- Rate limiting
+- Audit logs
+- Rollebasert tilgang
+- Sikker filopplasting
+- E-postverifisering
+
+------------------------------------------------
+
+SKALERBARHET
+
+Design systemet for:
+
+- 1000+ brukere
+- 10000+ kjøretøy
+- 100000+ dokumenter
+- 100+ klubber
+
+Optimaliser database og API for produksjon.
+
+Generer:
+
+1. Prisma schema
+2. Database-struktur
+3. Backend API
+4. Frontend komponenter
+5. Stripe-integrasjon
+6. Super Admin Panel
+7. Kundeportal
+8. AI-assistent
+9. Responsive sider
+10. Komplett filstruktur
+11. Produksjonsklar kode
