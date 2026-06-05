@@ -17,3 +17,5 @@ export * from "./badges";
 export * from "./marketplace";
 export * from "./serviceReminders";
 export * from "./users";
+export * from "./supportTickets";
+export * from "./suggestions";

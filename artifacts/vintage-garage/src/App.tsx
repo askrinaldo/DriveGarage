@@ -31,6 +31,7 @@ import VehicleAiAdvice from "@/pages/vehicle-ai-advice";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Admin from "@/pages/admin";
+import Help from "@/pages/help";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +89,7 @@ function AppRoutes() {
         <Route path="/clubs/:id/edit" component={ClubForm} />
         <Route path="/clubs/:id" component={ClubDetail} />
         <Route path="/admin" component={Admin} />
+        <Route path="/help" component={Help} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

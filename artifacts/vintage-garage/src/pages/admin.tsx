@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, Link } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingState } from "@/components/ui-states";
 import {
@@ -12,8 +13,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Users, Car, Building2, BarChart3, Search, Shield, ShieldOff,
   TrendingUp, MessageSquare, ArrowLeft, Crown, Ban, CircleCheck,
+  Lightbulb, ChevronDown, ChevronUp, Clock, CheckCircle2, XCircle,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 
@@ -46,6 +51,52 @@ interface Stats {
   comments: number;
   admins: number;
 }
+
+interface AdminTicket {
+  id: number;
+  userId: number | null;
+  userEmail: string;
+  userName: string;
+  title: string;
+  description: string;
+  category: "feil" | "spørsmål" | "annet";
+  status: "open" | "answered" | "closed";
+  adminReply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+}
+
+interface AdminSuggestion {
+  id: number;
+  userId: number | null;
+  userEmail: string;
+  userName: string;
+  title: string;
+  description: string;
+  priority: "low" | "medium" | "high";
+  status: "pending" | "reviewed" | "implemented" | "declined";
+  adminNote: string | null;
+  createdAt: string;
+}
+
+const TICKET_STATUS_MAP: Record<string, { label: string; color: string }> = {
+  open: { label: "Åpen", color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
+  answered: { label: "Besvart", color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30" },
+  closed: { label: "Lukket", color: "text-muted-foreground bg-muted/20 border-border" },
+};
+
+const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
+  low: { label: "Lav", color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
+  medium: { label: "Medium", color: "text-amber-400 bg-amber-500/15 border-amber-500/30" },
+  high: { label: "Høy", color: "text-red-400 bg-red-500/15 border-red-500/30" },
+};
+
+const SUGGESTION_STATUS_MAP: Record<string, { label: string; color: string }> = {
+  pending: { label: "Venter", color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
+  reviewed: { label: "Vurdert", color: "text-amber-400 bg-amber-500/15 border-amber-500/30" },
+  implemented: { label: "Implementert", color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30" },
+  declined: { label: "Avslått", color: "text-muted-foreground bg-muted/20 border-border" },
+};
 
 function authHeader(token: string | null): Record<string, string> {
   if (!token) return {};
@@ -148,20 +199,27 @@ export default function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [tickets, setTickets] = useState<AdminTicket[]>([]);
+  const [suggestions, setSuggestions] = useState<AdminSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     const headers = authHeader(token);
-    const [usersRes, clubsRes, statsRes] = await Promise.all([
+    const [usersRes, clubsRes, statsRes, ticketsRes, suggestionsRes] = await Promise.all([
       fetch("/api/admin/users", { headers }),
       fetch("/api/admin/clubs", { headers }),
       fetch("/api/admin/stats", { headers }),
+      fetch("/api/admin/support/tickets", { headers }),
+      fetch("/api/admin/suggestions", { headers }),
     ]);
     if (usersRes.ok) setUsers(await usersRes.json() as User[]);
     if (clubsRes.ok) setClubs(await clubsRes.json() as Club[]);
     if (statsRes.ok) setStats(await statsRes.json() as Stats);
+    if (ticketsRes.ok) setTickets(await ticketsRes.json() as AdminTicket[]);
+    if (suggestionsRes.ok) setSuggestions(await suggestionsRes.json() as AdminSuggestion[]);
     setLoading(false);
   }, [token]);
 
@@ -235,7 +293,7 @@ export default function Admin() {
 
       {/* Tabs */}
       <Tabs defaultValue="users">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="users">
             <Users className="w-3.5 h-3.5 mr-1.5" />
             Brukere ({users.length})
@@ -243,6 +301,19 @@ export default function Admin() {
           <TabsTrigger value="clubs">
             <Building2 className="w-3.5 h-3.5 mr-1.5" />
             Klubber ({clubs.length})
+          </TabsTrigger>
+          <TabsTrigger value="support">
+            <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+            Supportsaker
+            {tickets.filter(t => t.status === "open").length > 0 && (
+              <span className="ml-1.5 bg-primary text-primary-foreground text-[10px] rounded-full px-1.5 py-0.5">
+                {tickets.filter(t => t.status === "open").length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="suggestions">
+            <Lightbulb className="w-3.5 h-3.5 mr-1.5" />
+            Forslag ({suggestions.length})
           </TabsTrigger>
         </TabsList>
 
@@ -348,7 +419,217 @@ export default function Admin() {
             )}
           </div>
         </TabsContent>
+
+        {/* Support tickets tab */}
+        <TabsContent value="support" className="mt-4 space-y-3">
+          {tickets.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Ingen supportsaker ennå</p>
+            </div>
+          )}
+          {tickets.map((ticket) => (
+            <TicketRow
+              key={ticket.id}
+              ticket={ticket}
+              token={token}
+              expanded={expandedTicket === ticket.id}
+              onToggle={() => setExpandedTicket(expandedTicket === ticket.id ? null : ticket.id)}
+              onUpdate={load}
+            />
+          ))}
+        </TabsContent>
+
+        {/* Suggestions tab */}
+        <TabsContent value="suggestions" className="mt-4 space-y-3">
+          {suggestions.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <Lightbulb className="w-8 h-8 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Ingen forbedringsforslag ennå</p>
+            </div>
+          )}
+          {suggestions.map((sug) => (
+            <SuggestionRow key={sug.id} suggestion={sug} token={token} onUpdate={load} />
+          ))}
+        </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// ─── TicketRow ─────────────────────────────────────────────────────────────────
+function TicketRow({
+  ticket, token, expanded, onToggle, onUpdate,
+}: {
+  ticket: AdminTicket;
+  token: string | null;
+  expanded: boolean;
+  onToggle: () => void;
+  onUpdate: () => void;
+}) {
+  const [reply, setReply] = useState(ticket.adminReply ?? "");
+  const [status, setStatus] = useState(ticket.status);
+  const [saving, setSaving] = useState(false);
+
+  const statusInfo = TICKET_STATUS_MAP[ticket.status]!;
+
+  async function save() {
+    setSaving(true);
+    await fetch(`/api/admin/support/tickets/${ticket.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(token ? { "x-user-token": token } : {}) },
+      body: JSON.stringify({ adminReply: reply, status }),
+    });
+    setSaving(false);
+    onUpdate();
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-3">
+        <button className="w-full text-left" onClick={onToggle}>
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-sm">{ticket.title}</span>
+                <Badge variant="outline" className={`text-[10px] ${statusInfo.color}`}>{statusInfo.label}</Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  {ticket.category === "feil" ? "Feil/Bug" : ticket.category === "spørsmål" ? "Spørsmål" : "Annet"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {ticket.userName} · {ticket.userEmail} · {new Date(ticket.createdAt).toLocaleDateString("nb-NO")}
+              </p>
+            </div>
+            {expanded
+              ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+              : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />}
+          </div>
+        </button>
+
+        {expanded && (
+          <div className="mt-3 border-t border-border pt-3 space-y-4">
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{ticket.description}</p>
+
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as AdminTicket["status"])}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Åpen</SelectItem>
+                    <SelectItem value="answered">Besvart</SelectItem>
+                    <SelectItem value="closed">Lukket</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Svar til bruker</Label>
+                <Textarea
+                  placeholder="Skriv svar her..."
+                  value={reply}
+                  onChange={(e) => setReply(e.target.value)}
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+              <Button size="sm" onClick={save} disabled={saving}>
+                {saving ? "Lagrer..." : "Lagre svar"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── SuggestionRow ─────────────────────────────────────────────────────────────
+function SuggestionRow({
+  suggestion, token, onUpdate,
+}: {
+  suggestion: AdminSuggestion;
+  token: string | null;
+  onUpdate: () => void;
+}) {
+  const [status, setStatus] = useState(suggestion.status);
+  const [note, setNote] = useState(suggestion.adminNote ?? "");
+  const [expanded, setExpanded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const prio = PRIORITY_MAP[suggestion.priority]!;
+  const statusInfo = SUGGESTION_STATUS_MAP[suggestion.status]!;
+
+  async function save() {
+    setSaving(true);
+    await fetch(`/api/admin/suggestions/${suggestion.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(token ? { "x-user-token": token } : {}) },
+      body: JSON.stringify({ status, adminNote: note }),
+    });
+    setSaving(false);
+    onUpdate();
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-3">
+        <button className="w-full text-left" onClick={() => setExpanded(!expanded)}>
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-sm">{suggestion.title}</span>
+                <Badge variant="outline" className={`text-[10px] ${prio.color}`}>{prio.label} prioritet</Badge>
+                <Badge variant="outline" className={`text-[10px] ${statusInfo.color}`}>{statusInfo.label}</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {suggestion.userName} · {suggestion.userEmail} · {new Date(suggestion.createdAt).toLocaleDateString("nb-NO")}
+              </p>
+            </div>
+            {expanded
+              ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+              : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />}
+          </div>
+        </button>
+
+        {expanded && (
+          <div className="mt-3 border-t border-border pt-3 space-y-4">
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{suggestion.description}</p>
+
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as AdminSuggestion["status"])}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Venter</SelectItem>
+                    <SelectItem value="reviewed">Vurdert</SelectItem>
+                    <SelectItem value="implemented">Implementert</SelectItem>
+                    <SelectItem value="declined">Avslått</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Admin-notat (vises til brukeren)</Label>
+                <Textarea
+                  placeholder="Legg til notat om dette forslaget..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={2}
+                  className="text-sm"
+                />
+              </div>
+              <Button size="sm" onClick={save} disabled={saving}>
+                {saving ? "Lagrer..." : "Lagre"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

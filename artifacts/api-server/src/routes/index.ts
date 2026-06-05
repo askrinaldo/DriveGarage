@@ -17,6 +17,7 @@ import badgesRouter from "./badges";
 import marketplaceRouter from "./marketplace";
 import serviceRemindersRouter from "./serviceReminders";
 import maintenanceAdviceRouter from "./maintenanceAdvice";
+import supportRouter from "./support";
 
 const router: IRouter = Router();
 
@@ -37,6 +38,7 @@ router.use(badgesRouter);
 router.use(marketplaceRouter);
 router.use(serviceRemindersRouter);
 router.use(maintenanceAdviceRouter);
+router.use(supportRouter);
 router.use(clubsRouter);
 
 export default router;
