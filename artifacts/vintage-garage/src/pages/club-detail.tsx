@@ -49,7 +49,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Edit, Trash2, Users, MapPin, Car, Bike,
   Crown, Shield, UserCheck, User, UserPlus, Loader2,
-  Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse, MessageSquare, ClipboardList, LayoutDashboard,
+  Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse, MessageSquare, ClipboardList, LayoutDashboard, Calendar,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -264,6 +264,12 @@ export default function ClubDetail() {
             <Button variant="outline" size="sm">
               <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />
               Dashboard
+            </Button>
+          </Link>
+          <Link href={`/clubs/${clubId}/events`}>
+            <Button variant="outline" size="sm">
+              <Calendar className="w-3.5 h-3.5 mr-1.5" />
+              Arrangementer
             </Button>
           </Link>
           <Link href={`/clubs/${clubId}/forum`}>

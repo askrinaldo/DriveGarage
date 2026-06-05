@@ -11,3 +11,5 @@ export * from "./forumComments";
 export * from "./forumLikes";
 export * from "./forumNotifications";
 export * from "./auditLogs";
+export * from "./clubEvents";
+export * from "./clubEventRsvps";

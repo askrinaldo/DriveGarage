@@ -186,6 +186,12 @@ export default function ClubDashboard() {
           <p className="text-sm text-muted-foreground">Oversikt og statistikk for klubben</p>
         </div>
         <div className="flex gap-2 shrink-0">
+          <Link href={`/clubs/${clubId}/events`}>
+            <Button variant="outline" size="sm">
+              <Calendar className="w-3.5 h-3.5 mr-1.5" />
+              Arrangementer
+            </Button>
+          </Link>
           <Link href={`/clubs/${clubId}/forum`}>
             <Button variant="outline" size="sm">
               <MessageSquare className="w-3.5 h-3.5 mr-1.5" />

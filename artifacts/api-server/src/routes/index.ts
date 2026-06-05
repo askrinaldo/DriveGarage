@@ -11,6 +11,7 @@ import clubInvitationsRouter from "./clubInvitations";
 import clubGarageRouter from "./clubGarage";
 import forumRouter from "./forum";
 import clubDashboardRouter from "./clubDashboard";
+import clubEventsRouter from "./clubEvents";
 
 const router: IRouter = Router();
 
@@ -25,6 +26,7 @@ router.use(clubInvitationsRouter);
 router.use(clubGarageRouter);
 router.use(forumRouter);
 router.use(clubDashboardRouter);
+router.use(clubEventsRouter);
 router.use(clubsRouter);
 
 export default router;
