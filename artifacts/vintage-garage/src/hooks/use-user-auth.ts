@@ -10,6 +10,11 @@ export interface UserSession {
   role: UserRole;
 }
 
+export interface ThemePrefs {
+  themeAccent: string | null;
+  themeMode: string | null;
+}
+
 const STORAGE_KEY = "user_session";
 
 function loadSession(): UserSession | null {
@@ -45,32 +50,36 @@ export function getUserToken(): string | null {
 export function useUserAuth() {
   const [session, setSession] = useState<UserSession | null>(loadSession);
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
+  const register = useCallback(async (name: string, email: string, password: string): Promise<
+    { ok: false; error: string } | { ok: true; themePrefs: ThemePrefs }
+  > => {
     const res = await fetch("/api/users/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
     });
-    const data = await res.json() as { token?: string; user?: { id: number; name: string; email: string; role: UserRole }; error?: string };
+    const data = await res.json() as { token?: string; user?: { id: number; name: string; email: string; role: UserRole; themeAccent?: string | null; themeMode?: string | null }; error?: string };
     if (!res.ok) return { ok: false as const, error: data.error ?? "Registrering feilet" };
-    const newSession: UserSession = { token: data.token!, ...data.user! };
+    const newSession: UserSession = { token: data.token!, id: data.user!.id, name: data.user!.name, email: data.user!.email, role: data.user!.role };
     saveSession(newSession);
     setSession(newSession);
-    return { ok: true as const };
+    return { ok: true as const, themePrefs: { themeAccent: data.user?.themeAccent ?? null, themeMode: data.user?.themeMode ?? null } };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<
+    { ok: false; error: string } | { ok: true; themePrefs: ThemePrefs }
+  > => {
     const res = await fetch("/api/users/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json() as { token?: string; user?: { id: number; name: string; email: string; role: UserRole }; error?: string };
+    const data = await res.json() as { token?: string; user?: { id: number; name: string; email: string; role: UserRole; themeAccent?: string | null; themeMode?: string | null }; error?: string };
     if (!res.ok) return { ok: false as const, error: data.error ?? "Pålogging feilet" };
-    const newSession: UserSession = { token: data.token!, ...data.user! };
+    const newSession: UserSession = { token: data.token!, id: data.user!.id, name: data.user!.name, email: data.user!.email, role: data.user!.role };
     saveSession(newSession);
     setSession(newSession);
-    return { ok: true as const };
+    return { ok: true as const, themePrefs: { themeAccent: data.user?.themeAccent ?? null, themeMode: data.user?.themeMode ?? null } };
   }, []);
 
   const logout = useCallback(() => {

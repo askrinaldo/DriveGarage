@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wrench, Loader2, AlertCircle } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
+import { useTheme } from "@/contexts/theme";
 
 export default function Login() {
   const [, navigate] = useLocation();
   const { login } = useUserAuth();
+  const { applyServerTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,7 @@ export default function Login() {
       setError(result.error);
       return;
     }
+    applyServerTheme(result.themePrefs.themeAccent, result.themePrefs.themeMode);
     navigate("/");
   }
 

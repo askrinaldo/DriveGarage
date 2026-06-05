@@ -54,7 +54,7 @@ router.post("/users/register", async (req, res): Promise<void> => {
   }
 
   const token = signUserToken({ userId: user.id, email: user.email, name: user.name, role: user.role as "user" | "super_admin" });
-  res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, themeAccent: null, themeMode: null } });
 });
 
 // ─── Login ─────────────────────────────────────────────────────────────────
@@ -88,13 +88,13 @@ router.post("/users/login", async (req, res): Promise<void> => {
   }
 
   const token = signUserToken({ userId: user.id, email: user.email, name: user.name, role: user.role as "user" | "super_admin" });
-  res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, themeAccent: user.themeAccent ?? null, themeMode: user.themeMode ?? null } });
 });
 
 // ─── Me ────────────────────────────────────────────────────────────────────
 router.get("/users/me", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const [user] = await db
-    .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email, role: usersTable.role, isActive: usersTable.isActive })
+    .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email, role: usersTable.role, isActive: usersTable.isActive, themeAccent: usersTable.themeAccent, themeMode: usersTable.themeMode })
     .from(usersTable)
     .where(eq(usersTable.id, req.userAuth!.userId));
 
@@ -104,6 +104,28 @@ router.get("/users/me", parseUserAuth, requireUser, async (req, res): Promise<vo
   }
 
   res.json(user);
+});
+
+// ─── Update preferences ────────────────────────────────────────────────────
+router.patch("/users/me/preferences", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+  const { themeAccent, themeMode } = req.body as { themeAccent?: string; themeMode?: string };
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({
+      ...(themeAccent !== undefined ? { themeAccent } : {}),
+      ...(themeMode !== undefined ? { themeMode } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(usersTable.id, req.userAuth!.userId))
+    .returning({ themeAccent: usersTable.themeAccent, themeMode: usersTable.themeMode });
+
+  if (!updated) {
+    res.status(404).json({ error: "Bruker ikke funnet" });
+    return;
+  }
+
+  res.json(updated);
 });
 
 // ─── Admin: list users ─────────────────────────────────────────────────────

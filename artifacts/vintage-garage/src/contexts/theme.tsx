@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { getUserToken } from "@/hooks/use-user-auth";
 
 export type AccentColor =
   | "kobber"
@@ -19,6 +20,7 @@ interface ThemeState {
 interface ThemeContextValue extends ThemeState {
   setAccent: (accent: AccentColor) => void;
   setMode: (mode: ColorMode) => void;
+  applyServerTheme: (accent: string | null, mode: string | null) => void;
 }
 
 const ACCENT_VALUES: Record<AccentColor, { h: number; s: number; l: number }> = {
@@ -30,6 +32,9 @@ const ACCENT_VALUES: Record<AccentColor, { h: number; s: number; l: number }> = 
   lilla:  { h: 268, s: 58, l: 56 },
   grå:    { h: 220, s: 10, l: 52 },
 };
+
+const VALID_ACCENTS = new Set<string>(["kobber", "blå", "rød", "grønn", "gul", "lilla", "grå"]);
+const VALID_MODES = new Set<string>(["dark", "light"]);
 
 const STORAGE_KEY = "vg-theme";
 const DEFAULT_STATE: ThemeState = { accent: "kobber", mode: "dark" };
@@ -105,6 +110,19 @@ function applyTheme(state: ThemeState) {
   }
 }
 
+async function saveThemeToServer(accent: AccentColor, mode: ColorMode): Promise<void> {
+  const token = getUserToken();
+  if (!token) return;
+  try {
+    await fetch("/api/users/me/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "x-user-token": token },
+      body: JSON.stringify({ themeAccent: accent, themeMode: mode }),
+    });
+  } catch {
+  }
+}
+
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -125,16 +143,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const next = { ...theme, accent };
     setTheme(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    void saveThemeToServer(accent, theme.mode);
   }
 
   function setMode(mode: ColorMode) {
     const next = { ...theme, mode };
     setTheme(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    void saveThemeToServer(theme.accent, mode);
+  }
+
+  function applyServerTheme(accent: string | null, mode: string | null) {
+    const resolvedAccent = (accent && VALID_ACCENTS.has(accent) ? accent : null) as AccentColor | null;
+    const resolvedMode = (mode && VALID_MODES.has(mode) ? mode : null) as ColorMode | null;
+    if (!resolvedAccent && !resolvedMode) return;
+    const next: ThemeState = {
+      accent: resolvedAccent ?? theme.accent,
+      mode: resolvedMode ?? theme.mode,
+    };
+    setTheme(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }
 
   return (
-    <ThemeContext.Provider value={{ ...theme, setAccent, setMode }}>
+    <ThemeContext.Provider value={{ ...theme, setAccent, setMode, applyServerTheme }}>
       {children}
     </ThemeContext.Provider>
   );
