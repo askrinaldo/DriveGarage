@@ -51,7 +51,14 @@ function loadTheme(): ThemeState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
-    return JSON.parse(raw) as ThemeState;
+    const parsed = JSON.parse(raw) as Partial<ThemeState>;
+    const accent = VALID_ACCENTS.has(parsed.accent ?? "")
+      ? (parsed.accent as AccentColor)
+      : DEFAULT_STATE.accent;
+    const mode = VALID_MODES.has(parsed.mode ?? "")
+      ? (parsed.mode as ColorMode)
+      : DEFAULT_STATE.mode;
+    return { accent, mode };
   } catch {
     return DEFAULT_STATE;
   }
@@ -138,16 +145,13 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeState>(() => {
     const t = loadTheme();
+    applyTheme(t);
     return t;
   });
 
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
-
-  useEffect(() => {
-    applyTheme(loadTheme());
-  }, []);
 
   useEffect(() => {
     if (theme.mode !== "auto") return;
