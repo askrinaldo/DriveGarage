@@ -36,6 +36,7 @@ import Register from "@/pages/register";
 import Admin from "@/pages/admin";
 import Help from "@/pages/help";
 import VehicleTransfer from "@/pages/vehicle-transfer";
+import Billing from "@/pages/billing";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,7 @@ function AppRoutes() {
         <Route path="/clubs/:id/audit-log" component={ClubAuditLog} />
         <Route path="/clubs/:id/edit" component={ClubForm} />
         <Route path="/clubs/:id" component={ClubDetail} />
+        <Route path="/billing" component={Billing} />
         <Route path="/admin" component={Admin} />
         <Route path="/help" component={Help} />
         <Route component={NotFound} />

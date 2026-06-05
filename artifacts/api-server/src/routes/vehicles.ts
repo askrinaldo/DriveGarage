@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, vehiclesTable, serviceRecordsTable, receiptsTable, tripLogsTable } from "@workspace/db";
 import {
   CreateVehicleBody,
@@ -9,8 +9,9 @@ import {
   DeleteVehicleParams,
   ExportVehicleDataParams,
 } from "@workspace/api-zod";
-import { sql } from "drizzle-orm";
-import { parseUserAuth } from "../middleware/userAuth";
+import { sql, count } from "drizzle-orm";
+import { parseUserAuth, requireUser } from "../middleware/userAuth";
+import { getUserTier } from "../lib/subscriptionTier";
 
 const router: IRouter = Router();
 
@@ -22,13 +23,32 @@ router.get("/vehicles", async (_req, res): Promise<void> => {
   res.json(vehicles);
 });
 
-router.post("/vehicles", parseUserAuth, async (req, res): Promise<void> => {
+router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const parsed = CreateVehicleBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const userId = req.userAuth?.userId ?? null;
+
+  const userId = req.userAuth!.userId;
+  const tier = await getUserTier(userId);
+
+  if (tier === "free") {
+    const [{ value: vehicleCount }] = await db
+      .select({ value: count() })
+      .from(vehiclesTable)
+      .where(eq(vehiclesTable.userId, userId));
+
+    if (vehicleCount >= 1) {
+      res.status(403).json({
+        error: "Gratis-planen er begrenset til 1 kjøretøy. Oppgrader til Standard for ubegrenset antall.",
+        code: "SUBSCRIPTION_LIMIT",
+        upgradeUrl: "/billing",
+      });
+      return;
+    }
+  }
+
   const [vehicle] = await db.insert(vehiclesTable).values({ ...parsed.data, userId }).returning();
   res.status(201).json(vehicle);
 });

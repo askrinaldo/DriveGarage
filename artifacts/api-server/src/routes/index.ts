@@ -21,6 +21,7 @@ import supportRouter from "./support";
 import chatRouter from "./chat";
 import chatHistoryRouter from "./chatHistory";
 import vehicleTransfersRouter from "./vehicleTransfers";
+import billingRouter from "./billing";
 
 const router: IRouter = Router();
 
@@ -46,5 +47,6 @@ router.use(chatRouter);
 router.use(chatHistoryRouter);
 router.use(vehicleTransfersRouter);
 router.use(clubsRouter);
+router.use(billingRouter);
 
 export default router;
