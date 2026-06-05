@@ -40,7 +40,10 @@ import {
   MapPin,
   Download,
   Copy,
-  BookOpen
+  BookOpen,
+  Bell,
+  Sparkles,
+  Printer,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -348,6 +351,21 @@ export default function VehicleDetail() {
               </a>
             </Button>
           )}
+          <Link href={`/vehicles/${id}/reminders`}>
+            <Button variant="outline" size="icon" title="Servicepåminnelser">
+              <Bell className="w-4 h-4" />
+            </Button>
+          </Link>
+          <Link href={`/vehicles/${id}/ai-advice`}>
+            <Button variant="outline" size="icon" title="AI vedlikeholdsanbefaling">
+              <Sparkles className="w-4 h-4" />
+            </Button>
+          </Link>
+          <Link href={`/vehicles/${id}/print`}>
+            <Button variant="outline" size="icon" title="Skriv ut servicebok (PDF)">
+              <Printer className="w-4 h-4" />
+            </Button>
+          </Link>
           <Link href={`/vehicles/${id}/edit`}>
             <Button variant="outline">
               <Pencil className="w-4 h-4 mr-2" />

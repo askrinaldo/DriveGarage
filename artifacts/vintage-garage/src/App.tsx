@@ -24,6 +24,10 @@ import ClubDashboard from "@/pages/club-dashboard";
 import ClubEvents from "@/pages/club-events";
 import ClubEventForm from "@/pages/club-event-form";
 import ClubEventDetail from "@/pages/club-event-detail";
+import ClubMarketplace from "@/pages/club-marketplace";
+import VehicleReminders from "@/pages/vehicle-reminders";
+import VehiclePrint from "@/pages/vehicle-print";
+import VehicleAiAdvice from "@/pages/vehicle-ai-advice";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +52,9 @@ function Router() {
         <Route path="/vehicles/:id/receipts/new" component={ReceiptForm} />
         <Route path="/vehicles/:id/trips/new" component={TripForm} />
         <Route path="/vehicles/:id/trips/:tripId/edit" component={TripForm} />
+        <Route path="/vehicles/:id/reminders" component={VehicleReminders} />
+        <Route path="/vehicles/:id/print" component={VehiclePrint} />
+        <Route path="/vehicles/:id/ai-advice" component={VehicleAiAdvice} />
         <Route path="/clubs" component={ClubsList} />
         <Route path="/clubs/invite/:code" component={ClubInvite} />
         <Route path="/clubs/new" component={ClubForm} />
@@ -59,6 +66,7 @@ function Router() {
         <Route path="/clubs/:id/events/:eventId/edit" component={ClubEventForm} />
         <Route path="/clubs/:id/events/:eventId" component={ClubEventDetail} />
         <Route path="/clubs/:id/events" component={ClubEvents} />
+        <Route path="/clubs/:id/marketplace" component={ClubMarketplace} />
         <Route path="/clubs/:id/audit-log" component={ClubAuditLog} />
         <Route path="/clubs/:id/edit" component={ClubForm} />
         <Route path="/clubs/:id" component={ClubDetail} />

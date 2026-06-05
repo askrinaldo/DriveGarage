@@ -1,0 +1,1 @@
+- [API route path prefix](api-route-prefix.md) — Routes inside the router MUST omit /api prefix; app.ts mounts router at /api already.

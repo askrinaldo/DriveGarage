@@ -12,6 +12,10 @@ import clubGarageRouter from "./clubGarage";
 import forumRouter from "./forum";
 import clubDashboardRouter from "./clubDashboard";
 import clubEventsRouter from "./clubEvents";
+import badgesRouter from "./badges";
+import marketplaceRouter from "./marketplace";
+import serviceRemindersRouter from "./serviceReminders";
+import maintenanceAdviceRouter from "./maintenanceAdvice";
 
 const router: IRouter = Router();
 
@@ -27,6 +31,10 @@ router.use(clubGarageRouter);
 router.use(forumRouter);
 router.use(clubDashboardRouter);
 router.use(clubEventsRouter);
+router.use(badgesRouter);
+router.use(marketplaceRouter);
+router.use(serviceRemindersRouter);
+router.use(maintenanceAdviceRouter);
 router.use(clubsRouter);
 
 export default router;
