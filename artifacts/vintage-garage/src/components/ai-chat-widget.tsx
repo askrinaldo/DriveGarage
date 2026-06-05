@@ -3,6 +3,7 @@ import { MessageCircle, X, Send, Bot, User, Loader2, ExternalLink } from "lucide
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { getUserToken } from "@/hooks/use-user-auth";
 
 interface Message {
   role: "user" | "assistant";
@@ -68,9 +69,13 @@ export function AiChatWidget() {
     setLoading(true);
 
     try {
+      const token = getUserToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["x-user-token"] = token;
+
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           messages: updated.map((m) => ({ role: m.role, content: m.content })),
         }),

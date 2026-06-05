@@ -1,9 +1,11 @@
 import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const vehiclesTable = pgTable("vehicles", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id, { onDelete: "set null" }),
   make: text("make").notNull(),
   model: text("model").notNull(),
   year: integer("year").notNull(),

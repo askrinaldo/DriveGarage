@@ -1,4 +1,7 @@
 import { Router, type IRouter } from "express";
+import { db, vehiclesTable, serviceRecordsTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
+import { parseUserAuth } from "../middleware/userAuth";
 
 const router: IRouter = Router();
 
@@ -48,7 +51,45 @@ interface ChatMessage {
   content: string;
 }
 
-router.post("/chat", async (req, res): Promise<void> => {
+async function buildUserContext(userId: number, userName: string): Promise<string> {
+  const vehicles = await db
+    .select()
+    .from(vehiclesTable)
+    .where(eq(vehiclesTable.userId, userId))
+    .orderBy(vehiclesTable.createdAt);
+
+  if (vehicles.length === 0) {
+    return `\n\nBrukeren ${userName} er pålogget men har ingen kjøretøy registrert i garasjen ennå.`;
+  }
+
+  const vehicleLines: string[] = [];
+
+  for (const v of vehicles) {
+    const typeLabel = v.type === "motorcycle" ? "Motorsykkel" : "Bil";
+    const mileage = v.mileage != null ? `, ${v.mileage.toLocaleString("no-NO")} km` : "";
+    const reg = v.registrationNumber ? ` (reg: ${v.registrationNumber})` : "";
+
+    const [latestService] = await db
+      .select()
+      .from(serviceRecordsTable)
+      .where(eq(serviceRecordsTable.vehicleId, v.id))
+      .orderBy(desc(serviceRecordsTable.serviceDate))
+      .limit(1);
+
+    let serviceLine = "Ingen servicehistorikk registrert";
+    if (latestService) {
+      const date = new Date(latestService.serviceDate).toLocaleDateString("no-NO");
+      const km = latestService.mileageAtService != null ? ` ved ${latestService.mileageAtService.toLocaleString("no-NO")} km` : "";
+      serviceLine = `Siste service: ${latestService.title} (${date}${km})`;
+    }
+
+    vehicleLines.push(`- ${typeLabel}: ${v.year} ${v.make} ${v.model}${reg}${mileage} — ${serviceLine}`);
+  }
+
+  return `\n\nBrukeren ${userName} er pålogget. Kjøretøy i garasjen:\n${vehicleLines.join("\n")}\n\nBruk denne informasjonen til å gi personlige og spesifikke vedlikeholdsråd.`;
+}
+
+router.post("/chat", parseUserAuth, async (req, res): Promise<void> => {
   const { messages } = req.body as { messages?: ChatMessage[] };
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -60,6 +101,17 @@ router.post("/chat", async (req, res): Promise<void> => {
   if (!lastUserMessage) {
     res.status(400).json({ error: "Ingen brukermelding funnet" });
     return;
+  }
+
+  let systemPrompt = SYSTEM_PROMPT;
+
+  if (req.userAuth) {
+    try {
+      const userContext = await buildUserContext(req.userAuth.userId, req.userAuth.name);
+      systemPrompt = SYSTEM_PROMPT + userContext;
+    } catch {
+      // Ignore DB errors — fall back to generic prompt
+    }
   }
 
   const apiKey = process.env["OPENAI_API_KEY"];
@@ -81,7 +133,7 @@ router.post("/chat", async (req, res): Promise<void> => {
         model: "gpt-4o-mini",
         max_tokens: 400,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           ...messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
         ],
       }),

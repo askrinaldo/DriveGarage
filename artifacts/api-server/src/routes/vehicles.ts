@@ -10,6 +10,7 @@ import {
   ExportVehicleDataParams,
 } from "@workspace/api-zod";
 import { sql } from "drizzle-orm";
+import { parseUserAuth } from "../middleware/userAuth";
 
 const router: IRouter = Router();
 
@@ -21,13 +22,14 @@ router.get("/vehicles", async (_req, res): Promise<void> => {
   res.json(vehicles);
 });
 
-router.post("/vehicles", async (req, res): Promise<void> => {
+router.post("/vehicles", parseUserAuth, async (req, res): Promise<void> => {
   const parsed = CreateVehicleBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [vehicle] = await db.insert(vehiclesTable).values(parsed.data).returning();
+  const userId = req.userAuth?.userId ?? null;
+  const [vehicle] = await db.insert(vehiclesTable).values({ ...parsed.data, userId }).returning();
   res.status(201).json(vehicle);
 });
 
