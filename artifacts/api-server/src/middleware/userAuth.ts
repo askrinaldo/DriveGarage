@@ -46,22 +46,51 @@ export function parseUserAuth(req: Request, _res: Response, next: NextFunction):
   next();
 }
 
-export function requireUser(req: Request, res: Response, next: NextFunction): void {
+/**
+ * Verifies the user is logged in AND re-checks DB to ensure isActive === true.
+ * Prevents deactivated users with unexpired tokens from accessing protected routes.
+ */
+export async function requireUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!req.userAuth) {
     res.status(401).json({ error: "Innlogging kreves" });
     return;
   }
+  const [user] = await db
+    .select({ isActive: usersTable.isActive, role: usersTable.role })
+    .from(usersTable)
+    .where(eq(usersTable.id, req.userAuth.userId));
+
+  if (!user || !user.isActive) {
+    res.status(401).json({ error: "Kontoen er deaktivert" });
+    return;
+  }
+  // Refresh role from DB in case it changed after token was issued
+  req.userAuth = { ...req.userAuth, role: user.role as "user" | "super_admin" };
   next();
 }
 
-export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
+/**
+ * Verifies super_admin role against DB, not just JWT claim.
+ * Prevents role-demoted users with unexpired tokens from accessing admin routes.
+ */
+export async function requireSuperAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!req.userAuth) {
     res.status(401).json({ error: "Innlogging kreves" });
     return;
   }
-  if (req.userAuth.role !== "super_admin") {
+  const [user] = await db
+    .select({ isActive: usersTable.isActive, role: usersTable.role })
+    .from(usersTable)
+    .where(eq(usersTable.id, req.userAuth.userId));
+
+  if (!user || !user.isActive) {
+    res.status(401).json({ error: "Kontoen er deaktivert" });
+    return;
+  }
+  if (user.role !== "super_admin") {
     res.status(403).json({ error: "Super Admin-tilgang kreves" });
     return;
   }
+  req.userAuth = { ...req.userAuth, role: "super_admin" };
   next();
 }

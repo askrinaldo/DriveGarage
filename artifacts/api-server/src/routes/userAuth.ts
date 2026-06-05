@@ -156,29 +156,32 @@ router.get("/admin/clubs", parseUserAuth, requireSuperAdmin, async (req, res): P
   res.json(clubs);
 });
 
-// ─── Admin: update club (suspend etc.) ────────────────────────────────────
-router.patch("/admin/clubs/:id", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+// ─── Admin: suspend / unsuspend club ──────────────────────────────────────
+router.patch("/admin/clubs/:id/suspend", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
-  const { name, description } = req.body as { name?: string; description?: string };
+  const { suspend, reason } = req.body as { suspend: boolean; reason?: string };
 
   const [updated] = await db
     .update(clubsTable)
-    .set({ ...(name ? { name } : {}), ...(description !== undefined ? { description } : {}) })
+    .set({
+      isSuspended: suspend,
+      suspendedReason: suspend ? (reason ?? null) : null,
+      suspendedAt: suspend ? new Date() : null,
+    })
     .where(eq(clubsTable.id, id))
-    .returning();
+    .returning({
+      id: clubsTable.id,
+      name: clubsTable.name,
+      isSuspended: clubsTable.isSuspended,
+      suspendedReason: clubsTable.suspendedReason,
+      suspendedAt: clubsTable.suspendedAt,
+    });
 
   if (!updated) {
     res.status(404).json({ error: "Klubb ikke funnet" });
     return;
   }
   res.json(updated);
-});
-
-// ─── Admin: delete club ────────────────────────────────────────────────────
-router.delete("/admin/clubs/:id", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
-  const id = parseInt(String(req.params.id), 10);
-  await db.delete(clubsTable).where(eq(clubsTable.id, id));
-  res.json({ ok: true });
 });
 
 // ─── Admin: stats ──────────────────────────────────────────────────────────
