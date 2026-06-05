@@ -13,3 +13,6 @@ export * from "./forumNotifications";
 export * from "./auditLogs";
 export * from "./clubEvents";
 export * from "./clubEventRsvps";
+export * from "./badges";
+export * from "./marketplace";
+export * from "./serviceReminders";
