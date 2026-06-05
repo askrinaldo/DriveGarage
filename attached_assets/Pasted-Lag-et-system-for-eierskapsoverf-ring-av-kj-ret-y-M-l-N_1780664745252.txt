@@ -1,0 +1,173 @@
+Lag et system for eierskapsoverføring av kjøretøy.
+
+Mål:
+Når en bruker selger en bil eller motorsykkel, skal hele historikken kunne overføres til ny eier.
+
+FUNKSJONER
+
+DIGITAL KJØRETØYMAPPE
+
+Hvert kjøretøy skal ha en permanent historikk som inneholder:
+
+- Bilder
+- Vedlikehold
+- Servicehistorikk
+- Restaureringshistorikk
+- Kvitteringer
+- PDF-dokumenter
+- Tidligere eiere
+- Kilometerstandhistorikk
+- Arrangementer kjøretøyet har deltatt på
+- Kommentarer og notater
+
+Historikken skal aldri slettes ved eierskifte.
+
+------------------------------------------------
+
+EIERSKAPSOVERFØRING
+
+Nåværende eier skal kunne:
+
+- Klikke "Overfør kjøretøy"
+- Velge overføring via:
+  - e-post
+  - unik kode
+  - invitasjonslenke
+
+Systemet genererer:
+
+- unik kode
+- sikker lenke
+- utløpsdato
+
+Eksempel:
+
+/vehicle-transfer/ABC123XYZ
+
+------------------------------------------------
+
+NY EIER
+
+Ny eier skal kunne:
+
+- opprette konto hvis han ikke har konto
+- logge inn
+- godta overføringen
+
+Ved godkjenning:
+
+- kjøretøy flyttes til ny eier
+- all historikk følger med
+- dokumenter følger med
+- bilder følger med
+- servicehistorikk følger med
+
+------------------------------------------------
+
+TIDLIGERE EIERE
+
+Lagre historikk over eiere.
+
+Eksempel:
+
+Eierhistorikk
+
+1. Ola Hansen
+2017–2022
+
+2. Per Olsen
+2022–2025
+
+3. Nåværende eier
+2025–
+
+Kun navn og tidsperiode vises dersom tidligere eier samtykker.
+
+Hvis ikke:
+
+"Tidligere registrert eier"
+
+------------------------------------------------
+
+SALGSHISTORIKK
+
+Vis antall eierskifter.
+
+Vis:
+
+- dato for overføring
+- hvem som overførte
+- hvem som mottok
+
+Kun synlig for eier og administrator.
+
+------------------------------------------------
+
+DIGITALT EIERSKAPSBEVIS
+
+Generer PDF med:
+
+- kjøretøyinformasjon
+- chassisnummer
+- registreringsnummer
+- historikk
+- serviceoversikt
+- eierskapsoverføring
+
+Eksporter som PDF.
+
+------------------------------------------------
+
+SIKKERHET
+
+- Begge parter må bekrefte overføring
+- E-postbekreftelse
+- Tidsbegrenset kode
+- Audit-logg
+- Mulighet for å avbryte overføring
+
+------------------------------------------------
+
+ABONNEMENT
+
+Kun aktive medlemmer kan bruke overføringsfunksjonen.
+
+------------------------------------------------
+
+ADMIN
+
+Super Admin skal kunne:
+
+- se alle overføringer
+- hjelpe brukere
+- annullere feilaktige overføringer
+- se historikk
+
+------------------------------------------------
+
+DATABASE
+
+Lag Prisma-modeller for:
+
+- VehicleTransfer
+- VehicleOwnershipHistory
+- VehicleDocuments
+- VehicleTimeline
+- TransferAuditLog
+
+------------------------------------------------
+
+UI
+
+Lag:
+
+- Overfør kjøretøy-knapp
+- Veiviser for overføring
+- Godkjenningsside
+- Historikkside
+- Eierhistorikk-side
+- PDF-eksport
+
+Bruk React, TypeScript, PostgreSQL og Prisma.
+
+Lag komplett produksjonsklar kode.
