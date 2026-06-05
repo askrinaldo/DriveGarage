@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, vehiclesTable, serviceRecordsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { db, vehiclesTable, serviceRecordsTable, chatMessagesTable } from "@workspace/db";
+import { eq, desc, asc } from "drizzle-orm";
 import { parseUserAuth } from "../middleware/userAuth";
 
 const router: IRouter = Router();
@@ -89,6 +89,28 @@ async function buildUserContext(userId: number, userName: string): Promise<strin
   return `\n\nBrukeren ${userName} er pålogget. Kjøretøy i garasjen:\n${vehicleLines.join("\n")}\n\nBruk denne informasjonen til å gi personlige og spesifikke vedlikeholdsråd.`;
 }
 
+const MAX_MESSAGES = 20;
+
+async function persistMessages(userId: number, userContent: string, assistantContent: string): Promise<void> {
+  await db.insert(chatMessagesTable).values([
+    { userId, role: "user", content: userContent },
+    { userId, role: "assistant", content: assistantContent },
+  ]);
+
+  const rows = await db
+    .select({ id: chatMessagesTable.id })
+    .from(chatMessagesTable)
+    .where(eq(chatMessagesTable.userId, userId))
+    .orderBy(asc(chatMessagesTable.createdAt));
+
+  if (rows.length > MAX_MESSAGES) {
+    const toDelete = rows.slice(0, rows.length - MAX_MESSAGES);
+    for (const row of toDelete) {
+      await db.delete(chatMessagesTable).where(eq(chatMessagesTable.id, row.id));
+    }
+  }
+}
+
 router.post("/chat", parseUserAuth, async (req, res): Promise<void> => {
   const { messages } = req.body as { messages?: ChatMessage[] };
 
@@ -118,6 +140,13 @@ router.post("/chat", parseUserAuth, async (req, res): Promise<void> => {
 
   if (!apiKey) {
     const reply = getRuleBasedResponse(lastUserMessage.content);
+    if (req.userAuth) {
+      try {
+        await persistMessages(req.userAuth.userId, lastUserMessage.content, reply);
+      } catch {
+        // Ignore — persistence is best-effort
+      }
+    }
     res.json({ reply, source: "rule_based" });
     return;
   }
@@ -147,20 +176,34 @@ router.post("/chat", parseUserAuth, async (req, res): Promise<void> => {
       choices: Array<{ message: { content: string } }>;
     };
 
-    const reply = data.choices[0]?.message?.content ?? "";
+    const rawReply = data.choices[0]?.message?.content ?? "";
     const needsSupport =
-      reply.toLowerCase().includes("beklager") ||
-      reply.toLowerCase().includes("vet ikke") ||
-      reply.toLowerCase().includes("ikke sikker");
+      rawReply.toLowerCase().includes("beklager") ||
+      rawReply.toLowerCase().includes("vet ikke") ||
+      rawReply.toLowerCase().includes("ikke sikker");
 
-    res.json({
-      reply: needsSupport
-        ? `${reply}\n\n[Trenger du mer hjelp? Opprett en supportsak](/help)`
-        : reply,
-      source: "ai",
-    });
+    const reply = needsSupport
+      ? `${rawReply}\n\n[Trenger du mer hjelp? Opprett en supportsak](/help)`
+      : rawReply;
+
+    if (req.userAuth) {
+      try {
+        await persistMessages(req.userAuth.userId, lastUserMessage.content, reply);
+      } catch {
+        // Ignore — persistence is best-effort
+      }
+    }
+
+    res.json({ reply, source: "ai" });
   } catch {
     const reply = getRuleBasedResponse(lastUserMessage.content);
+    if (req.userAuth) {
+      try {
+        await persistMessages(req.userAuth.userId, lastUserMessage.content, reply);
+      } catch {
+        // Ignore — persistence is best-effort
+      }
+    }
     res.json({ reply, source: "rule_based" });
   }
 });

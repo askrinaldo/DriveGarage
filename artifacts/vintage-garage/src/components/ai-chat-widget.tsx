@@ -18,25 +18,112 @@ const WELCOME: Message = {
   content: "Hei! Jeg er Vintage Garage-assistenten 🔧 Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber og mer. Hva lurer du på?",
 };
 
-function loadHistory(): Message[] {
+function loadLocalHistory(): Message[] | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [WELCOME];
+    if (!raw) return null;
     const parsed = JSON.parse(raw) as Message[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return [WELCOME];
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
     return parsed;
   } catch {
-    return [WELCOME];
+    return null;
   }
 }
 
-function saveHistory(messages: Message[]) {
+function saveLocalHistory(messages: Message[]) {
   try {
     const trimmed = messages.slice(-MAX_MESSAGES);
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
   } catch {
     // sessionStorage unavailable
   }
+}
+
+function clearLocalHistory() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function messageKey(m: Message) {
+  return `${m.role}:${m.content}`;
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getUserToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["x-user-token"] = token;
+  return headers;
+}
+
+async function fetchServerHistory(): Promise<Message[] | null> {
+  const token = getUserToken();
+  if (!token) return null;
+  try {
+    const res = await fetch("/api/chat-history", {
+      headers: { "x-user-token": token },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as { messages: Message[] };
+    return data.messages;
+  } catch {
+    return null;
+  }
+}
+
+async function backfillMessageToServer(msg: Message): Promise<void> {
+  try {
+    await fetch("/api/chat-history", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ role: msg.role, content: msg.content }),
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+async function deleteServerHistory(): Promise<void> {
+  const token = getUserToken();
+  if (!token) return;
+  try {
+    await fetch("/api/chat-history", {
+      method: "DELETE",
+      headers: { "x-user-token": token },
+    });
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Merges local sessionStorage history with server history.
+ * Server is the source of truth; any messages present locally but
+ * absent from the server (e.g. due to a previous network failure)
+ * are appended and backfilled to the server.
+ * Returns the merged list trimmed to MAX_MESSAGES.
+ */
+async function mergeAndSync(serverHistory: Message[], localHistory: Message[]): Promise<Message[]> {
+  const serverKeys = new Set(serverHistory.map(messageKey));
+
+  // Identify local messages the server doesn't have (unsynced)
+  const localOnly = localHistory.filter((m) => !serverKeys.has(messageKey(m)));
+
+  if (localOnly.length === 0) {
+    return serverHistory;
+  }
+
+  // Append unsynced local messages and trim to cap
+  const merged = [...serverHistory, ...localOnly].slice(-MAX_MESSAGES);
+
+  // Backfill unsynced messages to server so it becomes the source of truth
+  for (const msg of localOnly) {
+    await backfillMessageToServer(msg);
+  }
+
+  return merged;
 }
 
 function renderContent(content: string, navigate: (path: string) => void) {
@@ -65,16 +152,58 @@ function renderContent(content: string, navigate: (path: string) => void) {
 
 export function AiChatWidget() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>(() => loadHistory());
+  const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    saveHistory(messages);
-  }, [messages]);
+    if (!open || historyLoaded) return;
+
+    async function loadHistory() {
+      const local = loadLocalHistory();
+      const serverHistory = await fetchServerHistory();
+
+      if (!serverHistory) {
+        // Unauthenticated or server error — use local cache only
+        if (local) setMessages(local);
+        setHistoryLoaded(true);
+        return;
+      }
+
+      // Server responded — merge with local state to capture any unsynced messages
+      const welcomeOnlyServer =
+        serverHistory.length === 1 && serverHistory[0]?.role === "assistant";
+      const hasLocalContent = local && local.length > 0 && !(local.length === 1 && local[0]?.role === "assistant");
+
+      let final: Message[];
+      if (hasLocalContent && !welcomeOnlyServer) {
+        // Both sides have real content — merge and backfill
+        final = await mergeAndSync(serverHistory, local!);
+      } else if (hasLocalContent && welcomeOnlyServer) {
+        // Server only has welcome (fresh account) — backfill local messages
+        final = await mergeAndSync(serverHistory, local!);
+      } else {
+        // No meaningful local content — server is source of truth
+        final = serverHistory;
+      }
+
+      setMessages(final);
+      saveLocalHistory(final);
+      setHistoryLoaded(true);
+    }
+
+    void loadHistory();
+  }, [open, historyLoaded]);
+
+  useEffect(() => {
+    if (historyLoaded) {
+      saveLocalHistory(messages);
+    }
+  }, [messages, historyLoaded]);
 
   useEffect(() => {
     if (open) {
@@ -86,9 +215,10 @@ export function AiChatWidget() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const clearHistory = useCallback(() => {
+  const clearHistory = useCallback(async () => {
     setMessages([WELCOME]);
-    sessionStorage.removeItem(STORAGE_KEY);
+    clearLocalHistory();
+    await deleteServerHistory();
   }, []);
 
   async function send() {
@@ -102,13 +232,9 @@ export function AiChatWidget() {
     setLoading(true);
 
     try {
-      const token = getUserToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["x-user-token"] = token;
-
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers,
+        headers: authHeaders(),
         body: JSON.stringify({
           messages: updated.map((m) => ({ role: m.role, content: m.content })),
         }),
@@ -166,7 +292,7 @@ export function AiChatWidget() {
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={clearHistory}
+                onClick={() => void clearHistory()}
                 className="text-muted-foreground hover:text-foreground transition-colors p-1"
                 title="Ny samtale"
               >
@@ -183,7 +309,12 @@ export function AiChatWidget() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map((msg, i) => (
+            {!historyLoaded && (
+              <div className="flex justify-center items-center h-full">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            {historyLoaded && messages.map((msg, i) => (
               <div
                 key={i}
                 className={cn(
