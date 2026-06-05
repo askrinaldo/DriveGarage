@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, chatMessagesTable } from "@workspace/db";
-import { eq, asc } from "drizzle-orm";
+import { and, eq, asc, desc, notInArray } from "drizzle-orm";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 
 const router: IRouter = Router();
@@ -48,12 +48,20 @@ router.post("/chat-history", parseUserAuth, requireUser, async (req, res): Promi
     .where(eq(chatMessagesTable.userId, userId))
     .orderBy(asc(chatMessagesTable.createdAt));
 
-  if (rows.length > MAX_MESSAGES) {
-    const toDelete = rows.slice(0, rows.length - MAX_MESSAGES);
-    for (const row of toDelete) {
-      await db.delete(chatMessagesTable).where(eq(chatMessagesTable.id, row.id));
-    }
-  }
+  await db.delete(chatMessagesTable).where(
+    and(
+      eq(chatMessagesTable.userId, userId),
+      notInArray(
+        chatMessagesTable.id,
+        db
+          .select({ id: chatMessagesTable.id })
+          .from(chatMessagesTable)
+          .where(eq(chatMessagesTable.userId, userId))
+          .orderBy(desc(chatMessagesTable.createdAt))
+          .limit(MAX_MESSAGES),
+      ),
+    ),
+  );
 
   res.status(201).json({ ok: true });
 });

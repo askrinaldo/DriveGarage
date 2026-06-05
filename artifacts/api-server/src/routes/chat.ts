@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, vehiclesTable, serviceRecordsTable, chatMessagesTable } from "@workspace/db";
-import { eq, desc, asc } from "drizzle-orm";
+import { and, eq, desc, notInArray } from "drizzle-orm";
 import { parseUserAuth } from "../middleware/userAuth";
 
 const router: IRouter = Router();
@@ -97,18 +97,20 @@ async function persistMessages(userId: number, userContent: string, assistantCon
     { userId, role: "assistant", content: assistantContent },
   ]);
 
-  const rows = await db
-    .select({ id: chatMessagesTable.id })
-    .from(chatMessagesTable)
-    .where(eq(chatMessagesTable.userId, userId))
-    .orderBy(asc(chatMessagesTable.createdAt));
-
-  if (rows.length > MAX_MESSAGES) {
-    const toDelete = rows.slice(0, rows.length - MAX_MESSAGES);
-    for (const row of toDelete) {
-      await db.delete(chatMessagesTable).where(eq(chatMessagesTable.id, row.id));
-    }
-  }
+  await db.delete(chatMessagesTable).where(
+    and(
+      eq(chatMessagesTable.userId, userId),
+      notInArray(
+        chatMessagesTable.id,
+        db
+          .select({ id: chatMessagesTable.id })
+          .from(chatMessagesTable)
+          .where(eq(chatMessagesTable.userId, userId))
+          .orderBy(desc(chatMessagesTable.createdAt))
+          .limit(MAX_MESSAGES),
+      ),
+    ),
+  );
 }
 
 router.post("/chat", parseUserAuth, async (req, res): Promise<void> => {
