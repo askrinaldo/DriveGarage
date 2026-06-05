@@ -10,7 +10,7 @@ export type AccentColor =
   | "lilla"
   | "grå";
 
-export type ColorMode = "dark" | "light";
+export type ColorMode = "dark" | "light" | "auto";
 
 interface ThemeState {
   accent: AccentColor;
@@ -34,10 +34,18 @@ const ACCENT_VALUES: Record<AccentColor, { h: number; s: number; l: number }> = 
 };
 
 const VALID_ACCENTS = new Set<string>(["kobber", "blå", "rød", "grønn", "gul", "lilla", "grå"]);
-const VALID_MODES = new Set<string>(["dark", "light"]);
+const VALID_MODES = new Set<string>(["dark", "light", "auto"]);
 
 const STORAGE_KEY = "vg-theme";
 const DEFAULT_STATE: ThemeState = { accent: "kobber", mode: "dark" };
+
+function getSystemMode(): "dark" | "light" {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function resolveMode(mode: ColorMode): "dark" | "light" {
+  return mode === "auto" ? getSystemMode() : mode;
+}
 
 function loadTheme(): ThemeState {
   try {
@@ -63,7 +71,9 @@ function applyTheme(state: ThemeState) {
   root.style.setProperty("--sidebar-ring", primaryHsl);
   root.style.setProperty("--chart-1", primaryHsl);
 
-  if (state.mode === "light") {
+  const effectiveMode = resolveMode(state.mode);
+
+  if (effectiveMode === "light") {
     root.classList.add("light-mode");
     root.style.setProperty("--background", "220 20% 96%");
     root.style.setProperty("--foreground", "220 15% 12%");
@@ -138,6 +148,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     applyTheme(loadTheme());
   }, []);
+
+  useEffect(() => {
+    if (theme.mode !== "auto") return;
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => applyTheme(theme);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [theme]);
 
   function setAccent(accent: AccentColor) {
     const next = { ...theme, accent };
