@@ -109,7 +109,16 @@ interface ThemePanelProps {
   iconOnly?: boolean;
 }
 
+const MODE_ICON_MAP: Record<ColorMode, React.ReactNode> = {
+  light: <Sun className="w-3 h-3" />,
+  auto:  <Monitor className="w-3 h-3" />,
+  dark:  <Moon className="w-3 h-3" />,
+};
+
 export function ThemePanel({ buttonClassName, popoverSide = "right", iconOnly = false }: ThemePanelProps) {
+  const { accent, mode } = useTheme();
+  const swatchColor = accentSwatch(accent);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -120,8 +129,17 @@ export function ThemePanel({ buttonClassName, popoverSide = "right", iconOnly = 
           )}
           title="Tilpass tema"
         >
-          <Palette className="w-4 h-4 shrink-0" />
-          {!iconOnly && <span>Tema</span>}
+          <span className="relative shrink-0">
+            <Palette className="w-4 h-4" />
+            <span
+              className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-sidebar ring-0"
+              style={{ backgroundColor: swatchColor }}
+            />
+          </span>
+          {!iconOnly && <span className="flex-1">Tema</span>}
+          <span className="flex items-center shrink-0 text-sidebar-foreground/50">
+            {MODE_ICON_MAP[mode]}
+          </span>
         </button>
       </PopoverTrigger>
       <PopoverContent side={popoverSide} align="end" className="w-56 p-4">
