@@ -107,8 +107,21 @@ router.get("/users/me", parseUserAuth, requireUser, async (req, res): Promise<vo
 });
 
 // ─── Update preferences ────────────────────────────────────────────────────
+const VALID_THEME_MODES = new Set(["dark", "light", "auto"]);
+const VALID_THEME_ACCENTS = new Set(["kobber", "blå", "rød", "grønn", "gul", "lilla", "grå"]);
+
 router.patch("/users/me/preferences", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const { themeAccent, themeMode } = req.body as { themeAccent?: string; themeMode?: string };
+
+  if (themeMode !== undefined && !VALID_THEME_MODES.has(themeMode)) {
+    res.status(400).json({ error: `Ugyldig fargemodus. Gyldige verdier: ${[...VALID_THEME_MODES].join(", ")}` });
+    return;
+  }
+
+  if (themeAccent !== undefined && !VALID_THEME_ACCENTS.has(themeAccent)) {
+    res.status(400).json({ error: `Ugyldig aksentfarge. Gyldige verdier: ${[...VALID_THEME_ACCENTS].join(", ")}` });
+    return;
+  }
 
   const [updated] = await db
     .update(usersTable)
