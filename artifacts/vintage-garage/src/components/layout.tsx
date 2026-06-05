@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemePanel } from "@/components/theme-panel";
+import { ThemePanel, ThemeControls } from "@/components/theme-panel";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -101,7 +101,7 @@ export function Layout({ children }: LayoutProps) {
                   <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
                 {isSuperAdmin && (
                   <>
                     <DropdownMenuItem onClick={() => navigate("/admin")}>
@@ -111,6 +111,15 @@ export function Layout({ children }: LayoutProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                {/* Inline theme controls */}
+                <div className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tema</span>
+                  </div>
+                  <ThemeControls />
+                </div>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="w-4 h-4 mr-2" />
                   Logg ut
@@ -142,6 +151,11 @@ export function Layout({ children }: LayoutProps) {
             <span className="font-bold text-lg">Vintage Garage</span>
           </div>
           <div className="flex items-center gap-2">
+            <ThemePanel
+              iconOnly
+              buttonClassName="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent w-auto"
+              popoverSide="bottom"
+            />
             {isAuthenticated ? (
               <button
                 onClick={handleLogout}

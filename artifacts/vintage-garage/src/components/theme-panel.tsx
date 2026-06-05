@@ -23,66 +23,83 @@ function accentSwatch(accent: AccentColor) {
   return `hsl(${h} ${s}% ${l}%)`;
 }
 
-export function ThemePanel() {
+export function ThemeControls() {
   const { accent, mode, setAccent, setMode } = useTheme();
 
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
+          Aksentfarge
+        </p>
+        <div className="grid grid-cols-7 gap-1.5">
+          {ACCENT_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              title={opt.label}
+              onClick={() => setAccent(opt.id)}
+              className={cn(
+                "w-7 h-7 rounded-full border-2 transition-all hover:scale-110",
+                accent === opt.id
+                  ? "border-foreground scale-110 shadow-md"
+                  : "border-transparent"
+              )}
+              style={{ backgroundColor: accentSwatch(opt.id) }}
+            />
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-2 capitalize">{accent}</p>
+      </div>
+
+      <div className="border-t border-border pt-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
+          Lysmodus
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {mode === "dark" ? (
+              <Moon className="w-3.5 h-3.5 text-muted-foreground" />
+            ) : (
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+            )}
+            <Label className="text-sm cursor-pointer" htmlFor="mode-toggle">
+              {mode === "dark" ? "Mørk" : "Lys"}
+            </Label>
+          </div>
+          <Switch
+            id="mode-toggle"
+            checked={mode === "light"}
+            onCheckedChange={(v) => setMode(v ? "light" : "dark")}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ThemePanelProps {
+  buttonClassName?: string;
+  popoverSide?: "right" | "top" | "bottom" | "left";
+  iconOnly?: boolean;
+}
+
+export function ThemePanel({ buttonClassName, popoverSide = "right", iconOnly = false }: ThemePanelProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+            buttonClassName
+          )}
           title="Tilpass tema"
         >
           <Palette className="w-4 h-4 shrink-0" />
-          <span>Tema</span>
+          {!iconOnly && <span>Tema</span>}
         </button>
       </PopoverTrigger>
-      <PopoverContent side="right" align="end" className="w-56 p-4 space-y-4">
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-            Aksentfarge
-          </p>
-          <div className="grid grid-cols-7 gap-1.5">
-            {ACCENT_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                title={opt.label}
-                onClick={() => setAccent(opt.id)}
-                className={cn(
-                  "w-7 h-7 rounded-full border-2 transition-all hover:scale-110",
-                  accent === opt.id
-                    ? "border-foreground scale-110 shadow-md"
-                    : "border-transparent"
-                )}
-                style={{ backgroundColor: accentSwatch(opt.id) }}
-              />
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground mt-2 capitalize">{accent}</p>
-        </div>
-
-        <div className="border-t border-border pt-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-            Lysmodus
-          </p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {mode === "dark" ? (
-                <Moon className="w-3.5 h-3.5 text-muted-foreground" />
-              ) : (
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-              )}
-              <Label className="text-sm cursor-pointer" htmlFor="mode-toggle">
-                {mode === "dark" ? "Mørk" : "Lys"}
-              </Label>
-            </div>
-            <Switch
-              id="mode-toggle"
-              checked={mode === "light"}
-              onCheckedChange={(v) => setMode(v ? "light" : "dark")}
-            />
-          </div>
-        </div>
+      <PopoverContent side={popoverSide} align="end" className="w-56 p-4">
+        <ThemeControls />
       </PopoverContent>
     </Popover>
   );
