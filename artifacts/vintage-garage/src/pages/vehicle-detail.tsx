@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { 
   useGetVehicle, 
@@ -44,7 +44,25 @@ import {
   Bell,
   Sparkles,
   Printer,
+  SendHorizontal,
+  History,
+  Users,
+  Check,
+  X,
+  Clock,
+  Loader2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useUserAuth } from "@/hooks/use-user-auth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -199,6 +217,85 @@ export default function VehicleDetail() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAuthenticated, token: userToken } = useUserAuth();
+
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferEmail, setTransferEmail] = useState("");
+  const [submittingTransfer, setSubmittingTransfer] = useState(false);
+  const [pendingTransfer, setPendingTransfer] = useState<{
+    id: number; transferCode: string; transferToken: string;
+    toEmail: string; expiresAt: string; status: string;
+  } | null>(null);
+  const [cancellingTransfer, setCancellingTransfer] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [ownershipHistory, setOwnershipHistory] = useState<{
+    id: number; userName: string; userEmail: string;
+    fromDate: string; toDate: string | null; consentToShow: boolean;
+  }[]>([]);
+
+  useEffect(() => {
+    if (!id || !isAuthenticated || !userToken) return;
+    void (async () => {
+      const res = await fetch(`/api/vehicles/${id}/transfer`, {
+        headers: { "x-user-token": userToken },
+      });
+      if (res.ok) {
+        const data = await res.json() as typeof pendingTransfer;
+        setPendingTransfer(data);
+      }
+    })();
+  }, [id, isAuthenticated, userToken]);
+
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      const res = await fetch(`/api/vehicles/${id}/ownership-history`);
+      if (res.ok) {
+        const data = await res.json() as typeof ownershipHistory;
+        setOwnershipHistory(data);
+      }
+    })();
+  }, [id]);
+
+  const handleCreateTransfer = async () => {
+    if (!transferEmail.trim() || !userToken) return;
+    setSubmittingTransfer(true);
+    const res = await fetch(`/api/vehicles/${id}/transfer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-user-token": userToken },
+      body: JSON.stringify({ toEmail: transferEmail.trim() }),
+    });
+    const json = await res.json() as { id?: number; transferCode?: string; transferToken?: string; toEmail?: string; expiresAt?: string; status?: string; error?: string };
+    setSubmittingTransfer(false);
+    if (!res.ok) {
+      toast({ title: "Feil", description: json.error ?? "Overføring feilet", variant: "destructive" });
+      return;
+    }
+    setPendingTransfer({ id: json.id!, transferCode: json.transferCode!, transferToken: json.transferToken!, toEmail: json.toEmail!, expiresAt: json.expiresAt!, status: json.status! });
+    setTransferEmail("");
+    toast({ title: "Overføring opprettet", description: `Kode sendt til ${json.toEmail}` });
+  };
+
+  const handleCancelTransfer = async () => {
+    if (!userToken) return;
+    setCancellingTransfer(true);
+    const res = await fetch(`/api/vehicles/${id}/transfer`, {
+      method: "DELETE",
+      headers: { "x-user-token": userToken },
+    });
+    setCancellingTransfer(false);
+    if (res.ok) {
+      setPendingTransfer(null);
+      toast({ title: "Overføring avbrutt" });
+    }
+  };
+
+  const copyTransferLink = (transferToken: string) => {
+    const url = `${window.location.origin}/vehicle-transfer/${transferToken}`;
+    navigator.clipboard.writeText(url);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
 
   const { data: vehicle, isLoading: vehicleLoading, isError: vehicleError } = useGetVehicle(id, {
     query: { enabled: !!id, queryKey: getGetVehicleQueryKey(id) }
@@ -366,6 +463,17 @@ export default function VehicleDetail() {
               <Printer className="w-4 h-4" />
             </Button>
           </Link>
+          {isAuthenticated && (
+            <Button
+              variant="outline"
+              onClick={() => setShowTransfer(true)}
+              className={pendingTransfer ? "border-amber-500/50 text-amber-400" : ""}
+              title="Overfør kjøretøy til ny eier"
+            >
+              <SendHorizontal className="w-4 h-4 mr-2" />
+              {pendingTransfer ? "Venter på aksept" : "Overfør"}
+            </Button>
+          )}
           <Link href={`/vehicles/${id}/edit`}>
             <Button variant="outline">
               <Pencil className="w-4 h-4 mr-2" />
@@ -405,13 +513,105 @@ export default function VehicleDetail() {
         </Card>
       )}
 
+      {/* Transfer Modal */}
+      <Dialog open={showTransfer} onOpenChange={setShowTransfer}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SendHorizontal className="w-5 h-5 text-primary" />
+              Overfør kjøretøy
+            </DialogTitle>
+            <DialogDescription>
+              Overfør eierskap av {vehicle.year} {vehicle.make} {vehicle.model} til en annen bruker.
+            </DialogDescription>
+          </DialogHeader>
+
+          {pendingTransfer ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm text-amber-400 font-medium">
+                  <Clock className="w-4 h-4" />
+                  Venter på aksept
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Sendt til <strong>{pendingTransfer.toEmail}</strong>
+                </p>
+                <div className="text-center py-2">
+                  <p className="text-xs text-muted-foreground mb-1">Overføringskode</p>
+                  <p className="text-3xl font-mono font-bold tracking-[0.3em] text-primary">{pendingTransfer.transferCode}</p>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Utløper: {new Date(pendingTransfer.expiresAt).toLocaleDateString("nb-NO")}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => copyTransferLink(pendingTransfer.transferToken)}
+                >
+                  {codeCopied ? <><Check className="w-4 h-4 mr-2 text-emerald-400" />Kopiert!</> : <><Copy className="w-4 h-4 mr-2" />Kopier lenke</>}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => void handleCancelTransfer()}
+                  disabled={cancellingTransfer}
+                >
+                  {cancellingTransfer ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4 mr-2" />}
+                  Avbryt
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="transfer-email">Mottakerens e-post</Label>
+                <Input
+                  id="transfer-email"
+                  type="email"
+                  placeholder="ny-eier@example.com"
+                  value={transferEmail}
+                  onChange={(e) => setTransferEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") void handleCreateTransfer(); }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mottakeren vil få en unik lenke og kode for å godta kjøretøyet.
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                <p>• Overføringen utløper etter 7 dager</p>
+                <p>• Du kan avbryte overføringen når som helst</p>
+                <p>• Servicehistorikk og dokumenter følger med</p>
+              </div>
+            </div>
+          )}
+
+          {!pendingTransfer && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowTransfer(false)}>Avbryt</Button>
+              <Button
+                onClick={() => void handleCreateTransfer()}
+                disabled={submittingTransfer || !transferEmail.trim()}
+              >
+                {submittingTransfer ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Oppretter...</> : <><SendHorizontal className="w-4 h-4 mr-2" />Send overføring</>}
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Tabs defaultValue="service" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto p-1 bg-muted/50 rounded-lg">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 h-auto p-1 bg-muted/50 rounded-lg">
           <TabsTrigger value="service" className="py-2.5 text-xs md:text-sm">Servicehistorikk</TabsTrigger>
           <TabsTrigger value="trips" className="py-2.5 text-xs md:text-sm">Kjørebok</TabsTrigger>
           <TabsTrigger value="receipts" className="py-2.5 text-xs md:text-sm">Kvitteringer</TabsTrigger>
           <TabsTrigger value="manuals" className="py-2.5 text-xs md:text-sm">Manualer</TabsTrigger>
           <TabsTrigger value="map" className="py-2.5 text-xs md:text-sm">Vedlikeholdskart</TabsTrigger>
+          <TabsTrigger value="owners" className="py-2.5 text-xs md:text-sm">
+            <Users className="w-3.5 h-3.5 mr-1" />
+            Eiere
+          </TabsTrigger>
           <TabsTrigger value="export" className="py-2.5 text-xs md:text-sm">Selg data</TabsTrigger>
         </TabsList>
         
@@ -758,6 +958,82 @@ export default function VehicleDetail() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="owners" className="mt-6 space-y-4 animate-in fade-in-50 duration-500">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Eierhistorikk</h2>
+            {isAuthenticated && (
+              <Button size="sm" variant="outline" onClick={() => setShowTransfer(true)}>
+                <SendHorizontal className="w-4 h-4 mr-2" />
+                Overfør kjøretøy
+              </Button>
+            )}
+          </div>
+
+          {ownershipHistory.length === 0 ? (
+            <Card className="bg-card">
+              <CardContent className="pt-8 pb-8 text-center">
+                <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                  <History className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium">Ingen eierhistorikk registrert</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Historikk registreres automatisk ved kjøretøyoverføring.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="relative border-l border-border ml-3 space-y-6 pb-6">
+              {ownershipHistory.map((entry, idx) => (
+                <div key={entry.id} className="relative pl-6">
+                  <div className={`absolute w-3 h-3 rounded-full -left-[6.5px] top-2 border-2 border-background ${idx === 0 ? "bg-primary" : "bg-muted-foreground/50"}`} />
+                  <Card className={`bg-card ${idx === 0 ? "border-primary/20" : ""}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-sm">
+                              {entry.consentToShow ? entry.userName : "Anonym eier"}
+                            </p>
+                            {idx === 0 && (
+                              <Badge variant="outline" className="text-xs border-primary/40 text-primary">Nåværende</Badge>
+                            )}
+                          </div>
+                          {entry.consentToShow && (
+                            <p className="text-xs text-muted-foreground">{entry.userEmail}</p>
+                          )}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>
+                              {format(new Date(entry.fromDate), "dd.MM.yyyy", { locale: nb })}
+                              {entry.toDate && ` → ${format(new Date(entry.toDate), "dd.MM.yyyy", { locale: nb })}`}
+                              {!entry.toDate && " → nå"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {pendingTransfer && (
+            <Card className="border-amber-500/30 bg-amber-500/5">
+              <CardContent className="p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span className="text-amber-400 font-medium">Aktiv overføring</span>
+                  <span className="text-muted-foreground">til {pendingTransfer.toEmail}</span>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setShowTransfer(true)}>
+                  Se detaljer
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="export" className="mt-6 space-y-4 animate-in fade-in-50 duration-500">

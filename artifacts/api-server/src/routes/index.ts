@@ -19,6 +19,7 @@ import serviceRemindersRouter from "./serviceReminders";
 import maintenanceAdviceRouter from "./maintenanceAdvice";
 import supportRouter from "./support";
 import chatRouter from "./chat";
+import vehicleTransfersRouter from "./vehicleTransfers";
 
 const router: IRouter = Router();
 
@@ -41,6 +42,7 @@ router.use(serviceRemindersRouter);
 router.use(maintenanceAdviceRouter);
 router.use(supportRouter);
 router.use(chatRouter);
+router.use(vehicleTransfersRouter);
 router.use(clubsRouter);
 
 export default router;

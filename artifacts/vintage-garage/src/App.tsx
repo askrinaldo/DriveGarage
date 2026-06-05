@@ -34,6 +34,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Admin from "@/pages/admin";
 import Help from "@/pages/help";
+import VehicleTransfer from "@/pages/vehicle-transfer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,17 +45,18 @@ const queryClient = new QueryClient({
   },
 });
 
-const AUTH_ROUTES = ["/login", "/register"];
+const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer"];
 
 function AppRoutes() {
   const [location] = useLocation();
-  const isAuthRoute = AUTH_ROUTES.some((r) => location === r || location.startsWith(r + "/"));
+  const isStandalone = STANDALONE_ROUTES.some((r) => location === r || location.startsWith(r + "/"));
 
-  if (isAuthRoute) {
+  if (isStandalone) {
     return (
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
       </Switch>
     );
   }
@@ -92,6 +94,7 @@ function AppRoutes() {
         <Route path="/clubs/:id" component={ClubDetail} />
         <Route path="/admin" component={Admin} />
         <Route path="/help" component={Help} />
+        <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

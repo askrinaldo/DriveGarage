@@ -19,3 +19,5 @@ export * from "./serviceReminders";
 export * from "./users";
 export * from "./supportTickets";
 export * from "./suggestions";
+export * from "./vehicleTransfers";
+export * from "./vehicleOwnershipHistory";
