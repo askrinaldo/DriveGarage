@@ -1,0 +1,242 @@
+Lag et komplett SUPER ADMIN PANEL for plattformen min for veteranbiler og klassiske motorsykler.
+
+TEKNOLOGI
+- React
+- TypeScript
+- Tailwind CSS
+- Node.js
+- PostgreSQL
+- Prisma ORM
+- Stripe
+
+SUPER ADMIN ROLLE
+
+Opprett en egen rolle:
+
+SUPER_ADMIN
+
+SUPER_ADMIN skal ha full tilgang til hele systemet.
+
+Kun SUPER_ADMIN kan:
+
+- Se alle brukere
+- Se alle klubber
+- Se alle kjøretøy
+- Se alle betalinger
+- Se alle abonnementer
+- Se alle fakturaer
+- Se alle supporthenvendelser
+- Se alle forslag til forbedringer
+- Se systemlogger
+
+------------------------------------------------
+
+SUPER ADMIN DASHBOARD
+
+Lag et moderne dashboard.
+
+Vis KPI-kort for:
+
+- Totalt antall brukere
+- Aktive brukere
+- Nye brukere denne måneden
+- Antall betalende medlemmer
+- Totalt antall klubber
+- Totalt antall kjøretøy
+- Totalt lagringsforbruk
+- Supportsaker
+
+ØKONOMI
+
+Vis:
+
+- Inntekt denne måneden
+- Inntekt forrige måned
+- Inntekt siste 12 måneder
+- Årlig gjentakende inntekt (ARR)
+- Månedlig gjentakende inntekt (MRR)
+- Antall aktive abonnementer
+
+Lag grafer for:
+
+- Brukervekst
+- Omsetning
+- Nye abonnementer
+- Oppsigelser
+
+------------------------------------------------
+
+BRUKERADMINISTRASJON
+
+Lag brukeroversikt med:
+
+- Navn
+- E-post
+- Telefon
+- Registreringsdato
+- Sist innlogget
+- Abonnementstype
+- Lagringsforbruk
+- Antall kjøretøy
+- Antall klubber
+
+Funksjoner:
+
+- Søk brukere
+- Filtrer brukere
+- Suspendere bruker
+- Aktivere bruker
+- Endre abonnement
+- Tilbakestille passord
+- Logg inn som bruker (impersonation)
+- Sende melding til bruker
+
+------------------------------------------------
+
+FAKTURERING
+
+Lag fakturasystem.
+
+Super Admin skal kunne:
+
+- Opprette faktura
+- Sende faktura på e-post
+- Registrere betaling
+- Registrere manuell betaling
+- Se åpne fakturaer
+- Se betalte fakturaer
+- Kreditere faktura
+
+Faktura skal inneholde:
+
+- Fakturanummer
+- Kundeinformasjon
+- Produkter
+- MVA-felt
+- Dato
+- Forfallsdato
+
+Generer PDF automatisk.
+
+------------------------------------------------
+
+KUNDEOPPFØLGING
+
+Lag CRM-funksjon.
+
+For hver kunde skal jeg kunne se:
+
+- Kontaktinformasjon
+- Historikk
+- Fakturaer
+- Betalinger
+- Supportsaker
+- Abonnement
+- Notater
+
+Jeg skal kunne:
+
+- Legge til interne notater
+- Opprette oppgaver
+- Markere oppfølging
+- Se tidligere kommunikasjon
+
+------------------------------------------------
+
+LAGRINGSOVERSIKT
+
+Vis per bruker:
+
+- Bilder
+- Dokumenter
+- Totalt antall filer
+- Brukt lagringsplass
+- Maks lagringsplass
+
+Eksempel:
+
+Ola Hansen
+3.2 GB brukt av 10 GB
+
+------------------------------------------------
+
+SUPPORTSENTER
+
+Vis alle supportsaker.
+
+Funksjoner:
+
+- Åpne saker
+- Pågående saker
+- Løste saker
+
+Mulighet for:
+
+- Svar til bruker
+- Interne notater
+- Prioritet
+- Tildeling til administrator
+
+------------------------------------------------
+
+FORBEDRINGSFORSLAG
+
+Lag oversikt over alle forslag.
+
+Vis:
+
+- Bruker
+- Dato
+- Forslag
+- Status
+
+Status:
+
+- Ny
+- Under vurdering
+- Planlagt
+- Fullført
+
+------------------------------------------------
+
+SIKKERHET
+
+- To-faktor autentisering
+- Audit-logg
+- Logging av admin-handlinger
+- Rollebasert tilgangskontroll
+
+------------------------------------------------
+
+DESIGN
+
+Designet skal være som moderne SaaS-systemer.
+
+Inspirert av:
+- Stripe
+- Notion
+- Linear
+- Shopify
+
+Bruk:
+- Tailwind CSS
+- Mørk modus
+- KPI-kort
+- Grafer
+- Datatabeller
+- Responsive sider
+
+------------------------------------------------
+
+GENERER
+
+1. Prisma schema
+2. Database-struktur
+3. API-ruter
+4. React-komponenter
+5. Dashboard
+6. Fakturasystem
+7. CRM-modul
+8. Supportsystem
+9. Lagringsoversikt
+10. Produksjonsklar kode
