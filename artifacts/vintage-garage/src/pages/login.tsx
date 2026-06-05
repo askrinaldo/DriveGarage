@@ -28,7 +28,7 @@ export default function Login() {
       return;
     }
     applyServerTheme(result.themePrefs.themeAccent, result.themePrefs.themeMode);
-    navigate("/");
+    navigate("/dashboard");
   }
 
   return (

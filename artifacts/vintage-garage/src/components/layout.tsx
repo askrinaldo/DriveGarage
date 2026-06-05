@@ -16,7 +16,7 @@ export function Layout({ children }: LayoutProps) {
   const { isAuthenticated, isSuperAdmin, name, logout } = useUserAuth();
 
   const navItems = [
-    { href: "/", label: "Oversikt", icon: LayoutDashboard },
+    { href: "/dashboard", label: "Oversikt", icon: LayoutDashboard },
     { href: "/vehicles", label: "Garasjen min", icon: Car },
     { href: "/clubs", label: "Klubber", icon: Users },
     { href: "/help", label: "Hjelp", icon: HelpCircle },
@@ -31,7 +31,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <aside className="w-64 flex-shrink-0 border-r border-sidebar-border bg-sidebar hidden md:flex flex-col">
         <div className="p-6">
-          <Link href="/">
+          <Link href="/dashboard">
             <div className="flex items-center gap-3 cursor-pointer">
               <div className="bg-primary/20 p-2 rounded-md">
                 <Wrench className="w-6 h-6 text-primary" />

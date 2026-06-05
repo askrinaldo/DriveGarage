@@ -29,7 +29,7 @@ export default function Register() {
       return;
     }
     applyServerTheme(result.themePrefs.themeAccent, result.themePrefs.themeMode);
-    navigate("/");
+    navigate("/dashboard");
   }
 
   return (

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/theme";
 import { AiChatWidget } from "@/components/ai-chat-widget";
 import NotFound from "@/pages/not-found";
 
+import LandingPage from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import VehicleList from "@/pages/vehicle-list";
 import VehicleForm from "@/pages/vehicle-form";
@@ -45,15 +46,20 @@ const queryClient = new QueryClient({
   },
 });
 
-const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer"];
+const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/"];
 
 function AppRoutes() {
   const [location] = useLocation();
-  const isStandalone = STANDALONE_ROUTES.some((r) => location === r || location.startsWith(r + "/"));
+  const isStandalone =
+    location === "/" ||
+    STANDALONE_ROUTES.filter((r) => r !== "/").some(
+      (r) => location === r || location.startsWith(r + "/")
+    );
 
   if (isStandalone) {
     return (
       <Switch>
+        <Route path="/" component={LandingPage} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
@@ -64,7 +70,7 @@ function AppRoutes() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/vehicles" component={VehicleList} />
         <Route path="/vehicles/new" component={VehicleForm} />
         <Route path="/vehicles/:id" component={VehicleDetail} />
@@ -94,7 +100,6 @@ function AppRoutes() {
         <Route path="/clubs/:id" component={ClubDetail} />
         <Route path="/admin" component={Admin} />
         <Route path="/help" component={Help} />
-        <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
