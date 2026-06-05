@@ -1,0 +1,207 @@
+Utvid plattformen med følgende funksjoner og implementer dem med React, TypeScript, Node.js, PostgreSQL og Prisma.
+
+SUPER ADMIN SYSTEM
+
+Lag et eget Super Admin-panel som kun er tilgjengelig for nettstedets eiere.
+
+Super Admin skal kunne:
+
+- Se alle brukere
+- Søke etter brukere
+- Se alle klubber
+- Se alle kjøretøy
+- Se alle abonnementer
+- Se alle betalinger
+- Se systemlogger
+- Se innsendte forbedringsforslag
+- Se statistikk over aktivitet
+
+Super Admin skal kunne:
+
+- Redigere brukere
+- Nullstille passord
+- Aktivere/deaktivere kontoer
+- Hjelpe brukere med feil
+- Flytte eierskap av klubber
+- Suspendere brukere
+- Suspendere klubber
+- Sende meldinger til brukere
+- Sende meldinger til alle medlemmer
+
+Lag rolle:
+
+SUPER_ADMIN
+
+Denne rollen skal ha tilgang til absolutt alt i systemet.
+
+------------------------------------------------
+
+SUPPORT-SYSTEM
+
+Lag et hjelpesystem hvor brukere kan:
+
+- Opprette supportsaker
+- Kontakte administrator
+- Rapportere feil
+- Be om hjelp
+
+Super Admin skal kunne:
+
+- Se alle saker
+- Svare på saker
+- Lukke saker
+- Markere saker som løst
+
+------------------------------------------------
+
+AI-HJELPEBOT
+
+Lag en AI-chatbot nederst til høyre på alle sider.
+
+Funksjoner:
+
+- Hjelpe brukere med nettsiden
+- Forklare funksjoner
+- Hjelpe med registrering av kjøretøy
+- Hjelpe med klubber
+- Hjelpe med abonnement
+
+Chatvindu:
+
+- Flytende knapp nederst til høyre
+- Åpnes som popup
+- Mobilvennlig
+- Mørk modus
+
+Lag støtte for OpenAI API.
+
+Hvis AI ikke kan hjelpe:
+
+- Opprett supportsak automatisk
+
+------------------------------------------------
+
+FORBEDRINGSFORSLAG
+
+Lag egen funksjon:
+
+"Send forbedringsforslag"
+
+Brukere kan sende:
+
+- Ideer
+- Feilmeldinger
+- Ønsker om nye funksjoner
+
+Når forslag sendes:
+
+- Lagres i databasen
+- Vises i Super Admin-panel
+- Sendes til administrator e-post
+
+Felter:
+
+- Tittel
+- Beskrivelse
+- Prioritet
+- Bruker-ID
+- Dato
+
+------------------------------------------------
+
+TEMA OG FARGER
+
+La brukere velge egne temaer.
+
+Standardtema:
+- Mørkt
+
+Velgbare farger:
+
+- Blå
+- Rød
+- Grønn
+- Oransje
+- Gul
+- Lilla
+- Grå
+
+Brukere skal kunne:
+
+- Endre hovedfarge
+- Endre aksentfarge
+- Bytte mellom lys og mørk modus
+
+Lagre valg i databasen.
+
+Temaet skal lastes automatisk ved innlogging.
+
+------------------------------------------------
+
+VARSLINGSSENTER
+
+Lag varslinger for:
+
+- Nye klubbinvitasjoner
+- Kommentarer
+- Likes
+- Arrangementer
+- Supportsvar
+- AI-varsler
+- Systemmeldinger
+
+Vis varsler i toppmenyen.
+
+------------------------------------------------
+
+ADMIN DASHBOARD
+
+Lag statistikk for:
+
+- Totalt antall brukere
+- Aktive abonnementer
+- Inntekt siste måned
+- Inntekt siste år
+- Antall kjøretøy
+- Antall klubber
+- Antall innlegg
+- Aktive medlemmer
+
+Lag grafer og KPI-kort.
+
+------------------------------------------------
+
+SIKKERHET
+
+- JWT
+- Rate limiting
+- CSRF-beskyttelse
+- Audit logs
+- Rollebasert tilgangskontroll
+- To-faktor autentisering
+- E-postverifisering
+
+------------------------------------------------
+
+SKALERBARHET
+
+Systemet skal håndtere:
+
+- 1000+ aktive brukere
+- 10000+ kjøretøy
+- 100+ klubber
+- 100000+ bilder og dokumenter
+
+Optimaliser database og API for produksjon.
+
+Generer:
+1. Prisma schema
+2. Database-struktur
+3. API-ruter
+4. Frontend-komponenter
+5. Admin-panel
+6. AI-chat
+7. Supportsystem
+8. Temasystem
+9. Produksjonsklar kode
+10. Full filstruktur
