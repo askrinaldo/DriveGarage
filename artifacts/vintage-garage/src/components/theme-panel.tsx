@@ -5,6 +5,22 @@ import {
 } from "@/components/ui/popover";
 import { Palette, Moon, Sun, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+
+function useSystemColorScheme() {
+  const [isDark, setIsDark] = useState(
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return isDark ? "Mørk" : "Lys";
+}
 
 const ACCENT_OPTIONS: { id: AccentColor; label: string }[] = [
   { id: "kobber", label: "Kobber" },
@@ -29,6 +45,7 @@ function accentSwatch(accent: AccentColor) {
 
 export function ThemeControls() {
   const { accent, mode, setAccent, setMode } = useTheme();
+  const systemScheme = useSystemColorScheme();
 
   return (
     <div className="space-y-4">
@@ -73,6 +90,11 @@ export function ThemeControls() {
             >
               {opt.icon}
               {opt.label}
+              {opt.id === "auto" && (
+                <span className="text-[10px] font-normal leading-none text-muted-foreground">
+                  nå: {systemScheme}
+                </span>
+              )}
             </button>
           ))}
         </div>
