@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageCircle, X, Send, Bot, User, Loader2, ExternalLink, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { getUserToken } from "@/hooks/use-user-auth";
@@ -156,6 +157,7 @@ export function AiChatWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [, navigate] = useLocation();
@@ -291,13 +293,43 @@ export function AiChatWidget() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => void clearHistory()}
-                className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                title="Ny samtale"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
+              <Popover open={confirmClear} onOpenChange={setConfirmClear}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                    title="Ny samtale"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="end" className="w-56 p-3">
+                  <p className="text-sm font-medium mb-1">Slette samtalen?</p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Hele chathistorikken slettes permanent.
+                  </p>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setConfirmClear(false)}
+                    >
+                      Avbryt
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setConfirmClear(false);
+                        void clearHistory();
+                      }}
+                    >
+                      Slett
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <button
                 onClick={() => setOpen(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors p-1"
