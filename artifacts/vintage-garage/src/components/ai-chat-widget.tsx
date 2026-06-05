@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2, ExternalLink } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { MessageCircle, X, Send, Bot, User, Loader2, ExternalLink, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
@@ -10,10 +10,34 @@ interface Message {
   content: string;
 }
 
+const STORAGE_KEY = "vg-chat-history";
+const MAX_MESSAGES = 20;
+
 const WELCOME: Message = {
   role: "assistant",
   content: "Hei! Jeg er Vintage Garage-assistenten 🔧 Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber og mer. Hva lurer du på?",
 };
+
+function loadHistory(): Message[] {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return [WELCOME];
+    const parsed = JSON.parse(raw) as Message[];
+    if (!Array.isArray(parsed) || parsed.length === 0) return [WELCOME];
+    return parsed;
+  } catch {
+    return [WELCOME];
+  }
+}
+
+function saveHistory(messages: Message[]) {
+  try {
+    const trimmed = messages.slice(-MAX_MESSAGES);
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+  } catch {
+    // sessionStorage unavailable
+  }
+}
 
 function renderContent(content: string, navigate: (path: string) => void) {
   const parts = content.split(/(\[.+?\]\(\/[^)]+\))/g);
@@ -41,12 +65,16 @@ function renderContent(content: string, navigate: (path: string) => void) {
 
 export function AiChatWidget() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([WELCOME]);
+  const [messages, setMessages] = useState<Message[]>(() => loadHistory());
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    saveHistory(messages);
+  }, [messages]);
 
   useEffect(() => {
     if (open) {
@@ -57,6 +85,11 @@ export function AiChatWidget() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  const clearHistory = useCallback(() => {
+    setMessages([WELCOME]);
+    sessionStorage.removeItem(STORAGE_KEY);
+  }, []);
 
   async function send() {
     const text = input.trim();
@@ -131,12 +164,21 @@ export function AiChatWidget() {
                 <p className="text-[10px] text-muted-foreground">AI-hjelp for Vintage Garage</p>
               </div>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={clearHistory}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                title="Ny samtale"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
