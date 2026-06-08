@@ -1,10 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle, Palette, CreditCard, Trophy, Star, IdCard, Building2, ChevronRight, Settings } from "lucide-react";
+import {
+  LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown,
+  User, ChevronDown, HelpCircle, Palette, CreditCard, Trophy,
+  Star, IdCard, Building2, ChevronRight, Settings, Zap, Menu, X
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { useState, useEffect } from "react";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemePanel, ThemeControls } from "@/components/theme-panel";
 
@@ -24,12 +29,35 @@ function authHeader(token: string | null): Record<string, string> {
   return { "x-user-token": token };
 }
 
+const navItems = [
+  { href: "/dashboard",        label: "Oversikt",          icon: LayoutDashboard, accent: "indigo" },
+  { href: "/vehicles",         label: "Garasjen min",       icon: Car,            accent: "sky"    },
+  { href: "/clubs",            label: "Klubber",            icon: Users,           accent: "violet" },
+  { href: "/prosjekt",         label: "Månedens prosjekt",  icon: Star,            accent: "amber"  },
+  { href: "/leaderboard",      label: "Leaderboard",        icon: Trophy,          accent: "yellow" },
+  { href: "/membership-card",  label: "Medlemskort",        icon: IdCard,          accent: "cyan"   },
+  { href: "/billing",          label: "Abonnement",         icon: CreditCard,      accent: "emerald"},
+  { href: "/help",             label: "Hjelp",              icon: HelpCircle,      accent: "slate"  },
+];
+
+const accentGradient: Record<string, string> = {
+  indigo:  "from-indigo-500 to-cyan-500",
+  sky:     "from-sky-500 to-blue-500",
+  violet:  "from-violet-500 to-purple-500",
+  amber:   "from-amber-500 to-orange-400",
+  yellow:  "from-yellow-400 to-amber-400",
+  cyan:    "from-cyan-500 to-teal-500",
+  emerald: "from-emerald-500 to-teal-500",
+  slate:   "from-slate-400 to-slate-500",
+};
+
 export function Layout({ children }: LayoutProps) {
   const [location, navigate] = useLocation();
   const { isAuthenticated, isSuperAdmin, name, logout, token, tenantId, tenantName, isPersonalTenant, switchTenant } = useUserAuth();
 
   const [tenants, setTenants] = useState<TenantEntry[]>([]);
   const [switchingTenant, setSwitchingTenant] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !token) return;
@@ -39,16 +67,7 @@ export function Layout({ children }: LayoutProps) {
     })();
   }, [isAuthenticated, token, tenantId]);
 
-  const navItems = [
-    { href: "/dashboard", label: "Oversikt", icon: LayoutDashboard },
-    { href: "/vehicles", label: "Garasjen min", icon: Car },
-    { href: "/clubs", label: "Klubber", icon: Users },
-    { href: "/prosjekt", label: "Månedens prosjekt", icon: Star },
-    { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-    { href: "/membership-card", label: "Medlemskort", icon: IdCard },
-    { href: "/billing", label: "Abonnement", icon: CreditCard },
-    { href: "/help", label: "Hjelp", icon: HelpCircle },
-  ];
+  useEffect(() => { setMobileOpen(false); }, [location]);
 
   function handleLogout() {
     logout();
@@ -65,204 +84,260 @@ export function Layout({ children }: LayoutProps) {
 
   const hasMultipleTenants = tenants.length > 1;
 
-  return (
-    <div className="flex min-h-screen w-full bg-background text-foreground">
-      <aside className="w-64 flex-shrink-0 border-r border-sidebar-border bg-sidebar hidden md:flex flex-col">
-        <div className="p-6">
-          <Link href="/dashboard">
-            <div className="flex items-center gap-3 cursor-pointer">
-              <div className="bg-primary/20 p-2 rounded-md">
-                <Wrench className="w-6 h-6 text-primary" />
-              </div>
-              <span className="font-bold text-xl tracking-tight text-sidebar-foreground">Vintage Garage</span>
+  const sidebar = (
+    <aside className="w-64 flex-shrink-0 flex flex-col h-full" style={{ background: "#080c14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+
+      {/* Logo */}
+      <div className="px-5 pt-6 pb-4">
+        <Link href="/dashboard">
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-900/40 group-hover:shadow-indigo-900/60 transition-shadow">
+              <Wrench className="w-5 h-5 text-white" />
             </div>
-          </Link>
+            <span className="font-black text-lg tracking-tight text-white">VintageGarage</span>
+          </div>
+        </Link>
+      </div>
+
+      {/* Tenant switcher */}
+      {isAuthenticated && (
+        <div className="px-3 pb-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/[0.07] bg-white/[0.04] hover:bg-white/[0.07] transition-colors text-left group">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 flex items-center justify-center shrink-0">
+                  <Building2 className="w-3.5 h-3.5 text-indigo-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-white/80 truncate">{tenantName ?? "Min garasje"}</p>
+                  <p className="text-[10px] text-white/30">{isPersonalTenant ? "Personlig konto" : "Organisasjon"}</p>
+                </div>
+                <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 bg-[#0f1520] border-white/10 text-white/80">
+              {hasMultipleTenants && (
+                <>
+                  <div className="px-2 py-1.5">
+                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Bytt garasje</p>
+                  </div>
+                  {tenants.map((t) => (
+                    <DropdownMenuItem
+                      key={t.tenantId}
+                      onClick={() => void handleSwitchTenant(t.tenantId)}
+                      className={cn("gap-2 focus:bg-white/10 focus:text-white", t.tenantId === tenantId && "text-indigo-300")}
+                      disabled={switchingTenant}
+                    >
+                      <Building2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{t.tenantName}</span>
+                      {t.tenantId === tenantId && <ChevronRight className="w-3 h-3 ml-auto" />}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator className="bg-white/10" />
+                </>
+              )}
+              <DropdownMenuItem onClick={() => navigate("/tenant-new")} className="gap-2 focus:bg-white/10 focus:text-white">
+                <Plus className="w-3.5 h-3.5" />
+                Ny organisasjon
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/org/settings")} className="gap-2 focus:bg-white/10 focus:text-white">
+                <Settings className="w-3.5 h-3.5" />
+                Innstillinger
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-1 space-y-0.5 overflow-y-auto">
+        <div className="pb-1 px-1">
+          <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-2">Navigasjon</p>
         </div>
 
-        {/* Tenant / Org switcher */}
-        {isAuthenticated && (
-          <div className="px-4 pb-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors text-left">
-                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
-                    <Building2 className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-sidebar-foreground truncate">
-                      {tenantName ?? "Min garasje"}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {isPersonalTenant ? "Personlig" : "Organisasjon"}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {hasMultipleTenants && (
-                  <>
-                    <div className="px-2 py-1.5">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bytt garasje</p>
-                    </div>
-                    {tenants.map((t) => (
-                      <DropdownMenuItem
-                        key={t.tenantId}
-                        onClick={() => void handleSwitchTenant(t.tenantId)}
-                        className={cn("gap-2", t.tenantId === tenantId && "bg-primary/10 text-primary")}
-                        disabled={switchingTenant}
-                      >
-                        <Building2 className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{t.tenantName}</span>
-                        {t.tenantId === tenantId && <ChevronRight className="w-3 h-3 ml-auto" />}
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem onClick={() => navigate("/tenant-new")} className="gap-2">
-                  <Plus className="w-3.5 h-3.5" />
-                  Ny organisasjon
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/org/settings")} className="gap-2">
-                  <Settings className="w-3.5 h-3.5" />
-                  Organisasjonsinnstillinger
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
-
-        <nav className="flex-1 px-4 py-2 space-y-1">
-          {navItems.map((item) => (
+        {navItems.map((item) => {
+          const isActive = location === item.href || location.startsWith(item.href + "/");
+          const gradient = accentGradient[item.accent] ?? "from-indigo-500 to-cyan-500";
+          return (
             <Link key={item.href} href={item.href}>
               <div
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium",
-                  location === item.href
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer text-sm font-medium group",
+                  isActive
+                    ? "text-white bg-white/[0.08]"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
                 )}
-                data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
+                data-testid={`nav-${item.label.toLowerCase().replace(/ /g, "-")}`}
               >
-                <item.icon className="w-4 h-4" />
-                {item.label}
+                {isActive && (
+                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-gradient-to-b ${gradient}`} />
+                )}
+                <div className={cn(
+                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all",
+                  isActive
+                    ? `bg-gradient-to-br ${gradient} shadow-sm`
+                    : "bg-white/[0.05] group-hover:bg-white/[0.08]"
+                )}>
+                  <item.icon className={cn("w-3.5 h-3.5", isActive ? "text-white" : "text-white/40 group-hover:text-white/60")} />
+                </div>
+                <span className="flex-1">{item.label}</span>
               </div>
             </Link>
-          ))}
+          );
+        })}
 
-          {isSuperAdmin && (
-            <Link href="/admin">
-              <div
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium",
-                  location === "/admin"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-primary/80 hover:text-primary hover:bg-primary/10"
-                )}
-              >
-                <Crown className="w-4 h-4" />
-                Admin-panel
+        {isSuperAdmin && (
+          <Link href="/admin">
+            <div className={cn(
+              "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer text-sm font-medium group",
+              location === "/admin"
+                ? "text-white bg-white/[0.08]"
+                : "text-amber-400/60 hover:text-amber-300 hover:bg-amber-900/20"
+            )}>
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-sm">
+                <Crown className="w-3.5 h-3.5 text-white" />
               </div>
-            </Link>
-          )}
-
-          <ThemePanel />
-        </nav>
-
-        <div className="p-4 border-t border-sidebar-border space-y-2">
-          <Link href="/vehicles/new">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors cursor-pointer text-sm font-medium">
-              <Plus className="w-4 h-4" />
-              Legg til kjøretøy
+              Admin-panel
             </div>
           </Link>
+        )}
 
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-sidebar-accent transition-colors cursor-pointer text-sm">
-                  <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                    <User className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-sidebar-foreground truncate">{name}</p>
-                    {isSuperAdmin && <p className="text-[10px] text-primary">Super Admin</p>}
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {isSuperAdmin && (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate("/admin")}>
-                      <Crown className="w-4 h-4 mr-2" />
-                      Admin-panel
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <div className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tema</span>
-                  </div>
-                  <ThemeControls />
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logg ut
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <div className="flex gap-2">
-              <Link href="/login" className="flex-1">
-                <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer text-xs font-medium">
-                  Logg inn
-                </div>
-              </Link>
-              <Link href="/register" className="flex-1">
-                <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border border-border hover:bg-sidebar-accent transition-colors cursor-pointer text-xs font-medium text-sidebar-foreground">
-                  Registrer
-                </div>
-              </Link>
-            </div>
-          )}
+        <div className="pt-2">
+          <ThemePanel />
         </div>
-      </aside>
+      </nav>
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Mobile header */}
-        <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card">
-          <div className="flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-primary" />
-            <span className="font-bold text-lg">Vintage Garage</span>
+      {/* Footer */}
+      <div className="p-3 space-y-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        {/* CTA */}
+        <Link href="/vehicles/new">
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600/80 to-cyan-600/80 hover:from-indigo-500/90 hover:to-cyan-500/90 transition-all cursor-pointer text-sm font-semibold text-white shadow-sm shadow-indigo-900/30">
+            <Plus className="w-4 h-4" />
+            Legg til kjøretøy
           </div>
-          <div className="flex items-center gap-2">
+        </Link>
+
+        {/* User menu */}
+        {isAuthenticated ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/[0.05] transition-colors cursor-pointer">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-sm">
+                  {name ? name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-white/80 truncate">{name}</p>
+                  {isSuperAdmin
+                    ? <p className="text-[10px] text-amber-400/80">Super Admin</p>
+                    : <p className="text-[10px] text-white/30">Innlogget</p>
+                  }
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-white/20 shrink-0" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-[#0f1520] border-white/10 text-white/80">
+              <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 focus:bg-white/10 focus:text-white">
+                <User className="w-4 h-4 mr-2" />
+                Min profil
+              </DropdownMenuItem>
+              {isSuperAdmin && (
+                <>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2 focus:bg-white/10 focus:text-white">
+                    <Crown className="w-4 h-4 mr-2" />
+                    Admin-panel
+                  </DropdownMenuItem>
+                </>
+              )}
+              <div className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Palette className="w-3.5 h-3.5 text-white/30" />
+                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Tema</span>
+                </div>
+                <ThemeControls />
+              </div>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem onClick={handleLogout} className="gap-2 text-red-400/80 focus:bg-red-900/20 focus:text-red-300">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logg ut
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="flex gap-2">
+            <Link href="/login" className="flex-1">
+              <div className="flex items-center justify-center px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 transition-all cursor-pointer text-xs font-bold text-white">
+                Logg inn
+              </div>
+            </Link>
+            <Link href="/register" className="flex-1">
+              <div className="flex items-center justify-center px-3 py-2 rounded-xl border border-white/[0.08] hover:bg-white/[0.05] transition-colors cursor-pointer text-xs font-semibold text-white/50">
+                Registrer
+              </div>
+            </Link>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+
+  return (
+    <div className="flex min-h-screen w-full" style={{ background: "#080c14" }}>
+
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex flex-col" style={{ width: 256, flexShrink: 0 }}>
+        {sidebar}
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMobileOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        </div>
+      )}
+
+      {/* Mobile drawer */}
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-50 w-64 md:hidden transition-transform duration-300",
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        {sidebar}
+      </div>
+
+      {/* Main */}
+      <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
+
+        {/* Mobile header */}
+        <header className="md:hidden flex items-center justify-between px-4 py-3 sticky top-0 z-30" style={{ background: "rgba(8,12,20,0.9)", borderBottom: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}>
+          <div className="flex items-center gap-2.5">
+            <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+              <Menu className="w-5 h-5 text-white/60" />
+            </button>
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
+              <Wrench className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-black text-base text-white tracking-tight">VintageGarage</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <ThemePanel
               iconOnly
-              buttonClassName="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent w-auto"
+              buttonClassName="p-2 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/10 transition-colors w-auto"
               popoverSide="bottom"
             />
             {isAuthenticated ? (
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-md text-muted-foreground hover:text-foreground"
-              >
+              <button onClick={handleLogout} className="p-2 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-900/20 transition-colors">
                 <LogOut className="w-4 h-4" />
               </button>
             ) : (
               <Link href="/login">
-                <div className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium">
+                <div className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 text-white text-xs font-bold">
                   Logg inn
                 </div>
               </Link>
             )}
             <Link href="/vehicles/new">
-              <div className="p-2 rounded-md bg-primary text-primary-foreground">
-                <Plus className="w-4 h-4" />
+              <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600">
+                <Plus className="w-4 h-4 text-white" />
               </div>
             </Link>
           </div>
