@@ -1,0 +1,257 @@
+Bygg et PREMIUM SUPER ADMIN DASHBOARD for min plattform (veteranbiler og motorsykler).
+
+Målet er å lage et ekstremt oversiktlig, moderne og intuitivt admin-system som gjør det lett å forstå:
+- inntekter
+- brukere
+- abonnementer
+- hvem som betaler og ikke
+- systemhelse
+- vekst
+
+TEKNOLOGI
+- React
+- TypeScript
+- Tailwind CSS
+- Node.js
+- PostgreSQL
+- Prisma
+- Stripe API
+- Recharts eller Chart.js
+
+DESIGN DIRECTION
+Designet skal være inspirert av:
+- Stripe Dashboard
+- Shopify Admin
+- Linear
+- Vercel Analytics
+
+Skal være:
+- ekstremt ryddig
+- visuelt premium
+- lett å lese på 3 sekunder
+- kort-basert UI + grafer + tabeller
+- mørk modus først
+
+------------------------------------------------
+
+SUPER ADMIN DASHBOARD STRUKTUR
+
+TOP BAR (HEADER)
+- global søk (brukere, faktura, klubber)
+- notifications bell
+- admin profil
+- quick actions
+
+------------------------------------------------
+
+HOVED DASHBOARD (OVERVIEW)
+
+Lag KPI CARDS øverst:
+
+1. TOTAL INNTEKT (MRR)
+- kr per måned
+- prosent endring siste 30 dager
+- grønn/rød trend indikator
+
+2. ÅRLIG INNTEKT (ARR)
+- total annual revenue
+- growth %
+
+3. AKTIVE BRUKERE
+- totalt
+- nye denne måneden
+- churn rate
+
+4. BETALENDE KUNDER
+- aktive abonnement
+- gratis brukere vs betalende
+
+5. LAGRING
+- total brukt lagring (GB)
+- gjennomsnitt per bruker
+- maks bruk
+
+6. SUPPORT TICKETS
+- åpne saker
+- i behandling
+- løst
+
+------------------------------------------------
+
+INNTEKTS-SEKSJON (VELDIG VIKTIG)
+
+Lag en stor graf-seksjon:
+
+- MRR over tid (linjegraf)
+- ARR utvikling
+- nye abonnement per måned
+- kanselleringer (churn)
+
+Vis også:
+
+- topp 10 betalende kunder
+- gjennomsnittlig inntekt per bruker (ARPU)
+- lifetime value estimat (LTV)
+
+------------------------------------------------
+
+BRUKEROVERSIKT (CRM VIEW)
+
+Lag en avansert tabell:
+
+Kolonner:
+- navn
+- e-post
+- status (active / suspended / unpaid)
+- abonnementstype
+- siste betaling
+- neste betaling
+- totalt betalt
+- lagringsbruk
+- siste innlogging
+
+Funksjoner:
+- filter: betalende / ikke betalende / suspendert
+- søk
+- sortering
+- bulk actions
+
+Når jeg klikker på bruker → åpne USER DETAIL PAGE
+
+------------------------------------------------
+
+USER DETAIL PAGE (CRM PRO VIEW)
+
+Vis:
+
+PROFIL
+- navn
+- e-post
+- rolle
+- status
+
+FINANS
+- alle betalinger
+- fakturaer
+- Stripe status
+- abonnement historikk
+
+BRUK
+- lagringsbruk
+- antall kjøretøy
+- antall klubber
+- aktivitet logg
+
+ACTIONS:
+- oppgrader abonnement
+- nedgrader abonnement
+- gi gratis tilgang
+- suspendere bruker
+- logg inn som bruker (impersonate)
+- send melding
+
+------------------------------------------------
+
+BETALINGER / INNBETALING
+
+Lag “Payments Dashboard”:
+
+- liste over alle betalinger
+- filter:
+  - betalt
+  - ikke betalt
+  - feilet betaling
+  - refundert
+
+Vis:
+- fakturanummer
+- bruker
+- beløp
+- status
+- dato
+- betalingsmetode
+
+Legg til:
+- “send påminnelse”
+- “refund”
+- “mark as paid”
+
+------------------------------------------------
+
+ABONNEMENT VIEW
+
+Vis:
+
+- aktive abonnement
+- kansellerte abonnement
+- gratis brukere
+- oppgraderinger/downgrades
+
+Vis også:
+- MRR per plan
+- churn per plan
+
+------------------------------------------------
+
+SUPPORT & CRM
+
+Vis:
+- alle support tickets
+- prioritet
+- status
+- hvem som håndterer saken
+
+------------------------------------------------
+
+SYSTEM HEALTH
+
+Vis:
+- API status
+- database status
+- lagringsstatus
+- feil logs
+- responstid
+
+------------------------------------------------
+
+VISUAL UX KRAV
+
+- store tydelige KPI cards
+- gradient highlights for inntekt
+- grønne/røde indikatorer
+- hover states
+- smooth transitions
+- data tables med sticky header
+- sidepanel for user details
+- modals for actions
+
+------------------------------------------------
+
+ROLLE SYSTEM
+
+- SUPER_ADMIN (full tilgang)
+- ADMIN (begrenset tilgang)
+- SUPPORT (kun support + users)
+
+------------------------------------------------
+
+GENERER
+
+1. Komplett UI (React + Tailwind)
+2. Admin routing system
+3. Dashboard pages
+4. CRM system (brukere)
+5. Payments system UI
+6. Subscription system UI
+7. Stripe integration hooks
+8. Database schema (Prisma)
+9. API endpoints
+10. Full produksjonsklar struktur
+
+SYSTEMKRAV
+Systemet må kunne håndtere:
+- 1000+ brukere
+- 10 000+ betalinger
+- sanntids dashboard data
+
+Gjør UI ekstremt ryddig, moderne og lett å forstå.

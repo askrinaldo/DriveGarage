@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { eq, desc, count, sql, gte } from "drizzle-orm";
-import { db, usersTable, vehiclesTable, auditLogsTable } from "@workspace/db";
+import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable } from "@workspace/db";
 import { parseUserAuth, requireSuperAdmin } from "../middleware/userAuth";
 
 const router = Router();
 
-// ─── Detailed user list with tier + vehicle count ─────────────────────────
+// ─── Detailed user list ────────────────────────────────────────────────────
 router.get("/admin/users-detailed", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const users = await db
     .select({
@@ -44,7 +44,6 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
   const sixtyDaysAgo = now - 60 * 24 * 60 * 60;
   const startOfYear = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
 
-  // Tier breakdown from users table
   const tierCounts = await db
     .select({ tier: usersTable.subscriptionTier, cnt: count() })
     .from(usersTable)
@@ -53,7 +52,6 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
   const tierMap: Record<string, number> = {};
   for (const row of tierCounts) tierMap[row.tier ?? "free"] = Number(row.cnt);
 
-  // New users this month
   const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
   const [newUsersRow] = await db
     .select({ cnt: count() })
@@ -61,7 +59,6 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
     .where(gte(usersTable.createdAt, new Date(monthStart * 1000)));
   const newUsersThisMonth = Number(newUsersRow?.cnt ?? 0);
 
-  // Stripe revenue stats (raw SQL since stripe schema is outside drizzle)
   let activeSubscriptions = 0;
   let mrrOre = 0;
   let revenueThisMonthOre = 0;
@@ -74,7 +71,6 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
     );
     activeSubscriptions = Number((activeSubsResult.rows[0] as Record<string, unknown>)?.cnt ?? 0);
 
-    // MRR: sum unit amounts from active subscription items (monthly equivalent)
     const mrrResult = await db.execute(sql`
       SELECT COALESCE(SUM(
         CASE
@@ -88,7 +84,6 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
     `);
     mrrOre = Number((mrrResult.rows[0] as Record<string, unknown>)?.mrr_ore ?? 0);
 
-    // Revenue this month (paid invoices)
     const revThisMonthResult = await db.execute(sql`
       SELECT COALESCE(SUM(amount_paid), 0) AS total
       FROM stripe.invoices
@@ -96,7 +91,6 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
     `);
     revenueThisMonthOre = Number((revThisMonthResult.rows[0] as Record<string, unknown>)?.total ?? 0);
 
-    // Revenue last month
     const revLastMonthResult = await db.execute(sql`
       SELECT COALESCE(SUM(amount_paid), 0) AS total
       FROM stripe.invoices
@@ -104,7 +98,6 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
     `);
     revenueLastMonthOre = Number((revLastMonthResult.rows[0] as Record<string, unknown>)?.total ?? 0);
 
-    // Revenue YTD
     const revYtdResult = await db.execute(sql`
       SELECT COALESCE(SUM(amount_paid), 0) AS total
       FROM stripe.invoices
@@ -112,10 +105,9 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
     `);
     revenueYtdOre = Number((revYtdResult.rows[0] as Record<string, unknown>)?.total ?? 0);
   } catch {
-    // stripe schema may be empty in dev — fallback to zeros
+    // stripe schema may be empty in dev
   }
 
-  // Monthly user growth (last 6 months)
   const userGrowth = await db.execute(sql`
     SELECT
       TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YY') AS month,
@@ -149,6 +141,135 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
   });
 });
 
+// ─── MRR history (last 12 months) ─────────────────────────────────────────
+router.get("/admin/mrr-history", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  let rows: Array<{ month: string; mrr: number; newSubs: number; churned: number }> = [];
+
+  try {
+    const result = await db.execute(sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', TO_TIMESTAMP(created)), 'Mon YY') AS month,
+        DATE_TRUNC('month', TO_TIMESTAMP(created)) AS month_date,
+        COALESCE(SUM(amount_paid), 0) AS revenue_ore,
+        COUNT(*) FILTER (WHERE status = 'paid') AS paid_count,
+        COUNT(*) FILTER (WHERE amount_paid = 0) AS zero_count
+      FROM stripe.invoices
+      WHERE created >= EXTRACT(EPOCH FROM NOW() - INTERVAL '12 months')
+      GROUP BY DATE_TRUNC('month', TO_TIMESTAMP(created))
+      ORDER BY month_date
+    `);
+
+    rows = (result.rows as Array<Record<string, unknown>>).map(r => ({
+      month: String(r.month ?? ""),
+      mrr: Math.round(Number(r.revenue_ore ?? 0) / 100),
+      newSubs: Number(r.paid_count ?? 0),
+      churned: Number(r.zero_count ?? 0),
+    }));
+  } catch {
+    // No stripe schema yet
+  }
+
+  // If no data, return empty placeholder months
+  if (rows.length === 0) {
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      rows.push({
+        month: d.toLocaleDateString("nb-NO", { month: "short", year: "2-digit" }),
+        mrr: 0,
+        newSubs: 0,
+        churned: 0,
+      });
+    }
+  }
+
+  res.json(rows);
+});
+
+// ─── Stripe invoices list ─────────────────────────────────────────────────
+router.get("/admin/invoices", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  let invoices: Array<{
+    id: string;
+    customerEmail: string;
+    amount: number;
+    status: string;
+    created: number;
+    hostedUrl: string | null;
+  }> = [];
+
+  try {
+    const result = await db.execute(sql`
+      SELECT
+        id,
+        customer_email,
+        amount_paid,
+        amount_due,
+        status,
+        created,
+        hosted_invoice_url
+      FROM stripe.invoices
+      ORDER BY created DESC
+      LIMIT 200
+    `);
+
+    invoices = (result.rows as Array<Record<string, unknown>>).map(r => ({
+      id: String(r.id ?? ""),
+      customerEmail: String(r.customer_email ?? "—"),
+      amount: Math.round(Number(r.amount_paid ?? r.amount_due ?? 0) / 100),
+      status: String(r.status ?? "unknown"),
+      created: Number(r.created ?? 0),
+      hostedUrl: r.hosted_invoice_url ? String(r.hosted_invoice_url) : null,
+    }));
+  } catch {
+    // No stripe schema
+  }
+
+  res.json(invoices);
+});
+
+// ─── System health ────────────────────────────────────────────────────────
+router.get("/admin/system-health", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const start = Date.now();
+  let dbOk = false;
+  let dbLatencyMs = 0;
+  let userCount = 0;
+  let vehicleCount = 0;
+
+  try {
+    const t0 = Date.now();
+    const [countRow] = await db.select({ cnt: count() }).from(usersTable);
+    dbLatencyMs = Date.now() - t0;
+    dbOk = true;
+    userCount = Number(countRow?.cnt ?? 0);
+
+    const [vRow] = await db.select({ cnt: count() }).from(vehiclesTable);
+    vehicleCount = Number(vRow?.cnt ?? 0);
+  } catch {
+    dbOk = false;
+  }
+
+  let clubCount = 0;
+  try {
+    const [cRow] = await db.select({ cnt: count() }).from(clubsTable);
+    clubCount = Number(cRow?.cnt ?? 0);
+  } catch { /* ok */ }
+
+  const apiLatencyMs = Date.now() - start;
+
+  res.json({
+    api: { status: "ok", latencyMs: apiLatencyMs },
+    database: { status: dbOk ? "ok" : "error", latencyMs: dbLatencyMs },
+    stats: { users: userCount, vehicles: vehicleCount, clubs: clubCount },
+    uptime: process.uptime(),
+    memory: {
+      heapUsedMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      heapTotalMb: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+    },
+    nodeVersion: process.version,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ─── Audit log ────────────────────────────────────────────────────────────
 router.get("/admin/audit-log", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const logs = await db
@@ -162,7 +283,6 @@ router.get("/admin/audit-log", parseUserAuth, requireSuperAdmin, async (req, res
 
 // ─── Subscription list from Stripe ────────────────────────────────────────
 router.get("/admin/subscriptions", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
-  // Join users with their stripe subscription data
   const users = await db
     .select({
       id: usersTable.id,
@@ -215,6 +335,21 @@ router.get("/admin/subscriptions", parseUserAuth, requireSuperAdmin, async (req,
   }));
 
   res.json(result);
+});
+
+// ─── Admin action on user ─────────────────────────────────────────────────
+router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  const { isActive } = req.body as { isActive?: boolean };
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({ isActive, updatedAt: new Date() })
+    .where(eq(usersTable.id, id))
+    .returning({ id: usersTable.id, isActive: usersTable.isActive });
+
+  if (!updated) { res.status(404).json({ error: "Bruker ikke funnet" }); return; }
+  res.json(updated);
 });
 
 // ─── Admin action on user subscription tier ───────────────────────────────
