@@ -23,6 +23,7 @@ import chatHistoryRouter from "./chatHistory";
 import vehicleTransfersRouter from "./vehicleTransfers";
 import billingRouter from "./billing";
 import adminRouter from "./admin";
+import financeInsightRouter from "./financeInsight";
 import projectsRouter from "./projects";
 import tenantsRouter from "./tenants";
 
@@ -52,6 +53,7 @@ router.use(vehicleTransfersRouter);
 router.use(clubsRouter);
 router.use(billingRouter);
 router.use(adminRouter);
+router.use(financeInsightRouter);
 router.use(projectsRouter);
 router.use(tenantsRouter);
 

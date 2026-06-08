@@ -25,6 +25,7 @@ import {
   RefreshCw, DollarSign, Star, Zap, Server, Database, Wifi, ArrowLeft,
   X, ExternalLink, LayoutDashboard, Receipt, Settings, Bell,
   ArrowUpRight, ArrowDownRight, Minus, ChevronRight, Hash,
+  Bot, Send, Loader2,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 
@@ -144,6 +145,38 @@ interface AuditLog {
   createdAt: string;
 }
 
+interface FinanceMetrics {
+  mrr: number;
+  arr: number;
+  revenueThisMonth: number;
+  revenueLastMonth: number;
+  revenueYtd: number;
+  totalUsers: number;
+  activeUsers: number;
+  newUsersThisMonth: number;
+  payingUsers: number;
+  freeUsers: number;
+  standardUsers: number;
+  premiumUsers: number;
+  activeSubscriptions: number;
+  cancelingSubscriptions: number;
+  pastDueSubscriptions: number;
+  openInvoices: number;
+  failedInvoices: number;
+  paidInvoices: number;
+  totalInvoiceRevenue: number;
+}
+
+interface FinanceInsight {
+  summary: string;
+  insights: string[];
+  risks: string[];
+  opportunities: string[];
+  nextSteps: string[];
+  metrics: FinanceMetrics;
+  generatedAt: string;
+}
+
 interface SystemHealth {
   api: { status: "ok" | "error"; latencyMs: number };
   database: { status: "ok" | "error"; latencyMs: number };
@@ -164,7 +197,8 @@ type Section =
   | "support"
   | "clubs"
   | "system"
-  | "audit";
+  | "audit"
+  | "ai";
 
 const NAV_ITEMS: Array<{
   id: Section;
@@ -173,6 +207,7 @@ const NAV_ITEMS: Array<{
   badge?: string;
 }> = [
   { id: "overview", label: "Oversikt", icon: LayoutDashboard },
+  { id: "ai", label: "Økonomi AI", icon: Bot },
   { id: "crm", label: "Brukere (CRM)", icon: Users },
   { id: "payments", label: "Betalinger", icon: Receipt },
   { id: "subscriptions", label: "Abonnementer", icon: CreditCard },
@@ -1592,6 +1627,289 @@ function AuditSection({ token }: { token: string | null }) {
   );
 }
 
+// ─── Finance Insight section ───────────────────────────────────────────────────
+
+const SUGGESTED_QUESTIONS = [
+  "Hva er vår nåværende MRR?",
+  "Er det churn-risiko?",
+  "Hvilke problemer har vi?",
+  "Hva er konverteringsraten?",
+  "Hvilket abonnement er mest populært?",
+];
+
+function InsightCard({
+  title, icon: Icon, items, color,
+}: {
+  title: string;
+  icon: React.ElementType;
+  items: string[];
+  color: "cyan" | "red" | "amber" | "emerald";
+}) {
+  const [open, setOpen] = useState(true);
+  const cfg = {
+    cyan:    { border: "border-cyan-500/20",    bg: "bg-cyan-500/5",    text: "text-cyan-300",    dot: "bg-cyan-500",    icon: "text-cyan-400"    },
+    red:     { border: "border-red-500/20",     bg: "bg-red-500/5",     text: "text-red-300",     dot: "bg-red-500",     icon: "text-red-400"     },
+    amber:   { border: "border-amber-500/20",   bg: "bg-amber-500/5",   text: "text-amber-300",   dot: "bg-amber-500",   icon: "text-amber-400"   },
+    emerald: { border: "border-emerald-500/20", bg: "bg-emerald-500/5", text: "text-emerald-300", dot: "bg-emerald-500", icon: "text-emerald-400" },
+  }[color];
+
+  return (
+    <div className={`rounded-xl border ${cfg.border} ${cfg.bg} overflow-hidden`}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/3 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Icon className={`w-3.5 h-3.5 ${cfg.icon}`} />
+          <span className={`text-xs font-semibold ${cfg.text}`}>{title}</span>
+          <span className="text-[10px] text-white/30 bg-white/5 rounded-full px-1.5 py-0.5">{items.length}</span>
+        </div>
+        {open ? <ChevronUp className="w-3.5 h-3.5 text-white/30" /> : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-2">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot} opacity-70 shrink-0 mt-1.5`} />
+              <p className="text-xs text-white/65 leading-relaxed">{item}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChatMessage({ role, content }: { role: "user" | "assistant"; content: string }) {
+  const isUser = role === "user";
+
+  const renderContent = (text: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((p, i) =>
+      p.startsWith("**") && p.endsWith("**")
+        ? <strong key={i} className="font-semibold text-white">{p.slice(2, -2)}</strong>
+        : <span key={i}>{p}</span>
+    );
+  };
+
+  const lines = content.split("\n").filter(Boolean);
+
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+      {!isUser && (
+        <div className="w-6 h-6 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5 mr-2">
+          <Bot className="w-3 h-3 text-indigo-400" />
+        </div>
+      )}
+      <div className={`max-w-[82%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed space-y-1 ${
+        isUser
+          ? "bg-indigo-600/80 text-white/90"
+          : "bg-white/5 border border-white/8 text-white/75"
+      }`}>
+        {lines.map((line, i) => {
+          if (line.startsWith("• ")) {
+            return (
+              <div key={i} className="flex items-start gap-1.5">
+                <span className="opacity-50 shrink-0 mt-0.5">•</span>
+                <span>{renderContent(line.slice(2))}</span>
+              </div>
+            );
+          }
+          return <p key={i}>{renderContent(line)}</p>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FinanceInsightSection({ token }: { token: string | null }) {
+  const [insight, setInsight] = useState<FinanceInsight | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch("/api/admin/finance-insight", { headers: authHeader(token) })
+      .then(r => r.json())
+      .then((data: FinanceInsight) => setInsight(data))
+      .catch(() => {/* ignore */})
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, chatLoading]);
+
+  async function sendMessage(text?: string) {
+    const question = (text ?? chatInput).trim();
+    if (!question || !insight) return;
+    setChatInput("");
+    setChatMessages(prev => [...prev, { role: "user", content: question }]);
+    setChatLoading(true);
+    try {
+      const res = await fetch("/api/admin/finance-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader(token) },
+        body: JSON.stringify({ question, metrics: insight.metrics }),
+      });
+      const data = await res.json() as { answer: string };
+      setChatMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Kunne ikke hente svar. Prøv igjen." }]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  const m = insight?.metrics;
+
+  return (
+    <div>
+      <SectionHeader
+        title="Økonomi AI"
+        sub="Automatisk analyse av inntekter, abonnementer og brukervekst"
+        action={
+          <button
+            onClick={() => { setLoading(true); setInsight(null); if (token) { fetch("/api/admin/finance-insight", { headers: authHeader(token) }).then(r => r.json()).then((d: FinanceInsight) => setInsight(d)).finally(() => setLoading(false)); } }}
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Oppdater
+          </button>
+        }
+      />
+
+      {loading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="flex items-center gap-2 text-white/40 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Analyserer økonomidata...
+          </div>
+        </div>
+      ) : insight ? (
+        <div className="space-y-5">
+          {/* Summary banner */}
+          <div className="rounded-xl border border-indigo-500/25 bg-gradient-to-br from-indigo-500/8 to-violet-500/5 p-5">
+            <div className="flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                <Bot className="w-4 h-4 text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider mb-2">Analyseoversikt</p>
+                <p className="text-sm text-white/70 leading-relaxed">{insight.summary}</p>
+                <p className="text-[10px] text-white/25 mt-2.5">
+                  Generert {new Date(insight.generatedAt).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  {" · "}Basert på {insight.metrics.totalUsers} brukere og {insight.metrics.activeSubscriptions} Stripe-abonnementer
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mini KPI row */}
+          {m && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "MRR", value: `kr ${m.mrr.toLocaleString("nb-NO")}`, sub: `ARR ${(m.arr/1000).toFixed(0)}k`, color: "from-indigo-500/30 to-indigo-600/20", border: "border-indigo-500/20" },
+                { label: "Betalende brukere", value: m.payingUsers, sub: `av ${m.totalUsers} totalt`, color: "from-cyan-500/20 to-cyan-600/10", border: "border-cyan-500/15" },
+                { label: "Aktive abonnement", value: m.activeSubscriptions, sub: m.cancelingSubscriptions > 0 ? `${m.cancelingSubscriptions} avslutter` : "ingen avslutter", color: "from-violet-500/20 to-violet-600/10", border: "border-violet-500/15" },
+                { label: "Problematisk", value: m.openInvoices + m.failedInvoices, sub: "fakturaer å følge opp", color: m.openInvoices + m.failedInvoices > 0 ? "from-red-500/20 to-red-600/10" : "from-emerald-500/20 to-emerald-600/10", border: m.openInvoices + m.failedInvoices > 0 ? "border-red-500/20" : "border-emerald-500/15" },
+              ].map(kpi => (
+                <div key={kpi.label} className={`rounded-xl border ${kpi.border} bg-gradient-to-br ${kpi.color} p-4`}>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">{kpi.label}</p>
+                  <p className="text-xl font-bold text-white">{kpi.value}</p>
+                  <p className="text-[10px] text-white/35 mt-0.5">{kpi.sub}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Four insight cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InsightCard title="Nøkkeltall" icon={BarChart3}      items={insight.insights}     color="cyan"    />
+            <InsightCard title="Risikoer"   icon={AlertCircle}    items={insight.risks}        color="red"     />
+            <InsightCard title="Muligheter" icon={Lightbulb}      items={insight.opportunities} color="amber"  />
+            <InsightCard title="Neste steg" icon={CheckCircle2}   items={insight.nextSteps}    color="emerald" />
+          </div>
+
+          {/* Chat section */}
+          <div className="rounded-xl border border-white/8 bg-black/20 overflow-hidden">
+            <div className="border-b border-white/6 px-5 py-3 flex items-center gap-2.5">
+              <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+              <p className="text-xs font-semibold text-white">Spør økonomiassistenten</p>
+              <span className="text-[10px] text-white/25 ml-auto">Regel-basert analyse på dine data</span>
+            </div>
+
+            {/* Suggested questions — shown when chat is empty */}
+            {chatMessages.length === 0 && (
+              <div className="px-5 pt-4 pb-2">
+                <p className="text-[10px] text-white/30 mb-2 uppercase tracking-wider">Foreslåtte spørsmål</p>
+                <div className="flex flex-wrap gap-2">
+                  {SUGGESTED_QUESTIONS.map(q => (
+                    <button
+                      key={q}
+                      onClick={() => void sendMessage(q)}
+                      className="text-[11px] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-3 py-1.5 hover:bg-indigo-500/20 transition-colors"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Messages */}
+            <div className="px-5 py-4 space-y-3 max-h-[400px] overflow-y-auto">
+              {chatMessages.map((msg, i) => (
+                <ChatMessage key={i} role={msg.role} content={msg.content} />
+              ))}
+              {chatLoading && (
+                <div className="flex items-center gap-2 text-white/30 text-xs">
+                  <div className="w-6 h-6 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0">
+                    <Bot className="w-3 h-3 text-indigo-400" />
+                  </div>
+                  <div className="flex gap-1 items-center">
+                    <span className="w-1.5 h-1.5 bg-indigo-400/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-indigo-400/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-indigo-400/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-white/6 px-4 py-3 flex gap-2">
+              <Input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); } }}
+                placeholder="Still et spørsmål om økonomi, vekst, churn..."
+                className="flex-1 h-9 bg-white/5 border-white/10 text-white placeholder:text-white/25 text-sm"
+                disabled={chatLoading}
+              />
+              <Button
+                onClick={() => void sendMessage()}
+                disabled={chatLoading || !chatInput.trim()}
+                size="sm"
+                className="h-9 px-3 bg-indigo-600 hover:bg-indigo-500 text-white shrink-0"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-16 text-white/30 text-sm">
+          Kunne ikke laste økonomidata. Prøv å oppdatere.
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main admin page ──────────────────────────────────────────────────────────
 
 export default function Admin() {
@@ -1737,6 +2055,9 @@ export default function Admin() {
           >
             {activeSection === "overview" && (
               <OverviewSection stats={stats} billingStats={billingStats} mrrHistory={mrrHistory} />
+            )}
+            {activeSection === "ai" && (
+              <FinanceInsightSection token={token} />
             )}
             {activeSection === "crm" && (
               <CrmSection users={users} token={token} onUpdate={load} />
