@@ -1,9 +1,11 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { parseAuth } from "./middleware/auth";
+import { parseUserAuth } from "./middleware/userAuth";
 import { WebhookHandlers } from "./webhookHandlers";
 
 const app: Express = express();
@@ -48,11 +50,13 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({ credentials: true, origin: true }));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(parseAuth);
+app.use(parseUserAuth);
 app.use("/api", router);
 
 export default app;

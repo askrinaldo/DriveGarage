@@ -19,6 +19,7 @@
     "express": "^5",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.8",
+    "openid-client": "^6.8.4",
     "pino": "^9",
     "pino-http": "^10",
     "socket.io": "^4.8.3",

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 export type UserRole = "user" | "super_admin";
 export type TenantRole = "owner" | "admin" | "member";
@@ -21,6 +21,7 @@ export interface ThemePrefs {
 }
 
 const STORAGE_KEY = "user_session";
+const BRIDGE_COOKIE = "_gptoken";
 
 function loadSession(): UserSession | null {
   try {
@@ -52,6 +53,28 @@ export function getUserToken(): string | null {
   return loadSession()?.token ?? null;
 }
 
+/** Read a cookie by name from document.cookie */
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]!) : null;
+}
+
+/** Clear the bridge cookie immediately after we pick it up */
+function clearBridgeCookie() {
+  document.cookie = `${BRIDGE_COOKIE}=; path=/; max-age=0; secure; samesite=lax`;
+}
+
+/** Decode JWT payload without verifying (verification happens server-side) */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    return JSON.parse(atob(parts[1]!)) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 interface ApiUser {
   id: number;
   name: string;
@@ -79,8 +102,55 @@ function buildSession(token: string, user: ApiUser): UserSession {
   };
 }
 
+/** Build a UserSession directly from a JWT payload (no extra API call needed) */
+function sessionFromJwt(token: string): UserSession | null {
+  const p = decodeJwtPayload(token);
+  if (!p) return null;
+  return {
+    token,
+    id: p.userId as number,
+    name: p.name as string,
+    email: p.email as string,
+    role: (p.role as UserRole) ?? "user",
+    tenantId: (p.tenantId as number) ?? null,
+    tenantName: (p.tenantName as string) ?? null,
+    tenantRole: (p.tenantRole as TenantRole) ?? null,
+    isPersonalTenant: (p.isPersonalTenant as boolean) ?? true,
+  };
+}
+
 export function useUserAuth() {
   const [session, setSession] = useState<UserSession | null>(loadSession);
+
+  // On mount: pick up the bridge cookie set by /api/callback after Replit OIDC
+  useEffect(() => {
+    const bridgeToken = readCookie(BRIDGE_COOKIE);
+    if (bridgeToken) {
+      clearBridgeCookie();
+      const newSession = sessionFromJwt(bridgeToken);
+      if (newSession) {
+        saveSession(newSession);
+        setSession(newSession);
+      }
+    }
+  }, []);
+
+  // Email/password login — kept for admin backward compat
+  const login = useCallback(async (email: string, password: string): Promise<
+    { ok: false; error: string } | { ok: true; themePrefs: ThemePrefs }
+  > => {
+    const res = await fetch("/api/users/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json() as { token?: string; user?: ApiUser; error?: string };
+    if (!res.ok) return { ok: false as const, error: data.error ?? "Pålogging feilet" };
+    const newSession = buildSession(data.token!, data.user!);
+    saveSession(newSession);
+    setSession(newSession);
+    return { ok: true as const, themePrefs: { themeAccent: data.user?.themeAccent ?? null, themeMode: data.user?.themeMode ?? null } };
+  }, []);
 
   const register = useCallback(async (name: string, email: string, password: string): Promise<
     { ok: false; error: string } | { ok: true; themePrefs: ThemePrefs }
@@ -98,25 +168,17 @@ export function useUserAuth() {
     return { ok: true as const, themePrefs: { themeAccent: data.user?.themeAccent ?? null, themeMode: data.user?.themeMode ?? null } };
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<
-    { ok: false; error: string } | { ok: true; themePrefs: ThemePrefs }
-  > => {
-    const res = await fetch("/api/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json() as { token?: string; user?: ApiUser; error?: string };
-    if (!res.ok) return { ok: false as const, error: data.error ?? "Pålogging feilet" };
-    const newSession = buildSession(data.token!, data.user!);
-    saveSession(newSession);
-    setSession(newSession);
-    return { ok: true as const, themePrefs: { themeAccent: data.user?.themeAccent ?? null, themeMode: data.user?.themeMode ?? null } };
-  }, []);
-
+  // Replit Auth logout — redirects to OIDC end-session, clears local state
   const logout = useCallback(() => {
     clearSession();
     setSession(null);
+    window.location.href = "/api/logout";
+  }, []);
+
+  // Initiate Replit OIDC login
+  const loginWithReplit = useCallback(() => {
+    const returnTo = encodeURIComponent(window.location.pathname || "/");
+    window.location.href = `/api/login?returnTo=${returnTo}`;
   }, []);
 
   const switchTenant = useCallback(async (tenantId: number): Promise<{ ok: boolean; error?: string }> => {
@@ -162,6 +224,7 @@ export function useUserAuth() {
     login,
     register,
     logout,
+    loginWithReplit,
     switchTenant,
   };
 }
