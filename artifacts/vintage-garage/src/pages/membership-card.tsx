@@ -65,7 +65,7 @@ export default function MembershipCard() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Digitalt medlemskort</h1>
-          <p className="text-sm text-muted-foreground">Ditt personlige kort for Vintage Garage</p>
+          <p className="text-sm text-muted-foreground">Ditt personlige kort for GaragePilot</p>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export default function MembershipCard() {
           {/* Header */}
           <div className="px-7 pt-6 pb-4 flex items-start justify-between">
             <div>
-              <div className="text-xs font-bold tracking-[0.3em] text-gray-500 uppercase mb-1">Vintage Garage</div>
+              <div className="text-xs font-bold tracking-[0.3em] text-gray-500 uppercase mb-1">GaragePilot</div>
               <div className="text-[10px] text-gray-600 tracking-widest uppercase">Medlemskort</div>
             </div>
             <div

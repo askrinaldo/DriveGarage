@@ -381,7 +381,7 @@ export default function VehicleDetail() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `vintage-garage-${vehicle.make}-${vehicle.model}.json`;
+    a.download = `garagepilot-${vehicle.make}-${vehicle.model}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

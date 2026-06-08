@@ -159,7 +159,7 @@ export default function VehicleTransfer() {
             <div className="bg-primary/20 p-2.5 rounded-lg">
               <Wrench className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-bold text-xl">Vintage Garage</span>
+            <span className="font-bold text-xl">GaragePilot</span>
           </div>
           <h1 className="text-2xl font-bold">Kjøretøyoverføring</h1>
           <p className="text-sm text-muted-foreground">

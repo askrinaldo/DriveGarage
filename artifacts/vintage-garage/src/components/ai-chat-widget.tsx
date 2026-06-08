@@ -16,7 +16,7 @@ const MAX_MESSAGES = 20;
 
 const WELCOME: Message = {
   role: "assistant",
-  content: "Hei! Jeg er Vintage Garage-assistenten 🔧 Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber og mer. Hva lurer du på?",
+  content: "Hei! Jeg er GaragePilot-assistenten 🔧 Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber og mer. Hva lurer du på?",
 };
 
 function loadLocalHistory(): Message[] | null {
@@ -289,7 +289,7 @@ export function AiChatWidget() {
               </div>
               <div>
                 <p className="text-sm font-semibold">Garage-assistenten</p>
-                <p className="text-[10px] text-muted-foreground">AI-hjelp for Vintage Garage</p>
+                <p className="text-[10px] text-muted-foreground">AI-hjelp for GaragePilot</p>
               </div>
             </div>
             <div className="flex items-center gap-1">

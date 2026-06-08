@@ -6,7 +6,7 @@ async function seedProducts() {
 
   // ── STANDARD ──────────────────────────────────────────────────────────────
   const existingStandard = await stripe.products.search({
-    query: "name:'Vintage Garage Standard' AND active:'true'",
+    query: "name:'GaragePilot Standard' AND active:'true'",
   });
 
   let standardProduct;
@@ -15,7 +15,7 @@ async function seedProducts() {
     console.log(`✓ Standard-produkt finnes allerede: ${standardProduct.id}`);
   } else {
     standardProduct = await stripe.products.create({
-      name: "Vintage Garage Standard",
+      name: "GaragePilot Standard",
       description: "Ubegrenset kjøretøy, 10 GB lagring, klubber og arrangementer",
       metadata: { tier: "standard" },
     });
@@ -68,7 +68,7 @@ async function seedProducts() {
 
   // ── PREMIUM ───────────────────────────────────────────────────────────────
   const existingPremium = await stripe.products.search({
-    query: "name:'Vintage Garage Premium' AND active:'true'",
+    query: "name:'GaragePilot Premium' AND active:'true'",
   });
 
   let premiumProduct;
@@ -77,7 +77,7 @@ async function seedProducts() {
     console.log(`✓ Premium-produkt finnes allerede: ${premiumProduct.id}`);
   } else {
     premiumProduct = await stripe.products.create({
-      name: "Vintage Garage Premium",
+      name: "GaragePilot Premium",
       description: "Ubegrenset lagring, AI-assistent, PDF-rapporter og prioritert support",
       metadata: { tier: "premium" },
     });
