@@ -1,0 +1,206 @@
+Build a production-ready, scalable SaaS application using Next.js (App Router) with TypeScript.
+
+This is NOT a demo app. It must be structured like a real SaaS product that can scale to real users.
+
+---
+
+# 1. AUTHENTICATION (CRITICAL RULE)
+
+Use Clerk as the ONLY authentication provider:
+https://clerk.com
+
+DO NOT build or implement any custom authentication system.
+
+We must NOT handle:
+
+* passwords
+* MFA
+* email verification
+* OAuth flows
+* session management
+* security tokens
+
+All authentication must be fully handled by Clerk.
+
+---
+
+## Authentication features (handled by Clerk)
+
+* Email + password login
+* Google OAuth login
+* Optional MFA
+* Password reset
+* Email verification
+* Session handling
+
+Use Clerk hosted UI:
+
+* SignIn page
+* SignUp page
+
+---
+
+## App auth behavior
+
+* Unauthenticated users must be redirected to Clerk login
+* Authenticated users can access dashboard
+* Use Clerk middleware to protect all private routes
+* All API routes must verify Clerk session server-side
+
+---
+
+# 2. SaaS STRUCTURE (IMPORTANT)
+
+This is a multi-tenant SaaS application.
+
+Users belong to organizations.
+
+Support:
+
+* Organizations (teams/workspaces)
+* Multiple users per organization
+* Role-based access control:
+
+  * admin
+  * member
+
+If possible, use Clerk Organizations feature.
+
+---
+
+# 3. DATABASE RULES
+
+Use PostgreSQL with Prisma ORM.
+
+ONLY store application data.
+
+DO NOT store:
+
+* passwords
+* MFA data
+* authentication tokens
+
+ONLY store:
+
+* clerk_user_id (primary user reference)
+* organization_id
+* email (optional reference)
+* app-specific business data
+* subscription status
+
+---
+
+## Required database models (minimum)
+
+* User (linked to Clerk user ID)
+* Organization
+* Membership (user ↔ organization + role)
+* Project / Core business entity (placeholder for SaaS logic)
+* Subscription
+* Audit log (important for SaaS tracking)
+
+---
+
+# 4. FRONTEND PAGES
+
+Create a clean SaaS UI with:
+
+Public:
+
+* Landing page
+* Pricing page
+
+Auth (Clerk):
+
+* Sign in
+* Sign up
+
+Protected:
+
+* Dashboard
+* Organization switcher (if applicable)
+* Settings page (profile via Clerk)
+* Admin panel (role-based access)
+
+---
+
+# 5. BACKEND/API REQUIREMENTS
+
+* All API routes must verify Clerk session
+* Never trust client-provided user IDs
+* Extract user identity ONLY from Clerk session
+
+Protect:
+
+* /api/* routes
+* server actions
+* database mutations
+
+---
+
+# 6. SECURITY REQUIREMENTS (NON-NEGOTIABLE)
+
+Follow modern SaaS security standards:
+
+* No custom auth logic
+* No password storage
+* No session storage in our database
+* All auth handled by Clerk
+* Validate all requests server-side
+* Protect against unauthorized API access
+* Use environment variables for all secrets
+
+Follow OWASP best practices.
+
+---
+
+# 7. STRIPE / PAYMENTS (FUTURE-PROOFING)
+
+Prepare architecture for Stripe subscriptions (do not fully implement unless necessary).
+
+Include:
+
+* subscription table in DB
+* plan field (free/pro/enterprise)
+* stripe_customer_id field
+* structure for billing middleware
+
+---
+
+# 8. TECH STACK
+
+* Next.js (App Router)
+* TypeScript
+* Clerk Authentication
+* Prisma ORM
+* PostgreSQL
+* Zod validation
+* Tailwind CSS (clean SaaS UI)
+
+---
+
+# 9. CODE QUALITY REQUIREMENTS
+
+* Clean folder structure
+* Separation of concerns:
+
+  * /app (frontend routes)
+  * /components
+  * /lib (utilities)
+  * /server (db logic)
+* Reusable components
+* No duplicate logic
+* Production-grade structure (not MVP spaghetti code)
+
+---
+
+# 10. GOAL
+
+This project must be a production-grade SaaS foundation where:
+
+* Authentication is fully outsourced to Clerk
+* We have zero responsibility for identity security
+* The system is scalable to multi-tenant enterprise SaaS
+* We can later add Stripe billing and AI features easily
+
+Focus on scalability, security, and clean architecture over quick MVP shortcuts.
