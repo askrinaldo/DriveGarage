@@ -139,8 +139,8 @@ export default function Profile() {
           <User className="w-4 h-4 text-indigo-400" />
           <span className="text-xs font-bold text-indigo-400/80 uppercase tracking-widest">Profil</span>
         </div>
-        <h1 className="text-3xl font-black text-white tracking-tight">Min profil</h1>
-        <p className="text-white/40 text-sm mt-1">Kontoinfo, statistikk og merker</p>
+        <h1 className="text-3xl font-black text-foreground tracking-tight">Min profil</h1>
+        <p className="text-muted-foreground text-sm mt-1">Kontoinfo, statistikk og merker</p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -153,14 +153,14 @@ export default function Profile() {
           className="lg:col-span-1 space-y-4"
         >
           {/* Avatar + info */}
-          <div className="rounded-2xl border border-white/[0.07] bg-[#0f1117] p-6 text-center space-y-4">
+          <div className="rounded-2xl border border-border/50 bg-card p-6 text-center space-y-4">
             <div className="relative inline-flex">
-              <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${tier.gradient} flex items-center justify-center text-white text-2xl font-black shadow-lg ring-4 ${tier.ring}`}>
+              <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${tier.gradient} flex items-center justify-center text-foreground text-2xl font-black shadow-lg ring-4 ${tier.ring}`}>
                 {getInitials(profile.name)}
               </div>
               {profile.subscriptionTier === "premium" && (
                 <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
-                  <Crown className="w-3.5 h-3.5 text-white" />
+                  <Crown className="w-3.5 h-3.5 text-foreground" />
                 </div>
               )}
             </div>
@@ -172,35 +172,35 @@ export default function Profile() {
                   <Input
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
-                    className="text-center bg-white/[0.06] border-white/20 text-white text-sm h-8"
+                    className="text-center bg-muted/30 border-border text-foreground text-sm h-8"
                     onKeyDown={e => { if (e.key === "Enter") void saveName(); if (e.key === "Escape") setEditingName(false); }}
                     autoFocus
                   />
                   <button onClick={() => void saveName()} disabled={savingName} className="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center shrink-0 transition-colors">
-                    <Check className="w-3.5 h-3.5 text-white" />
+                    <Check className="w-3.5 h-3.5 text-foreground" />
                   </button>
                   <button onClick={() => setEditingName(false)} className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center shrink-0 transition-colors">
-                    <X className="w-3.5 h-3.5 text-white/60" />
+                    <X className="w-3.5 h-3.5 text-foreground/60" />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <span className="text-lg font-bold text-white">{profile.name}</span>
+                  <span className="text-lg font-bold text-foreground">{profile.name}</span>
                   <button onClick={() => setEditingName(true)} className="p-1 rounded-md hover:bg-white/10 transition-colors">
-                    <Edit2 className="w-3 h-3 text-white/30 hover:text-white/60" />
+                    <Edit2 className="w-3 h-3 text-muted-foreground/70 hover:text-foreground/60" />
                   </button>
                 </div>
               )}
-              <p className="text-xs text-white/35 mt-1">{profile.email}</p>
+              <p className="text-xs text-muted-foreground/80 mt-1">{profile.email}</p>
             </div>
 
             {/* Tier badge */}
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} shadow-sm`}>
-              <Star className="w-3 h-3 text-white" />
-              <span className="text-xs font-bold text-white">{tier.label}</span>
+              <Star className="w-3 h-3 text-foreground" />
+              <span className="text-xs font-bold text-foreground">{tier.label}</span>
             </div>
 
-            <div className="text-[11px] text-white/25 flex items-center justify-center gap-1.5">
+            <div className="text-[11px] text-muted-foreground/60 flex items-center justify-center gap-1.5">
               <Calendar className="w-3 h-3" />
               Medlem siden {formatMemberSince(profile.createdAt)}
             </div>
@@ -218,13 +218,13 @@ export default function Profile() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 + i * 0.06 }}
-                className="rounded-xl border border-white/[0.07] bg-[#0f1117] p-3 text-center"
+                className="rounded-xl border border-border/50 bg-card p-3 text-center"
               >
                 <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${s.gradient} flex items-center justify-center mx-auto mb-2`}>
-                  <s.icon className="w-3.5 h-3.5 text-white" />
+                  <s.icon className="w-3.5 h-3.5 text-foreground" />
                 </div>
-                <div className="text-lg font-black text-white tabular-nums">{s.value}</div>
-                <div className="text-[10px] text-white/30 font-medium">{s.label}</div>
+                <div className="text-lg font-black text-foreground tabular-nums">{s.value}</div>
+                <div className="text-[10px] text-muted-foreground/70 font-medium">{s.label}</div>
               </motion.div>
             ))}
           </div>
@@ -242,7 +242,7 @@ export default function Profile() {
                 <Crown className="w-4 h-4 text-amber-400" />
                 <span className="text-sm font-bold text-amber-300">Oppgrader til Premium</span>
               </div>
-              <p className="text-xs text-white/35 mb-3">Lås opp AI-mekaniker, ubegrenset lagring og mer</p>
+              <p className="text-xs text-muted-foreground/80 mb-3">Lås opp AI-mekaniker, ubegrenset lagring og mer</p>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-amber-400">fra kr 49/mnd</span>
                 <ChevronRight className="w-4 h-4 text-amber-400/60 group-hover:translate-x-0.5 transition-transform" />
@@ -259,15 +259,15 @@ export default function Profile() {
           className="lg:col-span-2 space-y-4"
         >
           {/* Earned badges */}
-          <div className="rounded-2xl border border-white/[0.07] bg-[#0f1117] p-5">
+          <div className="rounded-2xl border border-border/50 bg-card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white/60 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground/60 uppercase tracking-widest flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-400" /> Merker opptjent
               </h3>
-              <span className="text-xs font-bold text-white/30">{earnedBadges.length} / {(achievements?.allBadges.length ?? 0)}</span>
+              <span className="text-xs font-bold text-muted-foreground/70">{earnedBadges.length} / {(achievements?.allBadges.length ?? 0)}</span>
             </div>
             {earnedBadges.length === 0 ? (
-              <div className="text-center py-6 text-white/25 text-sm">
+              <div className="text-center py-6 text-muted-foreground/60 text-sm">
                 <div className="text-3xl mb-2">🎯</div>
                 Ingen merker ennå – logg inn og kom i gang!
               </div>
@@ -279,13 +279,13 @@ export default function Profile() {
                     initial={{ opacity: 0, scale: 0.85 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 + i * 0.05 }}
-                    className={`flex items-center gap-3 p-3 rounded-xl border border-white/[0.07] bg-gradient-to-br ${CATEGORY_COLORS[badge.category] ?? "from-indigo-500 to-cyan-500"} bg-opacity-10 relative overflow-hidden group hover:border-white/20 transition-colors`}
+                    className={`flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-gradient-to-br ${CATEGORY_COLORS[badge.category] ?? "from-indigo-500 to-cyan-500"} bg-opacity-10 relative overflow-hidden group hover:border-border transition-colors`}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${CATEGORY_COLORS[badge.category] ?? "from-indigo-500 to-cyan-500"} opacity-[0.06]`} />
                     <div className="text-2xl shrink-0">{badge.icon}</div>
                     <div className="min-w-0 relative">
-                      <p className="text-xs font-bold text-white leading-snug">{badge.name}</p>
-                      <p className="text-[10px] text-white/40 mt-0.5 leading-snug truncate">{badge.description}</p>
+                      <p className="text-xs font-bold text-foreground leading-snug">{badge.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug truncate">{badge.description}</p>
                       <div className="flex items-center gap-1 mt-1">
                         <Zap className="w-2.5 h-2.5 text-amber-400/70" />
                         <span className="text-[10px] text-amber-400/70 font-bold">+{badge.points} poeng</span>
@@ -299,8 +299,8 @@ export default function Profile() {
 
           {/* Locked badges */}
           {lockedBadges.length > 0 && (
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0f1117] p-5">
-              <h3 className="text-sm font-bold text-white/30 uppercase tracking-widest flex items-center gap-2 mb-4">
+            <div className="rounded-2xl border border-border/50 bg-card p-5">
+              <h3 className="text-sm font-bold text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-4">
                 <Lock className="w-3.5 h-3.5" /> Låste merker
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -314,8 +314,8 @@ export default function Profile() {
                   >
                     <div className="text-2xl shrink-0 grayscale">{badge.icon}</div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-white/40">{badge.name}</p>
-                      <p className="text-[10px] text-white/20 mt-0.5 leading-snug truncate">{badge.description}</p>
+                      <p className="text-xs font-semibold text-muted-foreground">{badge.name}</p>
+                      <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-snug truncate">{badge.description}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -324,8 +324,8 @@ export default function Profile() {
           )}
 
           {/* Security & account */}
-          <div className="rounded-2xl border border-white/[0.07] bg-[#0f1117] p-5 space-y-3">
-            <h3 className="text-sm font-bold text-white/50 uppercase tracking-widest flex items-center gap-2 mb-1">
+          <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-1">
               <Shield className="w-4 h-4 text-cyan-400" /> Konto og sikkerhet
             </h3>
             <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
@@ -333,8 +333,8 @@ export default function Profile() {
                 <Mail className="w-4 h-4 text-indigo-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white/60">E-postadresse</p>
-                <p className="text-sm text-white/80 truncate">{profile.email}</p>
+                <p className="text-xs font-semibold text-foreground/60">E-postadresse</p>
+                <p className="text-sm text-foreground/80 truncate">{profile.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
@@ -342,14 +342,14 @@ export default function Profile() {
                 <Lock className="w-4 h-4 text-violet-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white/60">Passord</p>
-                <p className="text-sm text-white/30">••••••••</p>
+                <p className="text-xs font-semibold text-foreground/60">Passord</p>
+                <p className="text-sm text-muted-foreground/70">••••••••</p>
               </div>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => navigate("/login")}
-                className="text-xs text-white/40 hover:text-white/70 hover:bg-white/[0.06] h-7"
+                className="text-xs text-muted-foreground hover:text-foreground/70 hover:bg-muted/30 h-7"
               >
                 Endre
               </Button>
@@ -359,14 +359,14 @@ export default function Profile() {
                 <TrendingUp className="w-4 h-4 text-amber-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white/60">Abonnement</p>
+                <p className="text-xs font-semibold text-foreground/60">Abonnement</p>
                 <p className={`text-sm font-bold ${tier.text}`}>{tier.label}</p>
               </div>
               {profile.subscriptionTier !== "premium" && (
                 <Button
                   size="sm"
                   onClick={() => navigate("/billing")}
-                  className="text-xs bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white border-0 h-7"
+                  className="text-xs bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-foreground border-0 h-7"
                 >
                   Oppgrader
                 </Button>

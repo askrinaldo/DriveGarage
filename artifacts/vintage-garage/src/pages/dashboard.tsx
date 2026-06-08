@@ -96,18 +96,18 @@ function StatCard({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0f1117] p-5 group hover:border-white/20 transition-colors"
+      className="relative overflow-hidden rounded-2xl border border-border/50 bg-card p-5 group hover:border-border transition-colors"
     >
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${gradient} opacity-[0.04]`} />
       <div className="flex items-start justify-between mb-4">
         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
-          <Icon className="w-5 h-5 text-white" />
+          <Icon className="w-5 h-5 text-foreground" />
         </div>
-        <TrendingUp className="w-4 h-4 text-white/20" />
+        <TrendingUp className="w-4 h-4 text-muted-foreground/50" />
       </div>
-      <div className="text-2xl font-bold text-white tabular-nums">{displayValue}</div>
-      <div className="text-xs text-white/40 mt-1 font-medium uppercase tracking-wider">{label}</div>
-      {sub && <div className="text-[11px] text-white/25 mt-0.5">{sub}</div>}
+      <div className="text-2xl font-bold text-foreground tabular-nums">{displayValue}</div>
+      <div className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wider">{label}</div>
+      {sub && <div className="text-[11px] text-muted-foreground/60 mt-0.5">{sub}</div>}
     </motion.div>
   );
 }
@@ -121,7 +121,7 @@ function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: stri
       transition={{ delay, duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
     >
       <Link href={`/vehicles/${vehicle.id}`}>
-        <div className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0f1117] hover:border-white/20 transition-all duration-300 cursor-pointer">
+        <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card hover:border-border transition-all duration-300 cursor-pointer">
           <div className="h-28 relative overflow-hidden">
             {vehicle.imageUrl ? (
               <img src={vehicle.imageUrl} alt={`${vehicle.make} ${vehicle.model}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -130,13 +130,13 @@ function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: stri
                 {isMoto ? <span className="text-4xl">🏍️</span> : <span className="text-4xl">🚗</span>}
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0f1117] to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
           </div>
           <div className="p-4 pt-2">
-            <div className="text-sm font-bold text-white">{vehicle.make} {vehicle.model}</div>
-            <div className="text-xs text-white/40 mt-0.5">{vehicle.year} {vehicle.color ? `· ${vehicle.color}` : ""}</div>
+            <div className="text-sm font-bold text-foreground">{vehicle.make} {vehicle.model}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{vehicle.year} {vehicle.color ? `· ${vehicle.color}` : ""}</div>
             {vehicle.mileage && (
-              <div className="flex items-center gap-1 mt-2 text-[11px] text-white/30">
+              <div className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground/70">
                 <Route className="w-3 h-3" />
                 {vehicle.mileage.toLocaleString("no-NO")} km
               </div>
@@ -144,7 +144,7 @@ function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: stri
           </div>
           <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-              <ChevronRight className="w-3.5 h-3.5 text-white" />
+              <ChevronRight className="w-3.5 h-3.5 text-foreground" />
             </div>
           </div>
         </div>
@@ -200,15 +200,15 @@ export default function Dashboard() {
             <Flame className="w-4 h-4 text-amber-400" />
             <span className="text-xs font-semibold text-amber-400/80 uppercase tracking-widest">Dashboard</span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">
+          <h1 className="text-3xl font-black text-foreground tracking-tight">
             {greeting}, {firstName}
           </h1>
-          <p className="text-white/40 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {isPersonalTenant ? "Din personlige garasje" : tenantName ?? "Din garasje"} · {new Date().toLocaleDateString("no-NO", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
         <Link href="/vehicles/new">
-          <Button className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white border-0 shadow-lg shadow-indigo-900/30 rounded-xl px-5 h-10 font-semibold">
+          <Button className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-foreground border-0 shadow-lg shadow-indigo-900/30 rounded-xl px-5 h-10 font-semibold">
             <Plus className="w-4 h-4 mr-2" />
             Nytt kjøretøy
           </Button>
@@ -229,11 +229,11 @@ export default function Dashboard() {
         {/* Vehicles */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
+            <h2 className="text-sm font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2">
               <Car className="w-4 h-4 text-indigo-400" /> Mine kjøretøy
             </h2>
             <Link href="/vehicles">
-              <button className="text-xs text-white/30 hover:text-indigo-400 transition-colors flex items-center gap-1">
+              <button className="text-xs text-muted-foreground/70 hover:text-indigo-400 transition-colors flex items-center gap-1">
                 Se alle <ArrowRight className="w-3 h-3" />
               </button>
             </Link>
@@ -242,17 +242,17 @@ export default function Dashboard() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="rounded-2xl border border-dashed border-white/10 bg-[#0f1117] p-10 flex flex-col items-center text-center gap-3"
+              className="rounded-2xl border border-dashed border-border bg-card p-10 flex flex-col items-center text-center gap-3"
             >
               <div className="w-14 h-14 rounded-full bg-indigo-900/30 flex items-center justify-center">
                 <Car className="w-7 h-7 text-indigo-400/50" />
               </div>
               <div>
-                <p className="text-white/50 font-medium text-sm">Ingen kjøretøy ennå</p>
-                <p className="text-white/25 text-xs mt-0.5">Legg til din første veteranbil eller motorsykkel</p>
+                <p className="text-muted-foreground font-medium text-sm">Ingen kjøretøy ennå</p>
+                <p className="text-muted-foreground/60 text-xs mt-0.5">Legg til din første veteranbil eller motorsykkel</p>
               </div>
               <Link href="/vehicles/new">
-                <Button size="sm" className="mt-1 bg-indigo-600 hover:bg-indigo-500 text-white border-0 rounded-lg text-xs">
+                <Button size="sm" className="mt-1 bg-indigo-600 hover:bg-indigo-500 text-foreground border-0 rounded-lg text-xs">
                   <Plus className="w-3.5 h-3.5 mr-1.5" /> Legg til kjøretøy
                 </Button>
               </Link>
@@ -271,9 +271,9 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25, duration: 0.5 }}
-              className="rounded-2xl border border-white/[0.07] bg-[#0f1117] p-5"
+              className="rounded-2xl border border-border/50 bg-card p-5"
             >
-              <h3 className="text-xs font-bold text-white/50 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-amber-400" /> Tjenester etter kategori
               </h3>
               <div className="space-y-3">
@@ -285,10 +285,10 @@ export default function Dashboard() {
                     transition={{ delay: 0.3 + i * 0.06 }}
                     className="flex items-center gap-3"
                   >
-                    <div className="w-20 shrink-0 text-xs text-white/40 font-medium truncate">
+                    <div className="w-20 shrink-0 text-xs text-muted-foreground font-medium truncate">
                       {categoryTranslations[cat.category] ?? cat.category}
                     </div>
-                    <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="flex-1 h-2 rounded-full bg-muted/30 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${(cat.count / maxCat) * 100}%` }}
@@ -296,7 +296,7 @@ export default function Dashboard() {
                         className={`h-full rounded-full bg-gradient-to-r ${categoryColors[cat.category] ?? "from-indigo-500 to-cyan-500"}`}
                       />
                     </div>
-                    <div className="w-6 text-right text-xs font-bold text-white/40">{cat.count}</div>
+                    <div className="w-6 text-right text-xs font-bold text-muted-foreground">{cat.count}</div>
                   </motion.div>
                 ))}
               </div>
@@ -310,13 +310,13 @@ export default function Dashboard() {
           {/* Activity Feed */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
+              <h2 className="text-sm font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2">
                 <Activity className="w-4 h-4 text-emerald-400" /> Siste aktivitet
               </h2>
             </div>
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0f1117] overflow-hidden">
+            <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
               {!activity || activity.length === 0 ? (
-                <div className="p-8 text-center text-white/30 text-sm">Ingen nylig aktivitet</div>
+                <div className="p-8 text-center text-muted-foreground/70 text-sm">Ingen nylig aktivitet</div>
               ) : (
                 <div className="divide-y divide-white/[0.05]">
                   <AnimatePresence>
@@ -326,23 +326,23 @@ export default function Dashboard() {
                         initial={{ opacity: 0, x: 12 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.1 + i * 0.07, duration: 0.4 }}
-                        className="flex items-start gap-3 p-3.5 group hover:bg-white/[0.03] transition-colors"
+                        className="flex items-start gap-3 p-3.5 group hover:bg-muted/15 transition-colors"
                       >
                         <div className={`w-8 h-8 rounded-xl shrink-0 bg-gradient-to-br ${categoryColors[item.category] ?? "from-indigo-500 to-cyan-500"} flex items-center justify-center shadow-sm`}>
-                          <Wrench className="w-3.5 h-3.5 text-white" />
+                          <Wrench className="w-3.5 h-3.5 text-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white leading-snug truncate">{item.title}</p>
-                          <p className="text-[11px] text-white/35 mt-0.5 truncate">{item.vehicleName}</p>
+                          <p className="text-xs font-semibold text-foreground leading-snug truncate">{item.title}</p>
+                          <p className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">{item.vehicleName}</p>
                           <div className="flex items-center gap-1 mt-1">
-                            <Clock className="w-2.5 h-2.5 text-white/20" />
-                            <span className="text-[10px] text-white/25">
+                            <Clock className="w-2.5 h-2.5 text-muted-foreground/50" />
+                            <span className="text-[10px] text-muted-foreground/60">
                               {new Date(item.serviceDate).toLocaleDateString("no-NO", { day: "numeric", month: "short" })}
                             </span>
                           </div>
                         </div>
                         {item.cost != null && (
-                          <div className="text-[11px] font-mono text-white/35 shrink-0">
+                          <div className="text-[11px] font-mono text-muted-foreground/80 shrink-0">
                             kr {item.cost.toLocaleString("no-NO")}
                           </div>
                         )}
@@ -357,19 +357,19 @@ export default function Dashboard() {
           {/* Clubs */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
+              <h2 className="text-sm font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2">
                 <Users className="w-4 h-4 text-violet-400" /> Mine klubber
               </h2>
               <Link href="/clubs">
-                <button className="text-xs text-white/30 hover:text-violet-400 transition-colors flex items-center gap-1">
+                <button className="text-xs text-muted-foreground/70 hover:text-violet-400 transition-colors flex items-center gap-1">
                   Se alle <ArrowRight className="w-3 h-3" />
                 </button>
               </Link>
             </div>
             <div className="space-y-2">
               {myClubs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-[#0f1117] p-5 text-center">
-                  <p className="text-white/30 text-xs">Ikke med i noen klubb ennå</p>
+                <div className="rounded-2xl border border-dashed border-border bg-card p-5 text-center">
+                  <p className="text-muted-foreground/70 text-xs">Ikke med i noen klubb ennå</p>
                   <Link href="/clubs">
                     <button className="mt-2 text-xs text-violet-400 hover:text-violet-300 transition-colors">Finn en klubb →</button>
                   </Link>
@@ -383,8 +383,8 @@ export default function Dashboard() {
                     transition={{ delay: 0.2 + i * 0.08, duration: 0.4 }}
                   >
                     <Link href={`/clubs/${club.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.07] bg-[#0f1117] hover:border-violet-500/30 hover:bg-violet-900/10 transition-all duration-200 cursor-pointer group">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-sm">
+                      <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:border-violet-500/30 hover:bg-violet-900/10 transition-all duration-200 cursor-pointer group">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center text-sm font-bold text-foreground shrink-0 shadow-sm">
                           {club.logoUrl ? (
                             <img src={club.logoUrl} alt={club.name} className="w-full h-full object-cover rounded-xl" />
                           ) : (
@@ -392,19 +392,19 @@ export default function Dashboard() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-white truncate">{club.name}</p>
+                          <p className="text-xs font-bold text-foreground truncate">{club.name}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] text-white/30 flex items-center gap-1">
+                            <span className="text-[10px] text-muted-foreground/70 flex items-center gap-1">
                               <Users className="w-2.5 h-2.5" /> {club.memberCount}
                             </span>
                             {club.location && (
-                              <span className="text-[10px] text-white/25 flex items-center gap-1">
+                              <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
                                 <MapPin className="w-2.5 h-2.5" /> {club.location}
                               </span>
                             )}
                           </div>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-violet-400 transition-colors" />
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-violet-400 transition-colors" />
                       </div>
                     </Link>
                   </motion.div>
@@ -418,9 +418,9 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.4 }}
-            className="rounded-2xl border border-white/[0.07] bg-[#0f1117] p-4"
+            className="rounded-2xl border border-border/50 bg-card p-4"
           >
-            <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
               <Shield className="w-3.5 h-3.5 text-cyan-400" /> Hurtigtilgang
             </h3>
             <div className="grid grid-cols-2 gap-2">
@@ -431,11 +431,11 @@ export default function Dashboard() {
                 { label: "Profil", href: "/profile", icon: Shield, color: "from-indigo-600 to-cyan-600" },
               ].map((action) => (
                 <Link key={action.href} href={action.href}>
-                  <div className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/15 transition-all duration-200 cursor-pointer group">
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.06] bg-muted/15 hover:bg-muted/35 hover:border-border/70 transition-all duration-200 cursor-pointer group">
                     <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center shadow-sm`}>
-                      <action.icon className="w-4 h-4 text-white" />
+                      <action.icon className="w-4 h-4 text-foreground" />
                     </div>
-                    <span className="text-[11px] font-semibold text-white/50 group-hover:text-white/80 transition-colors text-center leading-tight">{action.label}</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground group-hover:text-foreground/80 transition-colors text-center leading-tight">{action.label}</span>
                   </div>
                 </Link>
               ))}
@@ -446,9 +446,9 @@ export default function Dashboard() {
 
       {/* Made by Evolvit */}
       <div className="flex items-center justify-center gap-2 pt-4 pb-2 opacity-30 hover:opacity-60 transition-opacity">
-        <span className="text-[10px] text-white/40">Made by</span>
+        <span className="text-[10px] text-muted-foreground">Made by</span>
         <img src="/evolvit-logo.webp" alt="Evolvit Solution Norge" className="h-3.5 object-contain" style={{ filter: "grayscale(1) brightness(1.5)" }} />
-        <span className="text-[10px] text-white/40">Solution Norge</span>
+        <span className="text-[10px] text-muted-foreground">Solution Norge</span>
       </div>
     </div>
   );
