@@ -22,3 +22,4 @@ export * from "./suggestions";
 export * from "./vehicleTransfers";
 export * from "./vehicleOwnershipHistory";
 export * from "./chatMessages";
+export * from "./monthlyProjects";

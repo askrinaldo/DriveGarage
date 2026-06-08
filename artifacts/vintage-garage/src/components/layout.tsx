@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle, Palette, CreditCard } from "lucide-react";
+import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle, Palette, CreditCard, Trophy, Star, IdCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import {
@@ -19,6 +19,9 @@ export function Layout({ children }: LayoutProps) {
     { href: "/dashboard", label: "Oversikt", icon: LayoutDashboard },
     { href: "/vehicles", label: "Garasjen min", icon: Car },
     { href: "/clubs", label: "Klubber", icon: Users },
+    { href: "/prosjekt", label: "Månedens prosjekt", icon: Star },
+    { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { href: "/membership-card", label: "Medlemskort", icon: IdCard },
     { href: "/billing", label: "Abonnement", icon: CreditCard },
     { href: "/help", label: "Hjelp", icon: HelpCircle },
   ];
