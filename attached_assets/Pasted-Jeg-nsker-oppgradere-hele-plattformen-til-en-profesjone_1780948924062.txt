@@ -1,0 +1,213 @@
+Jeg ønsker å oppgradere hele plattformen til en profesjonell SaaS-løsning for veteranbiler, klassiske biler og gamle motorsykler.
+
+VIKTIG ARKITEKTUR
+
+Bygg systemet som multi-tenant.
+
+Hver bruker skal ha sin egen isolerte tenant slik at data er adskilt mellom brukere.
+
+Datamodell:
+
+- Tenant
+- Users
+- Vehicles
+- Maintenance
+- Receipts
+- Clubs
+- ClubMembers
+- ClubPosts
+- Events
+
+Alle data skal være koblet til tenantId.
+
+Krav:
+
+- Ingen bruker skal kunne se andre brukeres private data.
+- Alle databaseforespørsler skal filtreres på tenantId.
+- Lag middleware som automatisk håndterer tenant-isolasjon.
+- Bruk Prisma og PostgreSQL.
+- Bruk TypeScript.
+
+KLUBBER
+
+Klubber skal fungere på tvers av medlemmer.
+
+Klubbene skal ha:
+
+- Egen klubbside
+- Egen klubbgarasje
+- Eget forum
+- Egen aktivitetsfeed
+- Arrangementer
+- Medlemsliste
+- Roller
+
+Når en bruker blir medlem av en klubb:
+
+- Kan se kjøretøy som er delt med klubben
+- Kan se vedlikehold som er delt med klubben
+- Kan kommentere og delta i forumet
+
+HJEMMESIDE / LANDING PAGE
+
+Jeg ønsker en moderne og levende startside.
+
+Designinspirasjon:
+
+- Moderne SaaS
+- Bil- og motorsykkelmiljø
+- Premium følelse
+- Profesjonelt design
+
+Startsiden skal inneholde:
+
+Hero-seksjon:
+
+- Stor bakgrunnsvideo eller animasjon
+- Veteranbiler og motorsykler
+- Stor overskrift
+- Call to action
+
+Eksempel:
+
+"Ta vare på historien til kjøretøyet ditt"
+
+Undertekst:
+
+"Dokumenter vedlikehold, lagre kvitteringer, bli med i klubber og følg hele historikken på veteranbilen eller motorsykkelen din."
+
+Knapper:
+
+- Registrer deg gratis
+- Se demo
+
+Seksjon 2:
+
+Vis funksjoner med flotte ikoner:
+
+- Digital servicebok
+- Kvitteringer
+- Klubbgarasjer
+- Arrangementer
+- Forum
+- Vedlikeholdslogg
+
+Seksjon 3:
+
+Interaktiv statistikk:
+
+- Antall kjøretøy
+- Antall klubber
+- Antall medlemmer
+- Antall vedlikeholdslogger
+
+Bruk animasjoner når tallene vises.
+
+Seksjon 4:
+
+Vis frem kjøretøy med moderne kort.
+
+Seksjon 5:
+
+Vis hvordan systemet fungerer steg for steg.
+
+Seksjon 6:
+
+Kundehistorier og testimonials.
+
+Seksjon 7:
+
+Priser og abonnement.
+
+Seksjon 8:
+
+Footer med kontaktinformasjon.
+
+INNLOGGINGSSIDE
+
+Lag en moderne premium innloggingsside.
+
+Funksjoner:
+
+- Split-screen design
+- Stor illustrasjon eller bakgrunnsbilde
+- Glassmorphism-effekter
+- Moderne skygger
+- Smooth animasjoner
+- Dark mode
+
+Innlogging:
+
+- E-post
+- Passord
+- Husk meg
+- Glemt passord
+
+Registrering:
+
+- Navn
+- E-post
+- Passord
+- Bekreft passord
+
+Mulighet for:
+
+- Google Login
+- Facebook Login
+- GitHub Login
+
+DESIGN
+
+Jeg ønsker ikke standardfarger.
+
+Lag en unik designprofil.
+
+Farger:
+
+- Mørk grafitt
+- Koksgrå
+- Dyp marineblå
+- Metallic sølv
+- Kobberdetaljer
+- Diskré gull-effekter
+
+Designstil:
+
+- Moderne SaaS
+- Premium automotive
+- Litt luksusfølelse
+- Myke animasjoner
+- Hover-effekter
+- Gradienter
+- Glassmorphism
+
+DASHBOARD
+
+Når brukeren logger inn skal de se:
+
+- Mine kjøretøy
+- Vedlikehold
+- Klubber
+- Kommende arrangementer
+- Ny aktivitet
+- Statistikk
+
+Lag et dashboard som føles som en moderne app og ikke som et gammelt adminpanel.
+
+KODEKVALITET
+
+- TypeScript
+- React
+- Node.js
+- Express
+- Prisma
+- PostgreSQL
+- Tailwind CSS
+- Framer Motion
+- Socket.io
+
+Lag produksjonsklar kode.
+
+Forbedre eksisterende kode der det er nødvendig.
+
+Forklar filstruktur, database, API-ruter og komponentstruktur før du genererer koden.
