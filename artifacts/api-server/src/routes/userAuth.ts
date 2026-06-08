@@ -1,12 +1,39 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   db, usersTable, clubsTable, vehiclesTable, forumPostsTable, forumCommentsTable,
+  tenantsTable, tenantMembershipsTable,
 } from "@workspace/db";
-import { signUserToken, requireUser, requireSuperAdmin, parseUserAuth } from "../middleware/userAuth";
+import { signUserToken, requireUser, requireSuperAdmin, parseUserAuth, resolvePersonalTenant } from "../middleware/userAuth";
 
 const router: IRouter = Router();
+
+// ─── Shared helper: get or create personal tenant ──────────────────────────
+async function getOrCreatePersonalTenant(userId: number, userName: string): Promise<{ tenantId: number; tenantName: string; tenantRole: "owner"; isPersonalTenant: boolean }> {
+  const slug = `personal-${userId}`;
+
+  const [existing] = await db
+    .select({ id: tenantsTable.id, name: tenantsTable.name })
+    .from(tenantsTable)
+    .where(eq(tenantsTable.slug, slug));
+
+  if (existing) {
+    return { tenantId: existing.id, tenantName: existing.name, tenantRole: "owner", isPersonalTenant: true };
+  }
+
+  const tenantName = `${userName}'s Garasje`;
+  const [tenant] = await db
+    .insert(tenantsTable)
+    .values({ name: tenantName, slug, isPersonal: true, ownerUserId: userId })
+    .returning({ id: tenantsTable.id });
+
+  if (!tenant) throw new Error("Kunne ikke opprette tenant");
+
+  await db.insert(tenantMembershipsTable).values({ tenantId: tenant.id, userId, role: "owner" });
+
+  return { tenantId: tenant.id, tenantName, tenantRole: "owner", isPersonalTenant: true };
+}
 
 // ─── Register ──────────────────────────────────────────────────────────────
 router.post("/users/register", async (req, res): Promise<void> => {
@@ -53,8 +80,32 @@ router.post("/users/register", async (req, res): Promise<void> => {
     return;
   }
 
-  const token = signUserToken({ userId: user.id, email: user.email, name: user.name, role: user.role as "user" | "super_admin" });
-  res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, themeAccent: null, themeMode: null } });
+  // Auto-create personal tenant
+  const tenantInfo = await getOrCreatePersonalTenant(user.id, user.name);
+
+  const token = signUserToken({
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role as "user" | "super_admin",
+    ...tenantInfo,
+  });
+
+  res.status(201).json({
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      themeAccent: null,
+      themeMode: null,
+      tenantId: tenantInfo.tenantId,
+      tenantName: tenantInfo.tenantName,
+      tenantRole: tenantInfo.tenantRole,
+      isPersonalTenant: tenantInfo.isPersonalTenant,
+    },
+  });
 });
 
 // ─── Login ─────────────────────────────────────────────────────────────────
@@ -87,8 +138,32 @@ router.post("/users/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const token = signUserToken({ userId: user.id, email: user.email, name: user.name, role: user.role as "user" | "super_admin" });
-  res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, themeAccent: user.themeAccent ?? null, themeMode: user.themeMode ?? null } });
+  // Resolve active tenant (personal tenant is default)
+  const tenantInfo = await getOrCreatePersonalTenant(user.id, user.name);
+
+  const token = signUserToken({
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role as "user" | "super_admin",
+    ...tenantInfo,
+  });
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      themeAccent: user.themeAccent ?? null,
+      themeMode: user.themeMode ?? null,
+      tenantId: tenantInfo.tenantId,
+      tenantName: tenantInfo.tenantName,
+      tenantRole: tenantInfo.tenantRole,
+      isPersonalTenant: tenantInfo.isPersonalTenant,
+    },
+  });
 });
 
 // ─── Me ────────────────────────────────────────────────────────────────────
@@ -103,7 +178,13 @@ router.get("/users/me", parseUserAuth, requireUser, async (req, res): Promise<vo
     return;
   }
 
-  res.json(user);
+  res.json({
+    ...user,
+    tenantId: req.userAuth!.tenantId,
+    tenantName: req.userAuth!.tenantName,
+    tenantRole: req.userAuth!.tenantRole,
+    isPersonalTenant: req.userAuth!.isPersonalTenant,
+  });
 });
 
 // ─── Update preferences ────────────────────────────────────────────────────
@@ -145,13 +226,11 @@ router.patch("/users/me/preferences", parseUserAuth, requireUser, async (req, re
 router.get("/admin/users", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const { q } = req.query as { q?: string };
 
-  let query = db
+  const users = await db
     .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email, role: usersTable.role, isActive: usersTable.isActive, createdAt: usersTable.createdAt })
     .from(usersTable)
-    .orderBy(desc(usersTable.createdAt))
-    .$dynamic();
+    .orderBy(desc(usersTable.createdAt));
 
-  const users = await query;
   const filtered = q
     ? users.filter(u => u.name.toLowerCase().includes(q.toLowerCase()) || u.email.toLowerCase().includes(q.toLowerCase()))
     : users;
@@ -159,7 +238,7 @@ router.get("/admin/users", parseUserAuth, requireSuperAdmin, async (req, res): P
   res.json(filtered);
 });
 
-// ─── Admin: update user (activate/deactivate) ──────────────────────────────
+// ─── Admin: update user ────────────────────────────────────────────────────
 router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
   const { isActive, role } = req.body as { isActive?: boolean; role?: "user" | "super_admin" };
@@ -183,11 +262,7 @@ router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, r
 
 // ─── Admin: list clubs ─────────────────────────────────────────────────────
 router.get("/admin/clubs", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
-  const clubs = await db
-    .select()
-    .from(clubsTable)
-    .orderBy(desc(clubsTable.createdAt));
-
+  const clubs = await db.select().from(clubsTable).orderBy(desc(clubsTable.createdAt));
   res.json(clubs);
 });
 
@@ -227,15 +302,8 @@ router.get("/admin/stats", parseUserAuth, requireSuperAdmin, async (req, res): P
   const [postCount] = await db.select({ count: count() }).from(forumPostsTable);
   const [commentCount] = await db.select({ count: count() }).from(forumCommentsTable);
 
-  const activeUserCount = await db
-    .select({ count: count() })
-    .from(usersTable)
-    .where(eq(usersTable.isActive, true));
-
-  const adminCount = await db
-    .select({ count: count() })
-    .from(usersTable)
-    .where(eq(usersTable.role, "super_admin"));
+  const activeUserCount = await db.select({ count: count() }).from(usersTable).where(eq(usersTable.isActive, true));
+  const adminCount = await db.select({ count: count() }).from(usersTable).where(eq(usersTable.role, "super_admin"));
 
   res.json({
     users: userCount?.count ?? 0,

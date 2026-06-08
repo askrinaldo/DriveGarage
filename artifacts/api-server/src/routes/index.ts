@@ -24,6 +24,7 @@ import vehicleTransfersRouter from "./vehicleTransfers";
 import billingRouter from "./billing";
 import adminRouter from "./admin";
 import projectsRouter from "./projects";
+import tenantsRouter from "./tenants";
 
 const router: IRouter = Router();
 
@@ -52,5 +53,6 @@ router.use(clubsRouter);
 router.use(billingRouter);
 router.use(adminRouter);
 router.use(projectsRouter);
+router.use(tenantsRouter);
 
 export default router;

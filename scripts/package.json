@@ -6,7 +6,11 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed-products": "tsx ./src/seed-products.ts",
+    "migrate:tenants": "tsx ./src/migrate-to-tenants.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

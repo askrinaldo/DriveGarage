@@ -1,3 +1,4 @@
 - [API route path prefix](api-route-prefix.md) — Routes inside the router MUST omit /api prefix; app.ts mounts router at /api already.
 - [User auth pattern](user-auth-pattern.md) — JWT in localStorage via x-user-token header; parseUserAuth middleware applied per-route, not globally in app.ts.
 - [Stripe connector credentials](stripe-connector-credentials.md) — Replit Stripe connector settings key is `secret` (not `secret_key`). Also note: runMigrations must run once before syncBackfill works.
+- [Multi-tenant architecture](multi-tenant-architecture.md) — Tenant tables, JWT tenant fields, per-tenant vehicle filtering, SQL backfill approach.

@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 export type UserRole = "user" | "super_admin";
+export type TenantRole = "owner" | "admin" | "member";
 
 export interface UserSession {
   token: string;
@@ -8,6 +9,10 @@ export interface UserSession {
   name: string;
   email: string;
   role: UserRole;
+  tenantId: number | null;
+  tenantName: string | null;
+  tenantRole: TenantRole | null;
+  isPersonalTenant: boolean;
 }
 
 export interface ThemePrefs {
@@ -47,6 +52,33 @@ export function getUserToken(): string | null {
   return loadSession()?.token ?? null;
 }
 
+interface ApiUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  themeAccent?: string | null;
+  themeMode?: string | null;
+  tenantId?: number | null;
+  tenantName?: string | null;
+  tenantRole?: TenantRole | null;
+  isPersonalTenant?: boolean;
+}
+
+function buildSession(token: string, user: ApiUser): UserSession {
+  return {
+    token,
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    tenantId: user.tenantId ?? null,
+    tenantName: user.tenantName ?? null,
+    tenantRole: user.tenantRole ?? null,
+    isPersonalTenant: user.isPersonalTenant ?? true,
+  };
+}
+
 export function useUserAuth() {
   const [session, setSession] = useState<UserSession | null>(loadSession);
 
@@ -58,9 +90,9 @@ export function useUserAuth() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
     });
-    const data = await res.json() as { token?: string; user?: { id: number; name: string; email: string; role: UserRole; themeAccent?: string | null; themeMode?: string | null }; error?: string };
+    const data = await res.json() as { token?: string; user?: ApiUser; error?: string };
     if (!res.ok) return { ok: false as const, error: data.error ?? "Registrering feilet" };
-    const newSession: UserSession = { token: data.token!, id: data.user!.id, name: data.user!.name, email: data.user!.email, role: data.user!.role };
+    const newSession = buildSession(data.token!, data.user!);
     saveSession(newSession);
     setSession(newSession);
     return { ok: true as const, themePrefs: { themeAccent: data.user?.themeAccent ?? null, themeMode: data.user?.themeMode ?? null } };
@@ -74,9 +106,9 @@ export function useUserAuth() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json() as { token?: string; user?: { id: number; name: string; email: string; role: UserRole; themeAccent?: string | null; themeMode?: string | null }; error?: string };
+    const data = await res.json() as { token?: string; user?: ApiUser; error?: string };
     if (!res.ok) return { ok: false as const, error: data.error ?? "Pålogging feilet" };
-    const newSession: UserSession = { token: data.token!, id: data.user!.id, name: data.user!.name, email: data.user!.email, role: data.user!.role };
+    const newSession = buildSession(data.token!, data.user!);
     saveSession(newSession);
     setSession(newSession);
     return { ok: true as const, themePrefs: { themeAccent: data.user?.themeAccent ?? null, themeMode: data.user?.themeMode ?? null } };
@@ -85,6 +117,32 @@ export function useUserAuth() {
   const logout = useCallback(() => {
     clearSession();
     setSession(null);
+  }, []);
+
+  const switchTenant = useCallback(async (tenantId: number): Promise<{ ok: boolean; error?: string }> => {
+    const token = loadSession()?.token;
+    if (!token) return { ok: false, error: "Ikke innlogget" };
+    const res = await fetch("/api/auth/switch-tenant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-user-token": token },
+      body: JSON.stringify({ tenantId }),
+    });
+    const data = await res.json() as { token?: string; tenantId?: number; tenantName?: string; tenantRole?: TenantRole; error?: string };
+    if (!res.ok) return { ok: false, error: data.error ?? "Bytte feilet" };
+    const current = loadSession();
+    if (current && data.token) {
+      const newSession: UserSession = {
+        ...current,
+        token: data.token,
+        tenantId: data.tenantId ?? null,
+        tenantName: data.tenantName ?? null,
+        tenantRole: data.tenantRole ?? null,
+        isPersonalTenant: false,
+      };
+      saveSession(newSession);
+      setSession(newSession);
+    }
+    return { ok: true };
   }, []);
 
   const isSuperAdmin = session?.role === "super_admin";
@@ -97,8 +155,13 @@ export function useUserAuth() {
     email: session?.email ?? null,
     role: session?.role ?? null,
     token: session?.token ?? null,
+    tenantId: session?.tenantId ?? null,
+    tenantName: session?.tenantName ?? null,
+    tenantRole: session?.tenantRole ?? null,
+    isPersonalTenant: session?.isPersonalTenant ?? true,
     login,
     register,
     logout,
+    switchTenant,
   };
 }

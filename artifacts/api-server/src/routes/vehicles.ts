@@ -15,10 +15,20 @@ import { getUserTier } from "../lib/subscriptionTier";
 
 const router: IRouter = Router();
 
-router.get("/vehicles", async (_req, res): Promise<void> => {
+router.get("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+  const tenantId = req.userAuth!.tenantId;
+  if (!tenantId) {
+    // Fallback: userId filter for old tokens
+    const vehicles = await db.select().from(vehiclesTable)
+      .where(eq(vehiclesTable.userId, req.userAuth!.userId))
+      .orderBy(vehiclesTable.createdAt);
+    res.json(vehicles);
+    return;
+  }
   const vehicles = await db
     .select()
     .from(vehiclesTable)
+    .where(eq(vehiclesTable.tenantId, tenantId))
     .orderBy(vehiclesTable.createdAt);
   res.json(vehicles);
 });
@@ -31,13 +41,17 @@ router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<v
   }
 
   const userId = req.userAuth!.userId;
+  const tenantId = req.userAuth!.tenantId;
   const tier = await getUserTier(userId);
 
   if (tier === "free") {
+    const whereClause = tenantId
+      ? eq(vehiclesTable.tenantId, tenantId)
+      : eq(vehiclesTable.userId, userId);
     const [{ value: vehicleCount }] = await db
       .select({ value: count() })
       .from(vehiclesTable)
-      .where(eq(vehiclesTable.userId, userId));
+      .where(whereClause);
 
     if (vehicleCount >= 1) {
       res.status(403).json({
@@ -49,7 +63,7 @@ router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<v
     }
   }
 
-  const [vehicle] = await db.insert(vehiclesTable).values({ ...parsed.data, userId }).returning();
+  const [vehicle] = await db.insert(vehiclesTable).values({ ...parsed.data, userId, tenantId: tenantId ?? null }).returning();
   res.status(201).json(vehicle);
 });
 

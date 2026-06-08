@@ -1,13 +1,17 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable, tenantsTable, tenantMembershipsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 
 export interface UserTokenPayload {
   userId: number;
   email: string;
   name: string;
   role: "user" | "super_admin";
+  tenantId: number;
+  tenantName: string;
+  tenantRole: "owner" | "admin" | "member";
+  isPersonalTenant: boolean;
 }
 
 declare global {
@@ -36,6 +40,27 @@ export function verifyUserToken(token: string): UserTokenPayload | null {
   }
 }
 
+/**
+ * Resolve the personal tenant for a user. Used to upgrade old tokens
+ * that predate the multi-tenant architecture.
+ */
+export async function resolvePersonalTenant(userId: number): Promise<{ tenantId: number; tenantName: string; tenantRole: "owner" | "admin" | "member"; isPersonalTenant: boolean } | null> {
+  const slug = `personal-${userId}`;
+  const [tenant] = await db
+    .select({ id: tenantsTable.id, name: tenantsTable.name, isPersonal: tenantsTable.isPersonal })
+    .from(tenantsTable)
+    .where(eq(tenantsTable.slug, slug));
+
+  if (!tenant) return null;
+
+  return {
+    tenantId: tenant.id,
+    tenantName: tenant.name,
+    tenantRole: "owner",
+    isPersonalTenant: tenant.isPersonal,
+  };
+}
+
 export function parseUserAuth(req: Request, _res: Response, next: NextFunction): void {
   const header = req.headers["x-user-token"];
   const token = Array.isArray(header) ? header[0] : header;
@@ -48,7 +73,7 @@ export function parseUserAuth(req: Request, _res: Response, next: NextFunction):
 
 /**
  * Verifies the user is logged in AND re-checks DB to ensure isActive === true.
- * Prevents deactivated users with unexpired tokens from accessing protected routes.
+ * If tenantId is missing from the token (old token), resolves personal tenant from DB.
  */
 export async function requireUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!req.userAuth) {
@@ -64,14 +89,24 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
     res.status(401).json({ error: "Kontoen er deaktivert" });
     return;
   }
-  // Refresh role from DB in case it changed after token was issued
-  req.userAuth = { ...req.userAuth, role: user.role as "user" | "super_admin" };
+
+  // Upgrade old tokens that lack tenantId
+  if (!req.userAuth.tenantId) {
+    const tenant = await resolvePersonalTenant(req.userAuth.userId);
+    if (tenant) {
+      req.userAuth = { ...req.userAuth, ...tenant, role: user.role as "user" | "super_admin" };
+    } else {
+      req.userAuth = { ...req.userAuth, role: user.role as "user" | "super_admin" };
+    }
+  } else {
+    req.userAuth = { ...req.userAuth, role: user.role as "user" | "super_admin" };
+  }
+
   next();
 }
 
 /**
  * Verifies super_admin role against DB, not just JWT claim.
- * Prevents role-demoted users with unexpired tokens from accessing admin routes.
  */
 export async function requireSuperAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!req.userAuth) {
@@ -93,4 +128,43 @@ export async function requireSuperAdmin(req: Request, res: Response, next: NextF
   }
   req.userAuth = { ...req.userAuth, role: "super_admin" };
   next();
+}
+
+/**
+ * Verifies the user has the required role in the current tenant.
+ */
+export async function requireTenantRole(minRole: "owner" | "admin" | "member") {
+  const roleOrder: Record<string, number> = { owner: 3, admin: 2, member: 1 };
+
+  return async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    if (!req.userAuth?.tenantId) {
+      res.status(401).json({ error: "Tenant-kontekst mangler" });
+      return;
+    }
+
+    const [membership] = await db
+      .select({ role: tenantMembershipsTable.role })
+      .from(tenantMembershipsTable)
+      .where(
+        and(
+          eq(tenantMembershipsTable.tenantId, req.userAuth.tenantId),
+          eq(tenantMembershipsTable.userId, req.userAuth.userId),
+        )
+      );
+
+    if (!membership) {
+      res.status(403).json({ error: "Du er ikke medlem av denne tenanten" });
+      return;
+    }
+
+    const userLevel = roleOrder[membership.role] ?? 0;
+    const requiredLevel = roleOrder[minRole] ?? 0;
+
+    if (userLevel < requiredLevel) {
+      res.status(403).json({ error: `Krever ${minRole}-rolle eller høyere` });
+      return;
+    }
+
+    next();
+  };
 }

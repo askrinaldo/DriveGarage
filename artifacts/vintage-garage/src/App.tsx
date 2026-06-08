@@ -40,6 +40,9 @@ import Billing from "@/pages/billing";
 import MembershipCard from "@/pages/membership-card";
 import Leaderboard from "@/pages/leaderboard";
 import ProjectOfMonth from "@/pages/project-of-month";
+import TenantSettings from "@/pages/tenant-settings";
+import TenantInvite from "@/pages/tenant-invite";
+import TenantNew from "@/pages/tenant-new";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,6 +110,9 @@ function AppRoutes() {
         <Route path="/membership-card" component={MembershipCard} />
         <Route path="/leaderboard" component={Leaderboard} />
         <Route path="/prosjekt" component={ProjectOfMonth} />
+        <Route path="/org/settings" component={TenantSettings} />
+        <Route path="/tenant-invite/:code" component={TenantInvite} />
+        <Route path="/tenant-new" component={TenantNew} />
         <Route path="/help" component={Help} />
         <Route component={NotFound} />
       </Switch>

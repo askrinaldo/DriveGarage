@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle, Palette, CreditCard, Trophy, Star, IdCard } from "lucide-react";
+import { LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown, User, ChevronDown, HelpCircle, Palette, CreditCard, Trophy, Star, IdCard, Building2, ChevronRight, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -11,9 +12,32 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+interface TenantEntry {
+  tenantId: number;
+  tenantName: string;
+  role: string;
+  isPersonal: boolean;
+}
+
+function authHeader(token: string | null): Record<string, string> {
+  if (!token) return {};
+  return { "x-user-token": token };
+}
+
 export function Layout({ children }: LayoutProps) {
   const [location, navigate] = useLocation();
-  const { isAuthenticated, isSuperAdmin, name, logout } = useUserAuth();
+  const { isAuthenticated, isSuperAdmin, name, logout, token, tenantId, tenantName, isPersonalTenant, switchTenant } = useUserAuth();
+
+  const [tenants, setTenants] = useState<TenantEntry[]>([]);
+  const [switchingTenant, setSwitchingTenant] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+    void (async () => {
+      const res = await fetch("/api/tenants/mine", { headers: authHeader(token) });
+      if (res.ok) setTenants(await res.json() as TenantEntry[]);
+    })();
+  }, [isAuthenticated, token, tenantId]);
 
   const navItems = [
     { href: "/dashboard", label: "Oversikt", icon: LayoutDashboard },
@@ -31,6 +55,16 @@ export function Layout({ children }: LayoutProps) {
     navigate("/login");
   }
 
+  async function handleSwitchTenant(id: number) {
+    if (id === tenantId) return;
+    setSwitchingTenant(true);
+    await switchTenant(id);
+    setSwitchingTenant(false);
+    navigate("/vehicles");
+  }
+
+  const hasMultipleTenants = tenants.length > 1;
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <aside className="w-64 flex-shrink-0 border-r border-sidebar-border bg-sidebar hidden md:flex flex-col">
@@ -45,7 +79,61 @@ export function Layout({ children }: LayoutProps) {
           </Link>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
+        {/* Tenant / Org switcher */}
+        {isAuthenticated && (
+          <div className="px-4 pb-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors text-left">
+                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
+                    <Building2 className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-sidebar-foreground truncate">
+                      {tenantName ?? "Min garasje"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {isPersonalTenant ? "Personlig" : "Organisasjon"}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {hasMultipleTenants && (
+                  <>
+                    <div className="px-2 py-1.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bytt garasje</p>
+                    </div>
+                    {tenants.map((t) => (
+                      <DropdownMenuItem
+                        key={t.tenantId}
+                        onClick={() => void handleSwitchTenant(t.tenantId)}
+                        className={cn("gap-2", t.tenantId === tenantId && "bg-primary/10 text-primary")}
+                        disabled={switchingTenant}
+                      >
+                        <Building2 className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{t.tenantName}</span>
+                        {t.tenantId === tenantId && <ChevronRight className="w-3 h-3 ml-auto" />}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={() => navigate("/tenant-new")} className="gap-2">
+                  <Plus className="w-3.5 h-3.5" />
+                  Ny organisasjon
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/org/settings")} className="gap-2">
+                  <Settings className="w-3.5 h-3.5" />
+                  Organisasjonsinnstillinger
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        <nav className="flex-1 px-4 py-2 space-y-1">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <div
@@ -90,7 +178,6 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </Link>
 
-          {/* User profile */}
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -115,7 +202,6 @@ export function Layout({ children }: LayoutProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                {/* Inline theme controls */}
                 <div className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
                   <div className="flex items-center gap-2 mb-2">
                     <Palette className="w-3.5 h-3.5 text-muted-foreground" />
