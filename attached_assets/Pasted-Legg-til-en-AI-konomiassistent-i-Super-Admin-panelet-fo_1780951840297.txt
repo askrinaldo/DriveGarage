@@ -1,0 +1,141 @@
+Legg til en AI-økonomiassistent i Super Admin-panelet for plattformen min (veteranbiler og motorsykler SaaS).
+
+TEKNOLOGI
+- React
+- TypeScript
+- Node.js
+- PostgreSQL
+- Prisma
+- OpenAI API
+
+MÅL
+Jeg vil ha en AI som forklarer økonomien i systemet på en enkel og menneskelig måte, slik at jeg ikke trenger å forstå grafer og tabeller selv.
+
+------------------------------------------------
+
+AI ØKONOMI-ASSISTENT (FINANCE COPILOT)
+
+Lag en egen seksjon i Super Admin Dashboard:
+
+"Økonomi forklart"
+
+AI skal kunne:
+
+1. Forklare inntektene mine
+- MRR (Monthly Recurring Revenue)
+- ARR (Annual Recurring Revenue)
+- vekst fra forrige måned
+- churn (hvor mange som slutter)
+
+2. Forklare brukeratferd
+- hvor mange nye brukere
+- hvor mange betalende vs gratis
+- hvilke abonnement som fungerer best
+
+3. Forklare problemer
+- fall i inntekter
+- økt churn
+- ubetalte fakturaer
+- feil betalinger
+
+4. Gi konkrete forslag
+Eksempler:
+- “Du bør fokusere på årsabonnement, fordi 72% velger det”
+- “Churn økte 8% denne måneden, mest fra månedsplan”
+- “Du har 43 ubetalte fakturaer som påvirker cashflow”
+
+------------------------------------------------
+
+AI INPUT DATA
+
+AI skal ha tilgang til:
+
+- totale inntekter
+- MRR og ARR
+- brukerdata
+- abonnementer
+- betalinger
+- faktura-status
+- churn rate
+- support tickets
+- lagringsbruk per bruker
+
+------------------------------------------------
+
+AI OUTPUT UI
+
+Lag et kort i dashboard:
+
+"Økonomi forklart i dag"
+
+Vis:
+- kort tekstforklaring (3–6 avsnitt maks)
+- bullet points med innsikt
+- “Risikoer”
+- “Muligheter”
+- “Neste steg”
+
+------------------------------------------------
+
+CHAT-FUNKSJON
+
+Lag også en chat nederst i samme panel:
+
+Jeg kan skrive:
+- “Hvorfor tjente vi mindre denne måneden?”
+- “Hvilket abonnement bør vi fokusere på?”
+- “Hvem er våre beste kunder?”
+- “Hva er problemet med veksten?”
+
+AI skal svare:
+- enkelt språk
+- konkrete tall
+- ingen teknisk sjargong uten forklaring
+
+------------------------------------------------
+
+SMART FUNKSJON
+
+AI skal automatisk generere:
+
+- ukentlig økonomi-rapport
+- månedlig økonomi-rapport
+- advarsel hvis:
+  - inntekt faller
+  - churn øker
+  - mange ubetalte fakturaer
+
+------------------------------------------------
+
+VISUALISERING
+
+Kombiner AI med data:
+
+- grafer (MRR/ARR)
+- små “insight cards”
+- trendpiler (opp/ned)
+- highlight viktige tall
+
+------------------------------------------------
+
+TONE
+
+AI skal være:
+- enkel
+- tydelig
+- direkte
+- ikke teknisk
+- som en økonomi-analytiker som forklarer til en gründer
+
+------------------------------------------------
+
+GENERER
+
+1. OpenAI API integrasjon
+2. Backend endpoint for økonomi-data
+3. AI prompt system (structured context)
+4. React UI panel
+5. Chat component
+6. Insight generator
+7. Weekly report generator
+8. Dashboard integration
