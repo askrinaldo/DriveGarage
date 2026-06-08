@@ -170,6 +170,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Made by Evolvit */}
+      <div className="flex items-center justify-center gap-2 pt-6 pb-2 opacity-40 hover:opacity-70 transition-opacity">
+        <span className="text-[10px] text-muted-foreground">Made by</span>
+        <img src="/evolvit-logo.webp" alt="Evolvit Solution Norge" className="h-3.5 object-contain" style={{ filter: "grayscale(1) brightness(1.5)" }} />
+        <span className="text-[10px] text-muted-foreground">Solution Norge</span>
+      </div>
     </div>
   );
 }

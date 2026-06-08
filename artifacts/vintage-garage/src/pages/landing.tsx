@@ -266,8 +266,13 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="pt-8 border-t border-white/10 text-center text-gray-500 text-sm">
-            © 2025 Vintage Garage. Alle rettigheter forbeholdt.
+          <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-gray-500 text-sm">
+            <span>© 2025 Vintage Garage. Alle rettigheter forbeholdt.</span>
+            <div className="flex items-center gap-2 opacity-60 hover:opacity-90 transition-opacity">
+              <span className="text-xs text-gray-600">Made by</span>
+              <img src="/evolvit-logo.webp" alt="Evolvit Solution Norge" className="h-4 object-contain" style={{ filter: "brightness(0) invert(0.5)" }} />
+              <span className="text-xs text-gray-600">Solution Norge</span>
+            </div>
           </div>
         </div>
       </footer>
