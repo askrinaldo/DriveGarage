@@ -1,0 +1,34 @@
+import { SignIn } from "@clerk/react";
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+export default function SignInPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#06080f]">
+      <div
+        className="absolute inset-0 opacity-[0.025] pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(rgba(99,102,241,1) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,1) 1px, transparent 1px)`,
+          backgroundSize: "64px 64px",
+        }}
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#06080f_100%)] pointer-events-none" />
+      <div
+        className="absolute rounded-full blur-[80px] pointer-events-none"
+        style={{ left: "20%", top: "30%", width: "500px", height: "500px", background: "rgba(79,70,229,0.12)", transform: "translate(-50%,-50%)" }}
+      />
+      <div
+        className="absolute rounded-full blur-[80px] pointer-events-none"
+        style={{ left: "80%", top: "70%", width: "400px", height: "400px", background: "rgba(6,182,212,0.09)", transform: "translate(-50%,-50%)" }}
+      />
+      <div className="relative z-10 w-full flex justify-center px-4">
+        <SignIn
+          routing="path"
+          path={`${basePath}/sign-in`}
+          signUpUrl={`${basePath}/sign-up`}
+          fallbackRedirectUrl={`${basePath}/dashboard`}
+        />
+      </div>
+    </div>
+  );
+}

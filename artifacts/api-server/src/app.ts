@@ -2,10 +2,16 @@ import express, { type Express } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
+import { clerkMiddleware } from "@clerk/express";
+import {
+  CLERK_PROXY_PATH,
+  clerkProxyMiddleware,
+} from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { parseAuth } from "./middleware/auth";
 import { parseUserAuth } from "./middleware/userAuth";
+import { clerkUserAuth } from "./middleware/clerkUserAuth";
 import { WebhookHandlers } from "./webhookHandlers";
 
 const app: Express = express();
@@ -31,6 +37,9 @@ app.post(
   }
 );
 
+// Clerk proxy must be mounted before body parsers (streams raw bytes)
+app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+
 app.use(
   pinoHttp({
     logger,
@@ -55,8 +64,21 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Clerk middleware — populates req.auth from session cookie
+app.use(
+  clerkMiddleware({
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+    secretKey: process.env.CLERK_SECRET_KEY,
+  }),
+);
+
+// Club JWT auth (separate auth system for clubs)
 app.use(parseAuth);
+
+// User auth: JWT header first (admin fallback), then Clerk session
 app.use(parseUserAuth);
+app.use(clerkUserAuth);
+
 app.use("/api", router);
 
 export default app;

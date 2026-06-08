@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +6,8 @@ import { Layout } from "@/components/layout";
 import { ThemeProvider } from "@/contexts/theme";
 import { AiChatWidget } from "@/components/ai-chat-widget";
 import NotFound from "@/pages/not-found";
+import { ClerkProvider, useAuth } from "@clerk/react";
+import { dark } from "@clerk/themes";
 
 import LandingPage from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
@@ -44,6 +46,8 @@ import TenantSettings from "@/pages/tenant-settings";
 import TenantInvite from "@/pages/tenant-invite";
 import TenantNew from "@/pages/tenant-new";
 import Profile from "@/pages/profile";
+import SignInPage from "@/pages/sign-in";
+import SignUpPage from "@/pages/sign-up";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,10 +58,14 @@ const queryClient = new QueryClient({
   },
 });
 
-const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/"];
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/", "/sign-in", "/sign-up"];
 
 function AppRoutes() {
   const [location] = useLocation();
+  const { isSignedIn, isLoaded } = useAuth();
+
   const isStandalone =
     location === "/" ||
     STANDALONE_ROUTES.filter((r) => r !== "/").some(
@@ -67,10 +75,14 @@ function AppRoutes() {
   if (isStandalone) {
     return (
       <Switch>
-        <Route path="/" component={LandingPage} />
+        <Route path="/sign-in/*?" component={SignInPage} />
+        <Route path="/sign-up/*?" component={SignUpPage} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
+        <Route path="/">
+          {isLoaded && isSignedIn ? <Redirect to="/dashboard" /> : <LandingPage />}
+        </Route>
       </Switch>
     );
   }
@@ -127,9 +139,37 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <AppRoutes />
-            <AiChatWidget />
+          <WouterRouter base={basePath}>
+            <ClerkProvider
+              publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string}
+              appearance={{
+                baseTheme: dark,
+                cssLayerName: "clerk",
+                layout: {
+                  logoImageUrl: `${basePath}/logo.svg`,
+                  logoLinkUrl: `${basePath}/`,
+                  socialButtonsPlacement: "bottom",
+                  socialButtonsVariant: "iconButton",
+                },
+                variables: {
+                  colorPrimary: "#6366f1",
+                  colorBackground: "#0d0f1a",
+                  colorInputBackground: "rgba(255,255,255,0.05)",
+                  colorInputText: "#f8fafc",
+                  colorNeutral: "#94a3b8",
+                  fontFamily: "Outfit, sans-serif",
+                  borderRadius: "0.75rem",
+                },
+                elements: {
+                  card: "shadow-2xl border border-white/10",
+                  formButtonPrimary: "bg-indigo-600 hover:bg-indigo-500 text-white font-semibold",
+                },
+              }}
+              afterSignOutUrl={`${basePath}/`}
+            >
+              <AppRoutes />
+              <AiChatWidget />
+            </ClerkProvider>
           </WouterRouter>
           <Toaster />
         </TooltipProvider>

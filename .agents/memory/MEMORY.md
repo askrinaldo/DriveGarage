@@ -1,4 +1,5 @@
 - [API route path prefix](api-route-prefix.md) — Routes inside the router MUST omit /api prefix; app.ts mounts router at /api already.
-- [User auth pattern](user-auth-pattern.md) — Replit OIDC bridge: /api/login→/api/callback sets _gptoken readable cookie; hook picks it up on mount → localStorage. parseUserAuth is now global in app.ts.
-- [Stripe connector credentials](stripe-connector-credentials.md) — Replit Stripe connector settings key is `secret` (not `secret_key`). Also note: runMigrations must run once before syncBackfill works.
+- [User auth pattern](user-auth-pattern.md) — Clerk is primary auth (session cookie via clerkUserAuth middleware → req.userAuth). Admin JWT fallback via x-user-token header + parseUserAuth. Both run globally in app.ts.
+- [Clerk auth wiring](clerk-auth-wiring.md) — Clerk replaces Replit Auth; clerkUserAuth bridges Clerk session → req.userAuth with JIT DB provisioning. publishableKeyFromHost does NOT exist in @clerk/shared@2.22.1 — pass process.env.CLERK_PUBLISHABLE_KEY directly to clerkMiddleware.
+- [Stripe connector credentials](stripe-connector-credentials.md) — Replit Stripe connector settings key is `secret` (not `secret_key`). runMigrations must run once before syncBackfill works.
 - [Multi-tenant architecture](multi-tenant-architecture.md) — Tenant tables, JWT tenant fields, per-tenant vehicle filtering, SQL backfill approach.

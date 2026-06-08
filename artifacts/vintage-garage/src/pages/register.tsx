@@ -1,12 +1,21 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@clerk/react";
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export default function Register() {
   const [, navigate] = useLocation();
+  const { isSignedIn, isLoaded } = useAuth();
 
   useEffect(() => {
-    navigate("/login");
-  }, [navigate]);
+    if (!isLoaded) return;
+    if (isSignedIn) {
+      navigate("/dashboard");
+    } else {
+      window.location.replace(`${basePath}/sign-up`);
+    }
+  }, [isLoaded, isSignedIn, navigate]);
 
   return null;
 }

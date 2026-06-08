@@ -132,6 +132,11 @@ router.post("/users/login", async (req, res): Promise<void> => {
     return;
   }
 
+  if (!user.passwordHash) {
+    res.status(401).json({ error: "Denne kontoen bruker Clerk-innlogging. Logg inn via innloggingssiden." });
+    return;
+  }
+
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     res.status(401).json({ error: "Feil e-post eller passord" });
@@ -292,6 +297,23 @@ router.patch("/admin/clubs/:id/suspend", parseUserAuth, requireSuperAdmin, async
     return;
   }
   res.json(updated);
+});
+
+// ─── Auth: current user (used by Clerk session bridge) ─────────────────────
+router.get("/auth/user", requireUser, async (req, res): Promise<void> => {
+  const auth = req.userAuth!;
+  res.json({
+    user: {
+      id: auth.userId,
+      name: auth.name,
+      email: auth.email,
+      role: auth.role,
+      tenantId: auth.tenantId,
+      tenantName: auth.tenantName,
+      tenantRole: auth.tenantRole,
+      isPersonalTenant: auth.isPersonalTenant,
+    },
+  });
 });
 
 // ─── Admin: stats ──────────────────────────────────────────────────────────
