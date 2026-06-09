@@ -14,7 +14,7 @@ import {
 import { ThemePanel, ThemeControls } from "@/components/theme-panel";
 import { useTheme } from "@/contexts/theme";
 import { useTranslation } from "react-i18next";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { FlagSwitcher } from "@/components/language-switcher";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -85,22 +85,25 @@ export function Layout({ children }: LayoutProps) {
     <aside className="w-64 flex-shrink-0 flex flex-col h-full bg-sidebar border-r border-sidebar-border">
 
       {/* Logo */}
-      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
-        <Link href="/dashboard">
-          <div className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-900/30 group-hover:shadow-indigo-900/50 transition-shadow">
-              <Wrench className="w-5 h-5 text-white" />
+      <div className="px-5 pt-5 pb-3">
+        <div className="flex items-center justify-between mb-2.5">
+          <Link href="/dashboard">
+            <div className="flex items-center gap-3 cursor-pointer group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-900/30 group-hover:shadow-indigo-900/50 transition-shadow">
+                <Wrench className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-black text-lg tracking-tight text-sidebar-foreground">DriveGarage</span>
             </div>
-            <span className="font-black text-lg tracking-tight text-sidebar-foreground">DriveGarage</span>
-          </div>
-        </Link>
-        <button
-          onClick={toggleDarkMode}
-          title={isDark ? t("theme.switchToLight") : t("theme.switchToDark")}
-          className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
+          </Link>
+          <button
+            onClick={toggleDarkMode}
+            title={isDark ? t("theme.switchToLight") : t("theme.switchToDark")}
+            className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
+        <FlagSwitcher className="justify-center" />
       </div>
 
       {/* Tenant switcher */}
@@ -206,7 +209,6 @@ export function Layout({ children }: LayoutProps) {
 
         <div className="pt-2 space-y-0.5">
           <ThemePanel />
-          <LanguageSwitcher popoverSide="right" />
         </div>
       </nav>
 

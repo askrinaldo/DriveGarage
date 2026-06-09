@@ -8,6 +8,7 @@ import {
   ChevronRight, Menu, X, Star, Shield, Zap,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { FlagSwitcher } from "@/components/language-switcher";
 
 /* ── Animated counter ────────────────────────────────────────── */
 function useCountUp(target: number, duration = 1800, start = false) {
@@ -135,6 +136,7 @@ export default function LandingPage() {
                 {t("landing.navbar.createAccount")}
               </Button>
             </Link>
+            <FlagSwitcher dark />
           </div>
 
           <button className="md:hidden text-[#8899bb] hover:text-white p-2" onClick={() => setMenuOpen((v) => !v)}>
@@ -153,6 +155,7 @@ export default function LandingPage() {
                 {t("landing.navbar.createAccountFree")}
               </Button>
             </Link>
+            <FlagSwitcher dark className="pt-2" />
           </div>
         )}
       </nav>
