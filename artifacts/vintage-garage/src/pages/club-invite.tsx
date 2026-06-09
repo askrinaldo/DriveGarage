@@ -160,7 +160,7 @@ export default function ClubInvite() {
           </CardHeader>
           <CardContent className="pb-5 space-y-3">
             <p className="text-sm text-muted-foreground">
-              <strong>{invitation.createdBy}</strong> har invitert deg til å bli med i denne klubben på GaragePilot.
+              <strong>{invitation.createdBy}</strong> har invitert deg til å bli med i denne klubben på DriveGarage.
             </p>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="w-4 h-4 shrink-0" />

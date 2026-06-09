@@ -146,6 +146,7 @@ function App() {
                 baseTheme: dark,
                 cssLayerName: "clerk",
                 layout: {
+                  applicationName: "DriveGarage",
                   logoImageUrl: `${basePath}/logo.svg`,
                   logoLinkUrl: `${basePath}/`,
                   socialButtonsPlacement: "bottom",

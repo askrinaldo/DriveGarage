@@ -51,7 +51,7 @@ function StatCard({ value, suffix, label, delay }: { value: number; suffix: stri
 
 const TESTIMONIALS = [
   { name: "Tor Gunnar H.", vehicle: "1968 Volvo Amazon", text: "Endelig ett sted å samle alt om bilen. Servicehistorikken er gull verdt ved salg!", stars: 5 },
-  { name: "Anita B.", vehicle: "1972 Triumph Bonneville", text: "Kvitteringsarkivet har reddet meg flere ganger. Anbefaler GaragePilot til alle MC-entusiaster.", stars: 5 },
+  { name: "Anita B.", vehicle: "1972 Triumph Bonneville", text: "Kvitteringsarkivet har reddet meg flere ganger. Anbefaler DriveGarage til alle MC-entusiaster.", stars: 5 },
   { name: "Knut-Erik L.", vehicle: "1955 Ford F100", text: "Restaureringsloggen med bilder er fantastisk. Jeg kan vise frem hele historien til kunden.", stars: 5 },
 ];
 
@@ -113,7 +113,7 @@ export default function LandingPage() {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.4)]">
               <Car className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight">GaragePilot</span>
+            <span className="text-xl font-bold tracking-tight">DriveGarage</span>
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#8899bb]">
@@ -270,7 +270,7 @@ export default function LandingPage() {
             <div className="inline-block px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-4">
               Hva brukerne sier
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold">Entusiaster elsker GaragePilot</h2>
+            <h2 className="text-3xl md:text-5xl font-bold">Entusiaster elsker DriveGarage</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t) => (
@@ -402,7 +402,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
                 <Car className="w-4 h-4 text-white" />
               </div>
-              <span className="text-xl font-bold">GaragePilot</span>
+              <span className="text-xl font-bold">DriveGarage</span>
             </div>
             <p className="text-[#8899bb] text-sm leading-relaxed max-w-xs">
               Norges beste digitale plattform for veteranbiler og klassiske motorsykler. Bevar historien for fremtiden.
@@ -426,7 +426,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8899bb]">
-          <span>© {new Date().getFullYear()} GaragePilot AS. Med enerett.</span>
+          <span>© {new Date().getFullYear()} DriveGarage AS. Med enerett.</span>
           <div className="flex items-center gap-1.5">
             <Shield className="w-3 h-3 text-indigo-400" />
             <span>Data lagret sikkert i Norge</span>

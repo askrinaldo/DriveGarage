@@ -246,7 +246,7 @@ export default function Billing() {
           </div>
           <h1 className="text-2xl font-black text-foreground tracking-tight">Abonnement</h1>
         </div>
-        <p className="text-muted-foreground text-sm ml-10">Administrer ditt GaragePilot-abonnement</p>
+        <p className="text-muted-foreground text-sm ml-10">Administrer ditt DriveGarage-abonnement</p>
       </div>
 
       {/* Active subscription card */}

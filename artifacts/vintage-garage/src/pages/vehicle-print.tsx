@@ -222,7 +222,7 @@ export default function VehiclePrint() {
 
         {/* Footer */}
         <div className="mt-12 pt-4 border-t border-gray-200 text-center text-xs text-gray-400 font-sans">
-          <p>Generert fra GaragePilot • {new Date().toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" })}</p>
+          <p>Generert fra DriveGarage • {new Date().toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" })}</p>
         </div>
       </div>
     </>

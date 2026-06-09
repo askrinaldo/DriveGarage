@@ -80,7 +80,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-900/30 group-hover:shadow-indigo-900/50 transition-shadow">
               <Wrench className="w-5 h-5 text-white" />
             </div>
-            <span className="font-black text-lg tracking-tight text-sidebar-foreground">GaragePilot</span>
+            <span className="font-black text-lg tracking-tight text-sidebar-foreground">DriveGarage</span>
           </div>
         </Link>
       </div>
@@ -299,7 +299,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
               <Wrench className="w-4 h-4 text-white" />
             </div>
-            <span className="font-black text-base text-sidebar-foreground tracking-tight">GaragePilot</span>
+            <span className="font-black text-base text-sidebar-foreground tracking-tight">DriveGarage</span>
           </div>
           <div className="flex items-center gap-1.5">
             <ThemePanel

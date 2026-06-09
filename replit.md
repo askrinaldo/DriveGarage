@@ -18,7 +18,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Applications
 
-### Vintage Garage (`artifacts/vintage-garage`)
+### DriveGarage (`artifacts/vintage-garage`)
 
 A personal maintenance logbook dashboard for classic cars and motorcycles.
 
@@ -43,7 +43,7 @@ A personal maintenance logbook dashboard for classic cars and motorcycles.
 
 ### API Server (`artifacts/api-server`)
 
-Express 5 REST API serving the Vintage Garage frontend.
+Express 5 REST API serving the DriveGarage frontend.
 
 **Endpoints:**
 - `GET/POST /api/vehicles`

@@ -1990,7 +1990,7 @@ export default function Admin() {
             </div>
             <p className="text-sm font-bold text-white">Super Admin</p>
           </div>
-          <p className="text-[10px] text-white/30 pl-9">GaragePilot Platform</p>
+          <p className="text-[10px] text-white/30 pl-9">DriveGarage Platform</p>
         </div>
 
         {/* Nav links */}
