@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Vintage Garage"
+title = "DriveGarage"
 version = "1.0.0"
 id = "artifacts/vintage-garage"
 router = "path"
