@@ -81,7 +81,7 @@ function generateInsights(m: FinanceMetrics): Omit<FinanceInsight, "metrics" | "
   } else if (m.mrr === 0 && m.totalUsers > 0) {
     summaryLines.push(`Du har ${m.totalUsers} registrerte brukere, men ingen betalende kunder ennå. Alle er på gratisplanen. Neste mål er å konvertere de første til Standard- eller Premium-abonnement.`);
   } else {
-    summaryLines.push(`GaragePilot genererer ${kr(m.mrr)} i månedlige inntekter (MRR), som gir en årlig omsetning på ${kr(m.arr)}. Inntektene er ${revTrend}.`);
+    summaryLines.push(`DriveGarage genererer ${kr(m.mrr)} i månedlige inntekter (MRR), som gir en årlig omsetning på ${kr(m.arr)}. Inntektene er ${revTrend}.`);
     if (m.totalUsers > 0) {
       summaryLines.push(`Av totalt ${m.totalUsers} brukere er ${m.payingUsers} betalende (${payingPct}%) og ${m.freeUsers} på gratisplan (${freePct}%). Gjennomsnittlig inntekt per betalende bruker (ARPU) er ${kr(arpu)}/mnd.`);
     }

@@ -31,7 +31,7 @@ export function Combined() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-playfair font-bold text-2xl text-copper">
-              Vintage Garage
+              DriveGarage
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8">
@@ -191,7 +191,7 @@ export function Combined() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
             <div>
               <div className="font-playfair font-bold text-2xl text-copper mb-4">
-                Vintage Garage
+                DriveGarage
               </div>
               <p className="text-gray-500">
                 Samle hele historien til kjøretøyet ditt på ett trygt sted.
@@ -223,7 +223,7 @@ export function Combined() {
             </div>
           </div>
           <div className="pt-8 border-t border-white/10 text-center text-gray-500">
-            © 2025 Vintage Garage. Alle rettigheter forbeholdt.
+            © 2025 DriveGarage. Alle rettigheter forbeholdt.
           </div>
         </div>
       </footer>

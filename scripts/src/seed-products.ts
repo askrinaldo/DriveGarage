@@ -2,11 +2,11 @@ import { getUncachableStripeClient } from "./stripeClient";
 
 async function seedProducts() {
   const stripe = await getUncachableStripeClient();
-  console.log("Sjekker og oppretter Stripe-produkter for Vintage Garage...\n");
+  console.log("Sjekker og oppretter Stripe-produkter for DriveGarage...\n");
 
   // ── STANDARD ──────────────────────────────────────────────────────────────
   const existingStandard = await stripe.products.search({
-    query: "name:'GaragePilot Standard' AND active:'true'",
+    query: "name:'DriveGarage Standard' AND active:'true'",
   });
 
   let standardProduct;
@@ -15,7 +15,7 @@ async function seedProducts() {
     console.log(`✓ Standard-produkt finnes allerede: ${standardProduct.id}`);
   } else {
     standardProduct = await stripe.products.create({
-      name: "GaragePilot Standard",
+      name: "DriveGarage Standard",
       description: "Ubegrenset kjøretøy, 10 GB lagring, klubber og arrangementer",
       metadata: { tier: "standard" },
     });
@@ -68,7 +68,7 @@ async function seedProducts() {
 
   // ── PREMIUM ───────────────────────────────────────────────────────────────
   const existingPremium = await stripe.products.search({
-    query: "name:'GaragePilot Premium' AND active:'true'",
+    query: "name:'DriveGarage Premium' AND active:'true'",
   });
 
   let premiumProduct;
@@ -77,7 +77,7 @@ async function seedProducts() {
     console.log(`✓ Premium-produkt finnes allerede: ${premiumProduct.id}`);
   } else {
     premiumProduct = await stripe.products.create({
-      name: "GaragePilot Premium",
+      name: "DriveGarage Premium",
       description: "Ubegrenset lagring, AI-assistent, PDF-rapporter og prioritert support",
       metadata: { tier: "premium" },
     });

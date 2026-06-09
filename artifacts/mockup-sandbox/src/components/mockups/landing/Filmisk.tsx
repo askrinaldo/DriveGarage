@@ -35,7 +35,7 @@ export function Filmisk() {
             <div className="w-8 h-8 bg-white flex items-center justify-center">
               <span className="text-black font-oswald font-bold text-xl leading-none">V</span>
             </div>
-            <span className="font-oswald text-2xl font-bold tracking-widest uppercase">Vintage Garage</span>
+            <span className="font-oswald text-2xl font-bold tracking-widest uppercase">DriveGarage</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium tracking-widest uppercase text-white/70">
             <a href="#funksjoner" className="hover:text-white transition-colors">Funksjoner</a>
@@ -295,7 +295,7 @@ export function Filmisk() {
                 <div className="w-10 h-10 bg-white flex items-center justify-center">
                   <span className="text-black font-oswald font-bold text-2xl leading-none">V</span>
                 </div>
-                <span className="font-oswald text-3xl font-bold tracking-widest uppercase text-white">Vintage Garage</span>
+                <span className="font-oswald text-3xl font-bold tracking-widest uppercase text-white">DriveGarage</span>
               </div>
               <p className="text-white/60 text-lg max-w-md leading-relaxed">
                 Norges beste plattform for å bevare historien til klassiske kjøretøy. Bygget av entusiaster, for entusiaster.
@@ -325,7 +325,7 @@ export function Filmisk() {
           
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-white/40 text-sm tracking-wider uppercase">
-              © {new Date().getFullYear()} Vintage Garage. Alle rettigheter reservert.
+              © {new Date().getFullYear()} DriveGarage. Alle rettigheter reservert.
             </p>
             <div className="flex gap-4">
               <div className="w-10 h-10 bg-white/5 hover:bg-amber-500 transition-colors cursor-pointer flex items-center justify-center rounded-full" />

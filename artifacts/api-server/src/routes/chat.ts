@@ -5,7 +5,7 @@ import { parseUserAuth } from "../middleware/userAuth";
 
 const router: IRouter = Router();
 
-const SYSTEM_PROMPT = `Du er en hjelpsom assistent for Vintage Garage — en norsk plattform for eiere av veteranbiler og klassiske motorsykler.
+const SYSTEM_PROMPT = `Du er en hjelpsom assistent for DriveGarage — en norsk plattform for eiere av veteranbiler og klassiske motorsykler.
 
 Plattformen har følgende funksjoner:
 - **Garasje**: Legg til og administrer kjøretøy (biler og motorsykler) med bilder, farge, kilometerstand, reg.nr. og Finn.no-lenke
@@ -40,7 +40,7 @@ function getRuleBasedResponse(message: string): string {
   }
 
   if (lower.includes("hei") || lower.includes("hallo") || lower.includes("god dag")) {
-    return "Hei! Jeg er Vintage Garage-assistenten. Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber, kvitteringer og mye mer. Hva kan jeg hjelpe deg med?";
+    return "Hei! Jeg er DriveGarage-assistenten. Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber, kvitteringer og mye mer. Hva kan jeg hjelpe deg med?";
   }
 
   return `Beklager, jeg fant ikke et godt svar på det. Prøv å spørre om kjøretøy, service, klubber, kvitteringer eller turer.\n\nHar du et problem som krever menneskelig hjelp? [Opprett en supportsak her](/help).`;

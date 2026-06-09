@@ -10,7 +10,7 @@ const MAX_MESSAGES = 20;
 const WELCOME_MESSAGE = {
   role: "assistant" as const,
   content:
-    "Hei! Jeg er Vintage Garage-assistenten 🔧 Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber og mer. Hva lurer du på?",
+    "Hei! Jeg er DriveGarage-assistenten 🔧 Jeg kan hjelpe deg med kjøretøy, servicelogg, klubber og mer. Hva lurer du på?",
 };
 
 router.get("/chat-history", parseUserAuth, requireUser, async (req, res): Promise<void> => {

@@ -41,11 +41,11 @@ export async function sendInvitationEmail(opts: {
   await transporter.sendMail({
     from: SMTP_FROM ?? SMTP_USER,
     to: opts.to,
-    subject: `Invitasjon til ${opts.clubName} på Vintage Garage`,
+    subject: `Invitasjon til ${opts.clubName} på DriveGarage`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#18181b;color:#fafafa;border-radius:10px;padding:32px;">
         <h2 style="color:#f97316;margin-top:0">Du er invitert!</h2>
-        <p><strong>${opts.createdBy}</strong> har invitert deg til å bli med i <strong>${opts.clubName}</strong> på Vintage Garage.</p>
+        <p><strong>${opts.createdBy}</strong> har invitert deg til å bli med i <strong>${opts.clubName}</strong> på DriveGarage.</p>
         <a href="${opts.inviteUrl}" style="display:inline-block;background:#f97316;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin:20px 0">
           Godta invitasjon
         </a>
