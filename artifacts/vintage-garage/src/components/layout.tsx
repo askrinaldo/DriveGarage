@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown,
   User, ChevronDown, HelpCircle, Palette, CreditCard, Trophy,
-  Star, IdCard, Building2, ChevronRight, Settings, Menu,
+  Star, IdCard, Building2, ChevronRight, Settings, Menu, Sun, Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemePanel, ThemeControls } from "@/components/theme-panel";
+import { useTheme, type ColorMode } from "@/contexts/theme";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -44,6 +45,13 @@ export function Layout({ children }: LayoutProps) {
   const [location, navigate] = useLocation();
   const { isAuthenticated, isSuperAdmin, name, logout, token, tenantId, tenantName, isPersonalTenant, switchTenant } = useUserAuth();
 
+  const { mode, setMode } = useTheme();
+  const isDark = mode === "dark" || (mode === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  function toggleDarkMode() {
+    setMode(isDark ? "light" : "dark");
+  }
+
   const [tenants, setTenants] = useState<TenantEntry[]>([]);
   const [switchingTenant, setSwitchingTenant] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -74,7 +82,7 @@ export function Layout({ children }: LayoutProps) {
     <aside className="w-64 flex-shrink-0 flex flex-col h-full bg-sidebar border-r border-sidebar-border">
 
       {/* Logo */}
-      <div className="px-5 pt-6 pb-4">
+      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
         <Link href="/dashboard">
           <div className="flex items-center gap-3 cursor-pointer group">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-900/30 group-hover:shadow-indigo-900/50 transition-shadow">
@@ -83,6 +91,13 @@ export function Layout({ children }: LayoutProps) {
             <span className="font-black text-lg tracking-tight text-sidebar-foreground">DriveGarage</span>
           </div>
         </Link>
+        <button
+          onClick={toggleDarkMode}
+          title={isDark ? "Bytt til lys modus" : "Bytt til mørk modus"}
+          className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* Tenant switcher */}
@@ -302,11 +317,13 @@ export function Layout({ children }: LayoutProps) {
             <span className="font-black text-base text-sidebar-foreground tracking-tight">DriveGarage</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <ThemePanel
-              iconOnly
-              buttonClassName="p-2 rounded-lg text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent transition-colors w-auto"
-              popoverSide="bottom"
-            />
+            <button
+              onClick={toggleDarkMode}
+              title={isDark ? "Bytt til lys modus" : "Bytt til mørk modus"}
+              className="p-2 rounded-lg text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent transition-colors"
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             {isAuthenticated ? (
               <button onClick={handleLogout} className="p-2 rounded-lg text-sidebar-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors">
                 <LogOut className="w-4 h-4" />
