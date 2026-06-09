@@ -1,25 +1,23 @@
 import { useTheme, type AccentColor, type ColorMode, ACCENT_VALUES } from "@/contexts/theme";
-import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { Palette, Moon, Sun, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
-function useSystemColorScheme() {
+function useSystemIsDark() {
   const [isDark, setIsDark] = useState(
     () => window.matchMedia("(prefers-color-scheme: dark)").matches
   );
-
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
-
-  return isDark ? "Mørk" : "Lys";
+  return isDark;
 }
 
 const ACCENT_OPTIONS: { id: AccentColor; label: string }[] = [
@@ -32,12 +30,6 @@ const ACCENT_OPTIONS: { id: AccentColor; label: string }[] = [
   { id: "grå",    label: "Grå" },
 ];
 
-const MODE_OPTIONS: { id: ColorMode; label: string; icon: React.ReactNode }[] = [
-  { id: "light", label: "Lys",  icon: <Sun className="w-3.5 h-3.5" /> },
-  { id: "auto",  label: "Auto", icon: <Monitor className="w-3.5 h-3.5" /> },
-  { id: "dark",  label: "Mørk", icon: <Moon className="w-3.5 h-3.5" /> },
-];
-
 function accentSwatch(accent: AccentColor) {
   const { h, s, l } = ACCENT_VALUES[accent];
   return `hsl(${h} ${s}% ${l}%)`;
@@ -45,13 +37,20 @@ function accentSwatch(accent: AccentColor) {
 
 export function ThemeControls() {
   const { accent, mode, setAccent, setMode } = useTheme();
-  const systemScheme = useSystemColorScheme();
+  const { t } = useTranslation();
+  const systemIsDark = useSystemIsDark();
+
+  const MODE_OPTIONS: { id: ColorMode; label: string; icon: React.ReactNode }[] = [
+    { id: "light", label: t("theme.light"), icon: <Sun className="w-3.5 h-3.5" /> },
+    { id: "auto",  label: t("theme.auto"),  icon: <Monitor className="w-3.5 h-3.5" /> },
+    { id: "dark",  label: t("theme.dark"),  icon: <Moon className="w-3.5 h-3.5" /> },
+  ];
 
   return (
     <div className="space-y-4">
       <div>
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-          Aksentfarge
+          {t("theme.accentColor")}
         </p>
         <div className="grid grid-cols-7 gap-1.5">
           {ACCENT_OPTIONS.map((opt) => (
@@ -74,7 +73,7 @@ export function ThemeControls() {
 
       <div className="border-t border-border pt-3">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-          Lysmodus
+          {t("theme.lightMode")}
         </p>
         <div className="grid grid-cols-3 gap-1.5">
           {MODE_OPTIONS.map((opt) => (
@@ -92,7 +91,7 @@ export function ThemeControls() {
               {opt.label}
               {opt.id === "auto" && (
                 <span className="text-[10px] font-normal leading-none text-muted-foreground">
-                  nå: {systemScheme}
+                  {t("theme.now")}: {systemIsDark ? t("theme.dark") : t("theme.light")}
                 </span>
               )}
             </button>
@@ -117,6 +116,7 @@ const MODE_ICON_MAP: Record<ColorMode, React.ReactNode> = {
 
 export function ThemePanel({ buttonClassName, popoverSide = "right", iconOnly = false }: ThemePanelProps) {
   const { accent, mode } = useTheme();
+  const { t } = useTranslation();
   const swatchColor = accentSwatch(accent);
 
   return (
@@ -127,7 +127,7 @@ export function ThemePanel({ buttonClassName, popoverSide = "right", iconOnly = 
             "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm font-medium w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
             buttonClassName
           )}
-          title="Tilpass tema"
+          title={t("theme.title")}
         >
           <span className="relative shrink-0">
             <Palette className="w-4 h-4" />
@@ -136,7 +136,7 @@ export function ThemePanel({ buttonClassName, popoverSide = "right", iconOnly = 
               style={{ backgroundColor: swatchColor }}
             />
           </span>
-          {!iconOnly && <span className="flex-1">Tema</span>}
+          {!iconOnly && <span className="flex-1">{t("nav.theme")}</span>}
           <span className="flex items-center shrink-0 text-sidebar-foreground/50">
             {MODE_ICON_MAP[mode]}
           </span>

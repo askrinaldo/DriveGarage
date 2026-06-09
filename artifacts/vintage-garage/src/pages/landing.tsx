@@ -7,6 +7,7 @@ import {
   Calendar, ArrowRightLeft, Bot, Cloud, CheckCircle2,
   ChevronRight, Menu, X, Star, Shield, Zap,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /* ── Animated counter ────────────────────────────────────────── */
 function useCountUp(target: number, duration = 1800, start = false) {
@@ -50,31 +51,20 @@ function StatCard({ value, suffix, label, delay }: { value: number; suffix: stri
 }
 
 const TESTIMONIALS = [
-  { name: "Tor Gunnar H.", vehicle: "1968 Volvo Amazon", text: "Endelig ett sted å samle alt om bilen. Servicehistorikken er gull verdt ved salg!", stars: 5 },
-  { name: "Anita B.", vehicle: "1972 Triumph Bonneville", text: "Kvitteringsarkivet har reddet meg flere ganger. Anbefaler DriveGarage til alle MC-entusiaster.", stars: 5 },
-  { name: "Knut-Erik L.", vehicle: "1955 Ford F100", text: "Restaureringsloggen med bilder er fantastisk. Jeg kan vise frem hele historien til kunden.", stars: 5 },
+  { name: "Tor Gunnar H.", vehicle: "1968 Volvo Amazon",       text: "Endelig ett sted å samle alt om bilen. Servicehistorikken er gull verdt ved salg!", stars: 5 },
+  { name: "Anita B.",      vehicle: "1972 Triumph Bonneville", text: "Kvitteringsarkivet har reddet meg flere ganger. Anbefaler DriveGarage til alle MC-entusiaster.", stars: 5 },
+  { name: "Knut-Erik L.",  vehicle: "1955 Ford F100",          text: "Restaureringsloggen med bilder er fantastisk. Jeg kan vise frem hele historien til kunden.", stars: 5 },
 ];
 
-const FEATURES = [
-  { icon: Wrench, title: "Digital servicebok", desc: "Loggfør alt vedlikehold med dato, kilometerstand og deler.", accent: "from-indigo-500/20" },
-  { icon: FileText, title: "Kvitteringsarkiv", desc: "Ta bilde av kvitteringer og lagre dem trygt i skyen.", accent: "from-cyan-500/20" },
-  { icon: History, title: "Kjøretøyhistorikk", desc: "Bygg en komplett tidslinje for eierskap og hendelser.", accent: "from-blue-500/20" },
-  { icon: Users, title: "Klubber & garasjer", desc: "Opprett eller bli med i klubber for ditt merke.", accent: "from-violet-500/20" },
-  { icon: MessageSquare, title: "Forum & diskusjon", desc: "Diskuter tekniske problemer og del erfaringer med andre.", accent: "from-indigo-500/20" },
-  { icon: Calendar, title: "Arrangementer", desc: "Finn treff, løp og utstillinger i nærheten av deg.", accent: "from-cyan-500/20" },
-  { icon: ArrowRightLeft, title: "Eierskapsoverføring", desc: "Overfør hele den digitale historikken ved salg.", accent: "from-blue-500/20" },
-  { icon: Bot, title: "AI-assistent", desc: "Få hjelp til å tyde gamle manualer eller finne deler.", accent: "from-violet-500/20" },
-  { icon: Cloud, title: "Skybasert lagring", desc: "Dine data er alltid trygge og tilgjengelige overalt.", accent: "from-indigo-500/20" },
-];
-
-const STEPS = [
-  { step: "01", title: "Opprett konto", desc: "Registrer deg gratis på under ett minutt — ingen kredittkort." },
-  { step: "02", title: "Registrer kjøretøy", desc: "Legg inn info om din veteranbil eller motorsykkel." },
-  { step: "03", title: "Last opp historikk", desc: "Legg til bilder, dokumenter og servicehistorikk." },
-  { step: "04", title: "Del eller selg", desc: "Vis frem bilen eller overfør hele historikken ved salg." },
-];
+const FEATURE_ICONS = [Wrench, FileText, History, Users, MessageSquare, Calendar, ArrowRightLeft, Bot, Cloud] as const;
+const FEATURE_ACCENTS = [
+  "from-indigo-500/20", "from-cyan-500/20", "from-blue-500/20",
+  "from-violet-500/20", "from-indigo-500/20", "from-cyan-500/20",
+  "from-blue-500/20",   "from-violet-500/20", "from-indigo-500/20",
+] as const;
 
 export default function LandingPage() {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -88,6 +78,25 @@ export default function LandingPage() {
     setMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   }
+
+  const FEATURES = [
+    { icon: FEATURE_ICONS[0], title: t("landing.features.f1Title"), desc: t("landing.features.f1Desc"), accent: FEATURE_ACCENTS[0] },
+    { icon: FEATURE_ICONS[1], title: t("landing.features.f2Title"), desc: t("landing.features.f2Desc"), accent: FEATURE_ACCENTS[1] },
+    { icon: FEATURE_ICONS[2], title: t("landing.features.f3Title"), desc: t("landing.features.f3Desc"), accent: FEATURE_ACCENTS[2] },
+    { icon: FEATURE_ICONS[3], title: t("landing.features.f4Title"), desc: t("landing.features.f4Desc"), accent: FEATURE_ACCENTS[3] },
+    { icon: FEATURE_ICONS[4], title: t("landing.features.f5Title"), desc: t("landing.features.f5Desc"), accent: FEATURE_ACCENTS[4] },
+    { icon: FEATURE_ICONS[5], title: t("landing.features.f6Title"), desc: t("landing.features.f6Desc"), accent: FEATURE_ACCENTS[5] },
+    { icon: FEATURE_ICONS[6], title: t("landing.features.f7Title"), desc: t("landing.features.f7Desc"), accent: FEATURE_ACCENTS[6] },
+    { icon: FEATURE_ICONS[7], title: t("landing.features.f8Title"), desc: t("landing.features.f8Desc"), accent: FEATURE_ACCENTS[7] },
+    { icon: FEATURE_ICONS[8], title: t("landing.features.f9Title"), desc: t("landing.features.f9Desc"), accent: FEATURE_ACCENTS[8] },
+  ];
+
+  const STEPS = [
+    { step: "01", title: t("landing.howItWorks.step1Title"), desc: t("landing.howItWorks.step1Desc") },
+    { step: "02", title: t("landing.howItWorks.step2Title"), desc: t("landing.howItWorks.step2Desc") },
+    { step: "03", title: t("landing.howItWorks.step3Title"), desc: t("landing.howItWorks.step3Desc") },
+    { step: "04", title: t("landing.howItWorks.step4Title"), desc: t("landing.howItWorks.step4Desc") },
+  ];
 
   return (
     <div className="min-h-screen bg-[#060b18] text-white font-sans overflow-x-hidden selection:bg-indigo-500/30">
@@ -117,13 +126,13 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#8899bb]">
-            <button onClick={() => scrollTo("funksjoner")} className="hover:text-white transition-colors">Funksjoner</button>
-            <button onClick={() => scrollTo("slik-fungerer")} className="hover:text-white transition-colors">Slik fungerer det</button>
-            <button onClick={() => scrollTo("priser")} className="hover:text-white transition-colors">Priser</button>
-            <Link href="/login" className="hover:text-white transition-colors">Logg inn</Link>
+            <button onClick={() => scrollTo("funksjoner")} className="hover:text-white transition-colors">{t("landing.navbar.features")}</button>
+            <button onClick={() => scrollTo("slik-fungerer")} className="hover:text-white transition-colors">{t("landing.navbar.howItWorks")}</button>
+            <button onClick={() => scrollTo("priser")} className="hover:text-white transition-colors">{t("landing.navbar.pricing")}</button>
+            <Link href="/login" className="hover:text-white transition-colors">{t("landing.navbar.logIn")}</Link>
             <Link href="/register">
               <Button className="bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm rounded-full px-6 h-9 text-sm">
-                Opprett konto
+                {t("landing.navbar.createAccount")}
               </Button>
             </Link>
           </div>
@@ -135,13 +144,13 @@ export default function LandingPage() {
 
         {menuOpen && (
           <div className="md:hidden border-t border-white/10 bg-[#060b18]/95 backdrop-blur-xl px-6 py-6 space-y-4">
-            <button onClick={() => scrollTo("funksjoner")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">Funksjoner</button>
-            <button onClick={() => scrollTo("slik-fungerer")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">Slik fungerer det</button>
-            <button onClick={() => scrollTo("priser")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">Priser</button>
-            <Link href="/login" className="block text-[#8899bb] hover:text-white py-1" onClick={() => setMenuOpen(false)}>Logg inn</Link>
+            <button onClick={() => scrollTo("funksjoner")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">{t("landing.navbar.features")}</button>
+            <button onClick={() => scrollTo("slik-fungerer")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">{t("landing.navbar.howItWorks")}</button>
+            <button onClick={() => scrollTo("priser")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">{t("landing.navbar.pricing")}</button>
+            <Link href="/login" className="block text-[#8899bb] hover:text-white py-1" onClick={() => setMenuOpen(false)}>{t("landing.navbar.logIn")}</Link>
             <Link href="/register" onClick={() => setMenuOpen(false)}>
               <Button className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 text-white border-0 rounded-full mt-2">
-                Opprett konto gratis
+                {t("landing.navbar.createAccountFree")}
               </Button>
             </Link>
           </div>
@@ -157,24 +166,24 @@ export default function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-60" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
             </span>
-            Norges beste plattform for veteranbiler
+            {t("landing.badge")}
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 max-w-4xl mx-auto leading-[1.05]">
-            Samle hele historien<br />til{" "}
+            {t("landing.hero.title1")}<br />{t("landing.hero.titleConnector")}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400">
-              kjøretøyet ditt
+              {t("landing.hero.title2")}
             </span>
           </h1>
 
           <p className="text-lg md:text-xl text-[#8899bb] max-w-2xl mx-auto mb-12 leading-relaxed">
-            Dokumenter vedlikehold, lagre kvitteringer, bli med i klubber og følg hele historikken på veteranbilen eller motorsykkelen din.
+            {t("landing.hero.subtitle")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/register">
               <Button className="h-14 px-8 text-lg rounded-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 border-0 shadow-[0_0_40px_rgba(99,102,241,0.3)] transition-all hover:scale-[1.03]">
-                Registrer deg gratis
+                {t("landing.hero.ctaPrimary")}
               </Button>
             </Link>
             <Button
@@ -182,15 +191,15 @@ export default function LandingPage() {
               onClick={() => scrollTo("slik-fungerer")}
               className="h-14 px-8 text-lg rounded-full bg-white/5 border-white/15 text-white hover:bg-white/10 backdrop-blur-sm transition-all"
             >
-              Se hvordan det fungerer <ChevronRight className="w-5 h-5 ml-1" />
+              {t("landing.hero.ctaSecondary")} <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </div>
 
           <div className="mt-16 flex flex-wrap items-center justify-center gap-6 opacity-55">
             {[
-              { icon: Shield, text: "Sikre data i Norge" },
-              { icon: Zap, text: "Sett opp på 2 min" },
-              { icon: Star, text: "4.9 / 5 fra brukere" },
+              { icon: Shield, text: t("landing.trust.secureData") },
+              { icon: Zap,    text: t("landing.trust.setup") },
+              { icon: Star,   text: t("landing.trust.rating") },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-2 text-sm text-[#8899bb]">
                 <Icon className="w-4 h-4 text-cyan-500" />
@@ -203,10 +212,10 @@ export default function LandingPage() {
         {/* ════ STATS ════ */}
         <section className="border-y border-white/[0.07] bg-white/[0.015] backdrop-blur-sm py-16">
           <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-            <StatCard value={12000} suffix="+" label="Kjøretøy" delay={0} />
-            <StatCard value={500} suffix="+" label="Klubber" delay={100} />
-            <StatCard value={45000} suffix="+" label="Dokumenter" delay={200} />
-            <StatCard value={100} suffix="%" label="Lidenskap" delay={300} />
+            <StatCard value={12000} suffix="+" label={t("landing.stats.vehicles")}  delay={0} />
+            <StatCard value={500}   suffix="+" label={t("landing.stats.clubs")}     delay={100} />
+            <StatCard value={45000} suffix="+" label={t("landing.stats.documents")} delay={200} />
+            <StatCard value={100}   suffix="%" label={t("landing.stats.passion")}   delay={300} />
           </div>
         </section>
 
@@ -214,11 +223,11 @@ export default function LandingPage() {
         <section id="funksjoner" className="max-w-7xl mx-auto px-6 py-32">
           <div className="text-center mb-20">
             <div className="inline-block px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
-              Funksjoner
+              {t("landing.features.badge")}
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">Alt du trenger for garasjen</h2>
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">{t("landing.features.title")}</h2>
             <p className="text-[#8899bb] max-w-2xl mx-auto text-lg">
-              En komplett verktøykasse designet spesifikt for å bevare historien til klassiske kjøretøy.
+              {t("landing.features.subtitle")}
             </p>
           </div>
 
@@ -244,9 +253,9 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="text-center mb-20">
               <div className="inline-block px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
-                Komme i gang
+                {t("landing.howItWorks.badge")}
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold">Slik fungerer det</h2>
+              <h2 className="text-3xl md:text-5xl font-bold">{t("landing.howItWorks.title")}</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
@@ -268,23 +277,23 @@ export default function LandingPage() {
         <section className="max-w-7xl mx-auto px-6 py-32">
           <div className="text-center mb-16">
             <div className="inline-block px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-4">
-              Hva brukerne sier
+              {t("landing.testimonials.badge")}
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold">Entusiaster elsker DriveGarage</h2>
+            <h2 className="text-3xl md:text-5xl font-bold">{t("landing.testimonials.title")}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <Card key={t.name} className="bg-white/[0.025] border-white/[0.07] backdrop-blur-md rounded-2xl hover:bg-white/[0.04] transition-all duration-300">
+            {TESTIMONIALS.map((item) => (
+              <Card key={item.name} className="bg-white/[0.025] border-white/[0.07] backdrop-blur-md rounded-2xl hover:bg-white/[0.04] transition-all duration-300">
                 <CardContent className="p-8">
                   <div className="flex gap-0.5 mb-5">
-                    {Array.from({ length: t.stars }).map((_, i) => (
+                    {Array.from({ length: item.stars }).map((_, i) => (
                       <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
-                  <p className="text-[#c5d0e8] leading-relaxed mb-6 text-sm">"{t.text}"</p>
+                  <p className="text-[#c5d0e8] leading-relaxed mb-6 text-sm">"{item.text}"</p>
                   <div>
-                    <p className="font-semibold text-white text-sm">{t.name}</p>
-                    <p className="text-xs text-[#8899bb] mt-0.5">{t.vehicle}</p>
+                    <p className="font-semibold text-white text-sm">{item.name}</p>
+                    <p className="text-xs text-[#8899bb] mt-0.5">{item.vehicle}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -298,21 +307,24 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="text-center mb-20">
               <div className="inline-block px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
-                Priser
+                {t("landing.pricing.badge")}
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">Enkle priser, ingen overraskelser</h2>
-              <p className="text-[#8899bb] max-w-xl mx-auto text-lg">Velg pakken som passer din garasje best. Oppgrader eller nedgrader når som helst.</p>
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">{t("landing.pricing.title")}</h2>
+              <p className="text-[#8899bb] max-w-xl mx-auto text-lg">{t("landing.pricing.subtitle")}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-center">
 
+              {/* Free */}
               <Card className="bg-white/[0.025] border-white/[0.08] backdrop-blur-md rounded-2xl">
                 <CardContent className="p-8">
-                  <p className="text-xs font-semibold text-[#8899bb] uppercase tracking-wider mb-2">Gratis</p>
-                  <div className="text-4xl font-bold text-white mb-1">kr 0<span className="text-base text-[#8899bb] font-normal">/mnd</span></div>
-                  <p className="text-xs text-[#8899bb] mb-8">For alltid gratis</p>
+                  <p className="text-xs font-semibold text-[#8899bb] uppercase tracking-wider mb-2">{t("landing.pricing.free.label")}</p>
+                  <div className="text-4xl font-bold text-white mb-1">
+                    {t("landing.pricing.free.price")}<span className="text-base text-[#8899bb] font-normal">{t("landing.pricing.free.period")}</span>
+                  </div>
+                  <p className="text-xs text-[#8899bb] mb-8">{t("landing.pricing.free.forever")}</p>
                   <ul className="space-y-3 mb-8 text-sm">
-                    {["1 kjøretøy", "500 MB lagring", "Basis servicelogg"].map((f) => (
+                    {[t("landing.pricing.free.f1"), t("landing.pricing.free.f2"), t("landing.pricing.free.f3")].map((f) => (
                       <li key={f} className="flex items-center gap-2.5 text-[#c5d0e8]">
                         <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />{f}
                       </li>
@@ -320,24 +332,29 @@ export default function LandingPage() {
                   </ul>
                   <Link href="/register">
                     <Button variant="outline" className="w-full bg-white/[0.05] border-white/[0.10] text-white hover:bg-white/[0.10] rounded-xl">
-                      Kom i gang
+                      {t("landing.pricing.free.cta")}
                     </Button>
                   </Link>
                 </CardContent>
               </Card>
 
+              {/* Premium */}
               <Card className="bg-white/[0.04] border-indigo-500/40 backdrop-blur-xl relative rounded-2xl shadow-[0_0_60px_rgba(99,102,241,0.15)] scale-[1.03] z-10">
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white text-xs font-semibold px-5 py-1.5 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.4)]">
-                  Mest populær
+                  {t("landing.pricing.popular")}
                 </div>
                 <CardContent className="p-8">
-                  <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">Premium</p>
+                  <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">{t("landing.pricing.premium.label")}</p>
                   <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-1">
-                    kr 99<span className="text-base text-[#8899bb] font-normal">/mnd</span>
+                    {t("landing.pricing.premium.price")}<span className="text-base text-[#8899bb] font-normal">{t("landing.pricing.premium.period")}</span>
                   </div>
-                  <p className="text-xs text-[#8899bb] mb-8">eller kr 799/år — spar 15%</p>
+                  <p className="text-xs text-[#8899bb] mb-8">{t("landing.pricing.premium.yearly")}</p>
                   <ul className="space-y-3 mb-8 text-sm">
-                    {["Ubegrenset kjøretøy", "Ubegrenset lagring", "AI-assistent", "PDF-rapporter", "Prioritert støtte"].map((f) => (
+                    {[
+                      t("landing.pricing.premium.f1"), t("landing.pricing.premium.f2"),
+                      t("landing.pricing.premium.f3"), t("landing.pricing.premium.f4"),
+                      t("landing.pricing.premium.f5"),
+                    ].map((f) => (
                       <li key={f} className="flex items-center gap-2.5 text-white">
                         <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />{f}
                       </li>
@@ -345,19 +362,25 @@ export default function LandingPage() {
                   </ul>
                   <Link href="/register">
                     <Button className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white border-0 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] h-11">
-                      Start gratis prøveperiode
+                      {t("landing.pricing.premium.cta")}
                     </Button>
                   </Link>
                 </CardContent>
               </Card>
 
+              {/* Standard */}
               <Card className="bg-white/[0.025] border-white/[0.08] backdrop-blur-md rounded-2xl">
                 <CardContent className="p-8">
-                  <p className="text-xs font-semibold text-[#8899bb] uppercase tracking-wider mb-2">Standard</p>
-                  <div className="text-4xl font-bold text-white mb-1">kr 49<span className="text-base text-[#8899bb] font-normal">/mnd</span></div>
-                  <p className="text-xs text-[#8899bb] mb-8">eller kr 399/år</p>
+                  <p className="text-xs font-semibold text-[#8899bb] uppercase tracking-wider mb-2">{t("landing.pricing.standard.label")}</p>
+                  <div className="text-4xl font-bold text-white mb-1">
+                    {t("landing.pricing.standard.price")}<span className="text-base text-[#8899bb] font-normal">{t("landing.pricing.standard.period")}</span>
+                  </div>
+                  <p className="text-xs text-[#8899bb] mb-8">{t("landing.pricing.standard.yearly")}</p>
                   <ul className="space-y-3 mb-8 text-sm">
-                    {["Ubegrenset kjøretøy", "10 GB lagring", "Klubber & Arrangementer", "Eksport til PDF"].map((f) => (
+                    {[
+                      t("landing.pricing.standard.f1"), t("landing.pricing.standard.f2"),
+                      t("landing.pricing.standard.f3"), t("landing.pricing.standard.f4"),
+                    ].map((f) => (
                       <li key={f} className="flex items-center gap-2.5 text-[#c5d0e8]">
                         <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />{f}
                       </li>
@@ -365,7 +388,7 @@ export default function LandingPage() {
                   </ul>
                   <Link href="/register">
                     <Button variant="outline" className="w-full bg-white/[0.05] border-white/[0.10] text-white hover:bg-white/[0.10] rounded-xl">
-                      Velg Standard
+                      {t("landing.pricing.standard.cta")}
                     </Button>
                   </Link>
                 </CardContent>
@@ -380,14 +403,14 @@ export default function LandingPage() {
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-indigo-600/10 blur-[100px]" />
           <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
             <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Klar til å starte?
+              {t("landing.cta.title")}
             </h2>
             <p className="text-xl text-[#8899bb] mb-10 max-w-xl mx-auto">
-              Bli med tusenvis av norske entusiaster. Gratis å komme i gang — oppgrader når du vil.
+              {t("landing.cta.subtitle")}
             </p>
             <Link href="/register">
               <Button className="h-16 px-12 text-xl rounded-full bg-white text-[#060b18] hover:bg-gray-100 border-0 font-bold shadow-[0_0_50px_rgba(255,255,255,0.2)] transition-all hover:scale-105">
-                Opprett din garasje nå
+                {t("landing.cta.button")}
               </Button>
             </Link>
           </div>
@@ -405,31 +428,31 @@ export default function LandingPage() {
               <span className="text-xl font-bold">DriveGarage</span>
             </div>
             <p className="text-[#8899bb] text-sm leading-relaxed max-w-xs">
-              Norges beste digitale plattform for veteranbiler og klassiske motorsykler. Bevar historien for fremtiden.
+              {t("landing.footer.desc")}
             </p>
           </div>
           <div>
-            <h4 className="text-white font-semibold mb-5 text-sm">Produkt</h4>
+            <h4 className="text-white font-semibold mb-5 text-sm">{t("landing.footer.product")}</h4>
             <ul className="space-y-3 text-sm text-[#8899bb]">
-              <li><button onClick={() => scrollTo("funksjoner")} className="hover:text-white transition-colors">Funksjoner</button></li>
-              <li><button onClick={() => scrollTo("priser")} className="hover:text-white transition-colors">Priser</button></li>
-              <li><Link href="/login" className="hover:text-white transition-colors">Logg inn</Link></li>
+              <li><button onClick={() => scrollTo("funksjoner")} className="hover:text-white transition-colors">{t("landing.footer.features")}</button></li>
+              <li><button onClick={() => scrollTo("priser")} className="hover:text-white transition-colors">{t("landing.footer.pricing")}</button></li>
+              <li><Link href="/login" className="hover:text-white transition-colors">{t("landing.footer.logIn")}</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-semibold mb-5 text-sm">Selskap</h4>
+            <h4 className="text-white font-semibold mb-5 text-sm">{t("landing.footer.company")}</h4>
             <ul className="space-y-3 text-sm text-[#8899bb]">
-              <li><span className="cursor-default">Om oss</span></li>
-              <li><span className="cursor-default">Kontakt</span></li>
-              <li><span className="cursor-default">Personvern</span></li>
+              <li><span className="cursor-default">{t("landing.footer.about")}</span></li>
+              <li><span className="cursor-default">{t("landing.footer.contact")}</span></li>
+              <li><span className="cursor-default">{t("landing.footer.privacy")}</span></li>
             </ul>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8899bb]">
-          <span>© {new Date().getFullYear()} DriveGarage AS. Med enerett.</span>
+          <span>© {new Date().getFullYear()} DriveGarage AS. {t("landing.footer.rights")}</span>
           <div className="flex items-center gap-1.5">
             <Shield className="w-3 h-3 text-indigo-400" />
-            <span>Data lagret sikkert i Norge</span>
+            <span>{t("landing.footer.secure")}</span>
           </div>
         </div>
       </footer>

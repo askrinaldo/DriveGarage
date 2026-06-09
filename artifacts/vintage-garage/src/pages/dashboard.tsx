@@ -19,16 +19,8 @@ import {
 import { LoadingState, ErrorState } from "@/components/ui-states";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
-
-const categoryTranslations: Record<string, string> = {
-  "oil-change": "Oljeskift",
-  brakes: "Bremser",
-  tires: "Dekk",
-  engine: "Motor",
-  electrical: "Elektro",
-  bodywork: "Karosseri",
-  other: "Annet",
-};
+import { useTranslation } from "react-i18next";
+import { getCurrentLocale } from "@/i18n";
 
 const categoryColors: Record<string, string> = {
   "oil-change": "from-amber-500 to-orange-400",
@@ -72,6 +64,7 @@ function StatCard({
   gradient: string;
   delay?: number;
 }) {
+  const locale = getCurrentLocale();
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -85,9 +78,9 @@ function StatCard({
   const numValue = typeof value === "number" ? value : parseFloat(String(value).replace(/[^0-9.]/g, "")) || 0;
   const counted = useCountUp(numValue, 1200, visible);
   const displayValue = typeof value === "string" && value.includes("kr")
-    ? `kr ${counted.toLocaleString("no-NO")}`
+    ? `kr ${counted.toLocaleString(locale)}`
     : typeof value === "string" && value.includes("km")
-    ? `${counted.toLocaleString("no-NO")} km`
+    ? `${counted.toLocaleString(locale)} km`
     : counted;
 
   return (
@@ -113,6 +106,7 @@ function StatCard({
 }
 
 function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: string; model: string; year: number; type: string; color?: string | null; mileage?: number | null; imageUrl?: string | null }; delay?: number }) {
+  const locale = getCurrentLocale();
   const isMoto = vehicle.type === "motorcycle";
   return (
     <motion.div
@@ -138,7 +132,7 @@ function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: stri
             {vehicle.mileage && (
               <div className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground/70">
                 <Route className="w-3 h-3" />
-                {vehicle.mileage.toLocaleString("no-NO")} km
+                {vehicle.mileage.toLocaleString(locale)} km
               </div>
             )}
           </div>
@@ -155,6 +149,8 @@ function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: stri
 
 export default function Dashboard() {
   const { name, tenantName, isPersonalTenant } = useUserAuth();
+  const { t } = useTranslation();
+  const locale = getCurrentLocale();
 
   const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useGetDashboardStats({
     query: { queryKey: getGetDashboardStatsQueryKey() },
@@ -173,17 +169,24 @@ export default function Dashboard() {
   const isLoading = statsLoading || activityLoading || vehiclesLoading;
   const isError = statsError || activityError;
 
-  if (isLoading) return <LoadingState message="Laster garasjen din..." />;
+  if (isLoading) return <LoadingState message={t("dashboard.loading")} />;
   if (isError) return <ErrorState onRetry={() => { refetchStats(); refetchActivity(); }} />;
 
-  const firstName = name?.split(" ")[0] ?? "Sjåfør";
+  const firstName = name?.split(" ")[0] ?? t("dashboard.defaultName");
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "God morgen" : hour < 18 ? "God dag" : "God kveld";
+  const greeting = hour < 12 ? t("dashboard.greetingMorning") : hour < 18 ? t("dashboard.greetingDay") : t("dashboard.greetingEvening");
 
   const maxCat = Math.max(...(stats?.servicesByCategory ?? []).map(c => c.count), 1);
 
   const recentVehicles = (vehicles ?? []).slice(0, 4);
   const myClubs = (clubs ?? []).slice(0, 3);
+
+  const quickActions = [
+    { label: t("dashboard.newService"), href: vehicles?.[0] ? `/vehicles/${vehicles[0].id}/service/new` : "/vehicles", icon: Wrench, color: "from-amber-600 to-orange-600" },
+    { label: t("dashboard.logbook"),   href: vehicles?.[0] ? `/vehicles/${vehicles[0].id}` : "/vehicles",              icon: Route,  color: "from-emerald-600 to-teal-600" },
+    { label: t("dashboard.clubs"),     href: "/clubs",                                                                  icon: Users,  color: "from-violet-600 to-purple-600" },
+    { label: t("dashboard.profile"),   href: "/profile",                                                                icon: Shield, color: "from-indigo-600 to-cyan-600" },
+  ];
 
   return (
     <div className="min-h-screen space-y-8 pb-12">
@@ -204,23 +207,23 @@ export default function Dashboard() {
             {greeting}, {firstName}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {isPersonalTenant ? "Din personlige garasje" : tenantName ?? "Din garasje"} · {new Date().toLocaleDateString("no-NO", { weekday: "long", day: "numeric", month: "long" })}
+            {isPersonalTenant ? t("dashboard.personalGarage") : tenantName ?? t("dashboard.yourGarage")} · {new Date().toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
         <Link href="/vehicles/new">
           <Button className="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-foreground border-0 shadow-lg shadow-indigo-900/30 rounded-xl px-5 h-10 font-semibold">
             <Plus className="w-4 h-4 mr-2" />
-            Nytt kjøretøy
+            {t("dashboard.newVehicle")}
           </Button>
         </Link>
       </motion.div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Car} label="Kjøretøy" value={stats?.totalVehicles ?? 0} sub={`${stats?.vehiclesWithFinnUrl ?? 0} på Finn.no`} gradient="from-indigo-500 to-cyan-500" delay={0.05} />
-        <StatCard icon={Wrench} label="Serviceposter" value={stats?.totalServiceRecords ?? 0} sub="Alle kjøretøy" gradient="from-amber-500 to-orange-400" delay={0.1} />
-        <StatCard icon={Banknote} label="Totalt brukt" value={`kr ${stats?.totalSpent ?? 0}`} sub="Livstidsvedlikehold" gradient="from-emerald-500 to-teal-400" delay={0.15} />
-        <StatCard icon={Route} label="Totalt kjørt" value={`${stats?.totalTripKm ?? 0} km`} sub="Loggede turer" gradient="from-violet-500 to-purple-400" delay={0.2} />
+        <StatCard icon={Car}     label={t("dashboard.vehicles")}      value={stats?.totalVehicles ?? 0}             sub={`${stats?.vehiclesWithFinnUrl ?? 0} ${t("dashboard.onFinnNo")}`} gradient="from-indigo-500 to-cyan-500"   delay={0.05} />
+        <StatCard icon={Wrench}  label={t("dashboard.serviceRecords")} value={stats?.totalServiceRecords ?? 0}       sub={t("dashboard.allVehicles")}                                        gradient="from-amber-500 to-orange-400" delay={0.1} />
+        <StatCard icon={Banknote} label={t("dashboard.totalSpent")}   value={`kr ${stats?.totalSpent ?? 0}`}        sub={t("dashboard.lifetimeMaintenance")}                                gradient="from-emerald-500 to-teal-400" delay={0.15} />
+        <StatCard icon={Route}   label={t("dashboard.totalDriven")}   value={`${stats?.totalTripKm ?? 0} km`}       sub={t("dashboard.loggedTrips")}                                        gradient="from-violet-500 to-purple-400" delay={0.2} />
       </div>
 
       {/* Main Grid */}
@@ -230,11 +233,11 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2">
-              <Car className="w-4 h-4 text-indigo-400" /> Mine kjøretøy
+              <Car className="w-4 h-4 text-indigo-400" /> {t("dashboard.myVehicles")}
             </h2>
             <Link href="/vehicles">
               <button className="text-xs text-muted-foreground/70 hover:text-indigo-400 transition-colors flex items-center gap-1">
-                Se alle <ArrowRight className="w-3 h-3" />
+                {t("dashboard.seeAll")} <ArrowRight className="w-3 h-3" />
               </button>
             </Link>
           </div>
@@ -248,12 +251,12 @@ export default function Dashboard() {
                 <Car className="w-7 h-7 text-indigo-400/50" />
               </div>
               <div>
-                <p className="text-muted-foreground font-medium text-sm">Ingen kjøretøy ennå</p>
-                <p className="text-muted-foreground/60 text-xs mt-0.5">Legg til din første veteranbil eller motorsykkel</p>
+                <p className="text-muted-foreground font-medium text-sm">{t("dashboard.noVehicles")}</p>
+                <p className="text-muted-foreground/60 text-xs mt-0.5">{t("dashboard.addFirstVehicle")}</p>
               </div>
               <Link href="/vehicles/new">
                 <Button size="sm" className="mt-1 bg-indigo-600 hover:bg-indigo-500 text-foreground border-0 rounded-lg text-xs">
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Legg til kjøretøy
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> {t("dashboard.addVehicle")}
                 </Button>
               </Link>
             </motion.div>
@@ -274,7 +277,7 @@ export default function Dashboard() {
               className="rounded-2xl border border-border/50 bg-card p-5"
             >
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-amber-400" /> Tjenester etter kategori
+                <Zap className="w-3.5 h-3.5 text-amber-400" /> {t("dashboard.servicesByCategory")}
               </h3>
               <div className="space-y-3">
                 {stats.servicesByCategory.map((cat, i) => (
@@ -286,7 +289,7 @@ export default function Dashboard() {
                     className="flex items-center gap-3"
                   >
                     <div className="w-20 shrink-0 text-xs text-muted-foreground font-medium truncate">
-                      {categoryTranslations[cat.category] ?? cat.category}
+                      {t(`categories.${cat.category}`, cat.category)}
                     </div>
                     <div className="flex-1 h-2 rounded-full bg-muted/30 overflow-hidden">
                       <motion.div
@@ -311,12 +314,12 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-400" /> Siste aktivitet
+                <Activity className="w-4 h-4 text-emerald-400" /> {t("dashboard.recentActivity")}
               </h2>
             </div>
             <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
               {!activity || activity.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground/70 text-sm">Ingen nylig aktivitet</div>
+                <div className="p-8 text-center text-muted-foreground/70 text-sm">{t("dashboard.noRecentActivity")}</div>
               ) : (
                 <div className="divide-y divide-white/[0.05]">
                   <AnimatePresence>
@@ -337,13 +340,13 @@ export default function Dashboard() {
                           <div className="flex items-center gap-1 mt-1">
                             <Clock className="w-2.5 h-2.5 text-muted-foreground/50" />
                             <span className="text-[10px] text-muted-foreground/60">
-                              {new Date(item.serviceDate).toLocaleDateString("no-NO", { day: "numeric", month: "short" })}
+                              {new Date(item.serviceDate).toLocaleDateString(locale, { day: "numeric", month: "short" })}
                             </span>
                           </div>
                         </div>
                         {item.cost != null && (
                           <div className="text-[11px] font-mono text-muted-foreground/80 shrink-0">
-                            kr {item.cost.toLocaleString("no-NO")}
+                            kr {item.cost.toLocaleString(locale)}
                           </div>
                         )}
                       </motion.div>
@@ -358,20 +361,20 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-foreground/70 uppercase tracking-widest flex items-center gap-2">
-                <Users className="w-4 h-4 text-violet-400" /> Mine klubber
+                <Users className="w-4 h-4 text-violet-400" /> {t("dashboard.myClubs")}
               </h2>
               <Link href="/clubs">
                 <button className="text-xs text-muted-foreground/70 hover:text-violet-400 transition-colors flex items-center gap-1">
-                  Se alle <ArrowRight className="w-3 h-3" />
+                  {t("dashboard.seeAll")} <ArrowRight className="w-3 h-3" />
                 </button>
               </Link>
             </div>
             <div className="space-y-2">
               {myClubs.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border bg-card p-5 text-center">
-                  <p className="text-muted-foreground/70 text-xs">Ikke med i noen klubb ennå</p>
+                  <p className="text-muted-foreground/70 text-xs">{t("dashboard.noClubs")}</p>
                   <Link href="/clubs">
-                    <button className="mt-2 text-xs text-violet-400 hover:text-violet-300 transition-colors">Finn en klubb →</button>
+                    <button className="mt-2 text-xs text-violet-400 hover:text-violet-300 transition-colors">{t("dashboard.findClub")}</button>
                   </Link>
                 </div>
               ) : (
@@ -421,15 +424,10 @@ export default function Dashboard() {
             className="rounded-2xl border border-border/50 bg-card p-4"
           >
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-cyan-400" /> Hurtigtilgang
+              <Shield className="w-3.5 h-3.5 text-cyan-400" /> {t("dashboard.quickAccess")}
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: "Ny service", href: vehicles?.[0] ? `/vehicles/${vehicles[0].id}/service/new` : "/vehicles", icon: Wrench, color: "from-amber-600 to-orange-600" },
-                { label: "Kjørebok", href: vehicles?.[0] ? `/vehicles/${vehicles[0].id}` : "/vehicles", icon: Route, color: "from-emerald-600 to-teal-600" },
-                { label: "Klubber", href: "/clubs", icon: Users, color: "from-violet-600 to-purple-600" },
-                { label: "Profil", href: "/profile", icon: Shield, color: "from-indigo-600 to-cyan-600" },
-              ].map((action) => (
+              {quickActions.map((action) => (
                 <Link key={action.href} href={action.href}>
                   <div className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.06] bg-muted/15 hover:bg-muted/35 hover:border-border/70 transition-all duration-200 cursor-pointer group">
                     <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center shadow-sm`}>
@@ -446,9 +444,9 @@ export default function Dashboard() {
 
       {/* Made by Evolvit */}
       <div className="flex items-center justify-center gap-2 pt-4 pb-2 opacity-30 hover:opacity-60 transition-opacity">
-        <span className="text-[10px] text-muted-foreground">Made by</span>
+        <span className="text-[10px] text-muted-foreground">{t("dashboard.madeBy")}</span>
         <img src="/evolvit-logo.webp" alt="Evolvit Solution Norge" className="h-3.5 object-contain" style={{ filter: "grayscale(1) brightness(1.5)" }} />
-        <span className="text-[10px] text-muted-foreground">Solution Norge</span>
+        <span className="text-[10px] text-muted-foreground">{t("dashboard.solutionNorge")}</span>
       </div>
     </div>
   );

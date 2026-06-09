@@ -3,3 +3,4 @@
 - [Clerk auth wiring](clerk-auth-wiring.md) — Clerk replaces Replit Auth; clerkUserAuth bridges Clerk session → req.userAuth with JIT DB provisioning. publishableKeyFromHost does NOT exist in @clerk/shared@2.22.1 — pass process.env.CLERK_PUBLISHABLE_KEY directly to clerkMiddleware.
 - [Stripe connector credentials](stripe-connector-credentials.md) — Replit Stripe connector settings key is `secret` (not `secret_key`). runMigrations must run once before syncBackfill works.
 - [Multi-tenant architecture](multi-tenant-architecture.md) — Tenant tables, JWT tenant fields, per-tenant vehicle filtering, SQL backfill approach.
+- [i18n setup](i18n-setup.md) — react-i18next with no/sv/da/en; no `as const` on master translation; getCurrentLocale() for date formatting.
