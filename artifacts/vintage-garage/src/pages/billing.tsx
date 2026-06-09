@@ -194,7 +194,7 @@ export default function Billing() {
   const portal = useCustomerPortal();
 
   useEffect(() => {
-    if (!isAuthenticated) { navigate("/login"); return; }
+    if (!isAuthenticated) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("success")) {
       toast({ title: "Betaling mottatt!", description: "Abonnementet ditt er nå aktivt." });
@@ -213,6 +213,7 @@ export default function Billing() {
     prices.find((p) => p.product_metadata?.tier === tier && p.recurring?.interval === interval);
 
   const handleCheckout = (priceId: string) => {
+    if (!isAuthenticated) { navigate("/login"); return; }
     checkout.mutate(priceId, {
       onError: (e) => toast({ title: "Feil", description: e.message, variant: "destructive" }),
     });
@@ -224,7 +225,7 @@ export default function Billing() {
     });
   };
 
-  if (subLoading || pricesLoading) {
+  if (pricesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
