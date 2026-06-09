@@ -64,7 +64,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Clerk middleware — populates req.auth from session cookie
+// Clerk middleware — populates req.auth from session cookie/token.
 app.use(
   clerkMiddleware({
     publishableKey: process.env.CLERK_PUBLISHABLE_KEY,

@@ -67,8 +67,8 @@ const clerkPubKey = publishableKeyFromHost(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
 
-// REQUIRED — empty in dev (intentional), auto-set in prod. Never gate on NODE_ENV.
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
+// REQUIRED — undefined in dev (empty string must become undefined). Auto-set in prod.
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL || undefined;
 
 // Clerk passes full paths; wouter's setLocation prepends base — strip it to avoid doubling.
 function stripBase(path: string): string {
