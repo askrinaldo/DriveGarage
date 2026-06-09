@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/theme";
 import { AiChatWidget } from "@/components/ai-chat-widget";
 import NotFound from "@/pages/not-found";
 import { ClerkProvider, useAuth } from "@clerk/react";
+import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
 
 import LandingPage from "@/pages/landing";
@@ -59,6 +60,22 @@ const queryClient = new QueryClient({
 });
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// REQUIRED — resolves key from hostname so same build serves multiple Clerk domains.
+const clerkPubKey = publishableKeyFromHost(
+  window.location.hostname,
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
+
+// REQUIRED — empty in dev (intentional), auto-set in prod. Never gate on NODE_ENV.
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
+
+// Clerk passes full paths; wouter's setLocation prepends base — strip it to avoid doubling.
+function stripBase(path: string): string {
+  return basePath && path.startsWith(basePath)
+    ? path.slice(basePath.length) || "/"
+    : path;
+}
 
 const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/", "/sign-in", "/sign-up"];
 
@@ -134,43 +151,55 @@ function AppRoutes() {
   );
 }
 
+function ClerkProviderWithRoutes() {
+  const [, setLocation] = useLocation();
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      proxyUrl={clerkProxyUrl}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      afterSignOutUrl={`${basePath}/`}
+      routerPush={(to) => setLocation(stripBase(to))}
+      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+      appearance={{
+        baseTheme: dark,
+        cssLayerName: "clerk",
+        options: {
+          logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+          logoLinkUrl: `${basePath}/`,
+          socialButtonsPlacement: "bottom",
+          socialButtonsVariant: "iconButton",
+        },
+        variables: {
+          colorPrimary: "#6366f1",
+          colorBackground: "#0d0f1a",
+          colorInput: "rgba(255,255,255,0.05)",
+          colorInputForeground: "#f8fafc",
+          colorForeground: "#f8fafc",
+          colorNeutral: "#94a3b8",
+          fontFamily: "Outfit, sans-serif",
+          borderRadius: "0.75rem",
+        },
+        elements: {
+          card: "shadow-2xl border border-white/10",
+          formButtonPrimary: "bg-indigo-600 hover:bg-indigo-500 text-white font-semibold",
+        },
+      }}
+    >
+      <AppRoutes />
+      <AiChatWidget />
+    </ClerkProvider>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <WouterRouter base={basePath}>
-            <ClerkProvider
-              publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string}
-              appearance={{
-                baseTheme: dark,
-                cssLayerName: "clerk",
-                layout: {
-                  applicationName: "DriveGarage",
-                  logoImageUrl: `${basePath}/logo.svg`,
-                  logoLinkUrl: `${basePath}/`,
-                  socialButtonsPlacement: "bottom",
-                  socialButtonsVariant: "iconButton",
-                },
-                variables: {
-                  colorPrimary: "#6366f1",
-                  colorBackground: "#0d0f1a",
-                  colorInputBackground: "rgba(255,255,255,0.05)",
-                  colorInputText: "#f8fafc",
-                  colorNeutral: "#94a3b8",
-                  fontFamily: "Outfit, sans-serif",
-                  borderRadius: "0.75rem",
-                },
-                elements: {
-                  card: "shadow-2xl border border-white/10",
-                  formButtonPrimary: "bg-indigo-600 hover:bg-indigo-500 text-white font-semibold",
-                },
-              }}
-              afterSignOutUrl={`${basePath}/`}
-            >
-              <AppRoutes />
-              <AiChatWidget />
-            </ClerkProvider>
+            <ClerkProviderWithRoutes />
           </WouterRouter>
           <Toaster />
         </TooltipProvider>
