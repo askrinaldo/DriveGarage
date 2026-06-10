@@ -6,9 +6,11 @@ import { Layout } from "@/components/layout";
 import { ThemeProvider } from "@/contexts/theme";
 import { AiChatWidget } from "@/components/ai-chat-widget";
 import NotFound from "@/pages/not-found";
-import { ClerkProvider, useAuth } from "@clerk/react";
+import { ClerkProvider, useAuth, useSession } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
+import { useEffect } from "react";
+import { setClerkTokenGetter } from "@workspace/api-client-react";
 
 import LandingPage from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
@@ -151,6 +153,18 @@ function AppRoutes() {
   );
 }
 
+function ClerkTokenInjector() {
+  const { session } = useSession();
+  // Register synchronously on every render so the getter is always current.
+  // customFetch awaits this before every API call, so no race condition.
+  if (session) {
+    setClerkTokenGetter(() => session.getToken());
+  } else {
+    setClerkTokenGetter(null);
+  }
+  return null;
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
   return (
@@ -187,6 +201,7 @@ function ClerkProviderWithRoutes() {
         },
       }}
     >
+      <ClerkTokenInjector />
       <AppRoutes />
       <AiChatWidget />
     </ClerkProvider>

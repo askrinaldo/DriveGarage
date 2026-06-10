@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback, useEffect } from "react";
-import { useAuth, useUser, useClerk } from "@clerk/react";
+import { useAuth, useUser, useClerk, useSession } from "@clerk/react";
 
 export type UserRole = "user" | "super_admin";
 export type TenantRole = "owner" | "admin" | "member";
@@ -97,26 +97,33 @@ export function useUserAuth() {
   const { isSignedIn, isLoaded: authLoaded } = useAuth();
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
+  const { session: clerkSession } = useSession();
 
   const [dbProfile, setDbProfile] = useState<DbUserProfile | null>(null);
   const [adminSession, setAdminSession] = useState<AdminSession | null>(
     () => loadAdminSession()
   );
 
-  // Fetch DB profile when Clerk session is active
+  // Fetch DB profile when Clerk session is active — send Bearer token so the
+  // API server can validate the session even in dev-proxy environments where
+  // Clerk session cookies are not forwarded correctly.
   useEffect(() => {
     if (!authLoaded) return;
-    if (!isSignedIn) {
+    if (!isSignedIn || !clerkSession) {
       setDbProfile(null);
       return;
     }
-    fetch("/api/auth/user", { credentials: "include" })
+    clerkSession.getToken().then((token) => {
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      return fetch("/api/auth/user", { credentials: "include", headers });
+    })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { user: DbUserProfile | null } | null) => {
         setDbProfile(data?.user ?? null);
       })
       .catch(() => setDbProfile(null));
-  }, [isSignedIn, authLoaded]);
+  }, [isSignedIn, authLoaded, clerkSession]);
 
   // ── Admin email/password login (fallback) ─────────────────────────────────
   const login = useCallback(

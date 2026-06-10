@@ -4,5 +4,6 @@ export {
   setBaseUrl,
   setAuthTokenGetter,
   setExtraHeadersGetter,
+  setClerkTokenGetter,
 } from "./custom-fetch";
 export type { AuthTokenGetter, ExtraHeadersGetter } from "./custom-fetch";

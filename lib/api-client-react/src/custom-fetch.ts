@@ -19,6 +19,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
 let _extraHeadersGetter: ExtraHeadersGetter | null = null;
+let _clerkTokenGetter: AuthTokenGetter | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -54,6 +55,17 @@ export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
  */
 export function setExtraHeadersGetter(getter: ExtraHeadersGetter | null): void {
   _extraHeadersGetter = getter;
+}
+
+/**
+ * Register a getter that returns a Clerk session token.
+ * When set, the token is sent as `Authorization: Bearer <token>` on every
+ * API request, enabling server-side session validation in environments where
+ * Clerk cookies are not forwarded correctly (e.g. Replit dev proxy).
+ * Pass `null` to clear the getter.
+ */
+export function setClerkTokenGetter(getter: AuthTokenGetter | null): void {
+  _clerkTokenGetter = getter;
 }
 
 function isRequest(input: RequestInfo | URL): input is Request {
@@ -359,6 +371,16 @@ export async function customFetch<T = unknown>(
 
   if (responseType === "json" && !headers.has("accept")) {
     headers.set("accept", DEFAULT_JSON_ACCEPT);
+  }
+
+  // Attach Clerk session token as Bearer — takes priority over _authTokenGetter.
+  // This is needed in Replit dev proxy environments where Clerk cookies are not
+  // forwarded correctly to the API server.
+  if (_clerkTokenGetter && !headers.has("authorization")) {
+    const clerkToken = await _clerkTokenGetter();
+    if (clerkToken) {
+      headers.set("authorization", `Bearer ${clerkToken}`);
+    }
   }
 
   // Attach bearer token when an auth getter is configured and no

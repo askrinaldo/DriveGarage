@@ -4,3 +4,4 @@
 - [Stripe connector credentials](stripe-connector-credentials.md) — Replit Stripe connector settings key is `secret` (not `secret_key`). runMigrations must run once before syncBackfill works.
 - [Multi-tenant architecture](multi-tenant-architecture.md) — Tenant tables, JWT tenant fields, per-tenant vehicle filtering, SQL backfill approach.
 - [i18n setup](i18n-setup.md) — react-i18next with no/sv/da/en; no `as const` on master translation; getCurrentLocale() for date formatting.
+- [Clerk Bearer Token Fix](clerk-bearer-token-fix.md) — In Replit dev-proxy, Clerk cookie auth always fails (dev-browser-missing); fix is Bearer token via setClerkTokenGetter + useSession().getToken().
