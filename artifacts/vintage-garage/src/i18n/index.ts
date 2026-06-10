@@ -10,11 +10,11 @@ export const LANG_STORAGE_KEY = "vg-lang";
 export const supportedLanguages = ["no", "sv", "da", "en"] as const;
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
-export const languageMeta: Record<SupportedLanguage, { flag: string; label: string; locale: string }> = {
-  no: { flag: "🇳🇴", label: "Norsk", locale: "no-NO" },
-  sv: { flag: "🇸🇪", label: "Svenska", locale: "sv-SE" },
-  da: { flag: "🇩🇰", label: "Dansk", locale: "da-DK" },
-  en: { flag: "🇬🇧", label: "English", locale: "en-GB" },
+export const languageMeta: Record<SupportedLanguage, { flag: string; flagUrl: string; label: string; locale: string }> = {
+  no: { flag: "🇳🇴", flagUrl: "https://flagcdn.com/w40/no.png", label: "Norsk", locale: "no-NO" },
+  sv: { flag: "🇸🇪", flagUrl: "https://flagcdn.com/w40/se.png", label: "Svenska", locale: "sv-SE" },
+  da: { flag: "🇩🇰", flagUrl: "https://flagcdn.com/w40/dk.png", label: "Dansk", locale: "da-DK" },
+  en: { flag: "🇬🇧", flagUrl: "https://flagcdn.com/w40/gb.png", label: "English", locale: "en-GB" },
 };
 
 function getSavedLang(): SupportedLanguage {
