@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Car, Wrench, Star, Shield, Download } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { LoadingState } from "@/components/ui-states";
+import { useTranslation } from "react-i18next";
 
 interface Profile {
   id: number;
@@ -19,12 +19,6 @@ interface Profile {
   };
 }
 
-const TIER_CONFIG = {
-  free: { label: "Gratis", color: "#6b7280", glow: "rgba(107,114,128,0.3)", text: "text-gray-400" },
-  standard: { label: "Standard", color: "#3b82f6", glow: "rgba(59,130,246,0.3)", text: "text-blue-400" },
-  premium: { label: "Premium", color: "#b87333", glow: "rgba(184,115,51,0.4)", text: "text-amber-400" },
-};
-
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 }
@@ -33,13 +27,20 @@ function formatMemberNumber(id: number) {
   return `VG-${String(id).padStart(6, "0")}`;
 }
 
-const MONTH_NAMES = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"];
-
 export default function MembershipCard() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { isAuthenticated, token } = useUserAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const TIER_CONFIG = {
+    free: { label: t("memberCard.tierFree"), color: "#6b7280", glow: "rgba(107,114,128,0.3)", text: "text-gray-400" },
+    standard: { label: t("memberCard.tierStandard"), color: "#3b82f6", glow: "rgba(59,130,246,0.3)", text: "text-blue-400" },
+    premium: { label: t("memberCard.tierPremium"), color: "#b87333", glow: "rgba(184,115,51,0.4)", text: "text-amber-400" },
+  };
+
+  const months = t("memberCard.months", { returnObjects: true }) as string[];
 
   useEffect(() => {
     if (!isAuthenticated) { navigate("/login"); return; }
@@ -50,12 +51,12 @@ export default function MembershipCard() {
     })();
   }, [isAuthenticated, token, navigate]);
 
-  if (loading) return <LoadingState message="Laster medlemskort..." />;
+  if (loading) return <LoadingState message={t("memberCard.loading")} />;
   if (!profile) return null;
 
   const tier = TIER_CONFIG[profile.subscriptionTier];
   const memberSince = new Date(profile.createdAt);
-  const memberSinceStr = `${MONTH_NAMES[memberSince.getMonth()]} ${memberSince.getFullYear()}`;
+  const memberSinceStr = `${months[memberSince.getMonth()]} ${memberSince.getFullYear()}`;
 
   return (
     <div className="space-y-6 pb-10">
@@ -64,8 +65,8 @@ export default function MembershipCard() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Digitalt medlemskort</h1>
-          <p className="text-sm text-muted-foreground">Ditt personlige kort for DriveGarage</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("memberCard.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("memberCard.subtitle")}</p>
         </div>
       </div>
 
@@ -86,7 +87,7 @@ export default function MembershipCard() {
           <div className="px-7 pt-6 pb-4 flex items-start justify-between">
             <div>
               <div className="text-xs font-bold tracking-[0.3em] text-gray-500 uppercase mb-1">DriveGarage</div>
-              <div className="text-[10px] text-gray-600 tracking-widest uppercase">Medlemskort</div>
+              <div className="text-[10px] text-gray-600 tracking-widest uppercase">{t("memberCard.cardLabel")}</div>
             </div>
             <div
               className="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase"
@@ -119,19 +120,19 @@ export default function MembershipCard() {
             <div>
               <div className="text-2xl font-bold" style={{ color: tier.color }}>{profile.stats.vehicleCount}</div>
               <div className="text-[10px] text-gray-600 mt-0.5 flex items-center justify-center gap-1">
-                <Car className="w-3 h-3" />Kjøretøy
+                <Car className="w-3 h-3" />{t("memberCard.vehicles")}
               </div>
             </div>
             <div>
               <div className="text-2xl font-bold" style={{ color: tier.color }}>{profile.stats.serviceCount}</div>
               <div className="text-[10px] text-gray-600 mt-0.5 flex items-center justify-center gap-1">
-                <Wrench className="w-3 h-3" />Service
+                <Wrench className="w-3 h-3" />{t("memberCard.service")}
               </div>
             </div>
             <div>
               <div className="text-2xl font-bold" style={{ color: tier.color }}>{profile.stats.score}</div>
               <div className="text-[10px] text-gray-600 mt-0.5 flex items-center justify-center gap-1">
-                <Star className="w-3 h-3" />Poeng
+                <Star className="w-3 h-3" />{t("memberCard.points")}
               </div>
             </div>
           </div>
@@ -142,11 +143,11 @@ export default function MembershipCard() {
           {/* Footer */}
           <div className="px-7 py-5 flex items-center justify-between">
             <div>
-              <div className="text-[10px] text-gray-600 uppercase tracking-widest">Medlem siden</div>
+              <div className="text-[10px] text-gray-600 uppercase tracking-widest">{t("memberCard.memberSince")}</div>
               <div className="text-sm text-gray-400 font-medium mt-0.5">{memberSinceStr}</div>
             </div>
             <div className="flex flex-col items-end">
-              <div className="text-[10px] text-gray-600 uppercase tracking-widest mb-1">Tilgang</div>
+              <div className="text-[10px] text-gray-600 uppercase tracking-widest mb-1">{t("memberCard.access")}</div>
               <Shield className="w-5 h-5" style={{ color: tier.color }} />
             </div>
           </div>
@@ -173,33 +174,33 @@ export default function MembershipCard() {
           onClick={() => window.print()}
         >
           <Download className="w-4 h-4" />
-          Lagre / skriv ut
+          {t("memberCard.savePrint")}
         </Button>
         <Button variant="outline" onClick={() => navigate("/billing")}>
-          Oppgrader abonnement
+          {t("memberCard.upgradeSubscription")}
         </Button>
       </div>
 
       {/* Score explanation */}
       <div className="max-w-md mx-auto">
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-          <h3 className="font-semibold text-sm">Poeng-oversikt</h3>
+          <h3 className="font-semibold text-sm">{t("memberCard.pointsTitle")}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between text-muted-foreground">
-              <span>Kjøretøy ({profile.stats.vehicleCount} × 50 p)</span>
+              <span>{t("memberCard.vehiclePointsLabel")} ({profile.stats.vehicleCount} × 50 p)</span>
               <span className="font-mono">{profile.stats.vehicleCount * 50}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Serviceoppføringer ({profile.stats.serviceCount} × 10 p)</span>
+              <span>{t("memberCard.servicePointsLabel")} ({profile.stats.serviceCount} × 10 p)</span>
               <span className="font-mono">{profile.stats.serviceCount * 10}</span>
             </div>
             <div className="flex justify-between font-semibold border-t border-border pt-2">
-              <span>Totalt</span>
+              <span>{t("memberCard.total")}</span>
               <span className="font-mono text-primary">{profile.stats.score}</span>
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Poeng øker med aktivitet — legg til kjøretøy, logg service og delta i klubber for å klatre på leaderboardet.
+            {t("memberCard.pointsDesc")}
           </p>
         </div>
       </div>

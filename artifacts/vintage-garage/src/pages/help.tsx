@@ -16,6 +16,7 @@ import {
   HelpCircle, MessageSquare, Lightbulb, Plus, ChevronDown, ChevronUp,
   AlertCircle, Clock, CheckCircle2, XCircle, Loader2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SupportTicket {
   id: number;
@@ -38,35 +39,36 @@ interface Suggestion {
   createdAt: string;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  feil: "Feil/Bug",
-  spørsmål: "Spørsmål",
-  annet: "Annet",
-};
-
-const PRIORITY_LABELS: Record<string, { label: string; color: string }> = {
-  low: { label: "Lav", color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
-  medium: { label: "Medium", color: "text-amber-400 bg-amber-500/15 border-amber-500/30" },
-  high: { label: "Høy", color: "text-red-400 bg-red-500/15 border-red-500/30" },
-};
-
-const TICKET_STATUS: Record<string, { label: string; icon: typeof Clock; color: string }> = {
-  open: { label: "Åpen", icon: Clock, color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
-  answered: { label: "Besvart", icon: CheckCircle2, color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30" },
-  closed: { label: "Lukket", icon: XCircle, color: "text-muted-foreground bg-muted/20 border-border" },
-};
-
-const SUGGESTION_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Venter", color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
-  reviewed: { label: "Vurdert", color: "text-amber-400 bg-amber-500/15 border-amber-500/30" },
-  implemented: { label: "Implementert", color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30" },
-  declined: { label: "Avslått", color: "text-muted-foreground bg-muted/20 border-border" },
-};
-
 export default function Help() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { isAuthenticated, token } = useUserAuth();
   const { toast } = useToast();
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    feil: t("help.catBug"),
+    spørsmål: t("help.catQuestion"),
+    annet: t("help.catOther"),
+  };
+
+  const PRIORITY_LABELS: Record<string, { label: string; color: string }> = {
+    low: { label: t("help.prioLow"), color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
+    medium: { label: t("help.prioMedium"), color: "text-amber-400 bg-amber-500/15 border-amber-500/30" },
+    high: { label: t("help.prioHigh"), color: "text-red-400 bg-red-500/15 border-red-500/30" },
+  };
+
+  const TICKET_STATUS: Record<string, { label: string; icon: typeof Clock; color: string }> = {
+    open: { label: t("help.statusOpen"), icon: Clock, color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
+    answered: { label: t("help.statusAnswered"), icon: CheckCircle2, color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30" },
+    closed: { label: t("help.statusClosed"), icon: XCircle, color: "text-muted-foreground bg-muted/20 border-border" },
+  };
+
+  const SUGGESTION_STATUS: Record<string, { label: string; color: string }> = {
+    pending: { label: t("help.sugPending"), color: "text-blue-400 bg-blue-500/15 border-blue-500/30" },
+    reviewed: { label: t("help.sugReviewed"), color: "text-amber-400 bg-amber-500/15 border-amber-500/30" },
+    implemented: { label: t("help.sugImplemented"), color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30" },
+    declined: { label: t("help.sugDeclined"), color: "text-muted-foreground bg-muted/20 border-border" },
+  };
 
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -74,14 +76,12 @@ export default function Help() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
 
-  // New ticket form
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [ticketTitle, setTicketTitle] = useState("");
   const [ticketDesc, setTicketDesc] = useState("");
   const [ticketCategory, setTicketCategory] = useState("annet");
   const [submittingTicket, setSubmittingTicket] = useState(false);
 
-  // New suggestion form
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   const [sugTitle, setSugTitle] = useState("");
   const [sugDesc, setSugDesc] = useState("");
@@ -126,10 +126,10 @@ export default function Help() {
     setSubmittingTicket(false);
     if (!res.ok) {
       const data = await res.json() as { error?: string };
-      toast({ title: "Feil", description: data.error ?? "Kunne ikke opprette sak", variant: "destructive" });
+      toast({ title: t("common.error"), description: data.error ?? t("help.errorTicket"), variant: "destructive" });
       return;
     }
-    toast({ title: "Sak sendt!", description: "Vi svarer så snart vi kan." });
+    toast({ title: t("help.ticketSent"), description: t("help.ticketSentDesc") });
     setShowTicketForm(false);
     setTicketTitle(""); setTicketDesc(""); setTicketCategory("annet");
     void loadTickets();
@@ -146,10 +146,10 @@ export default function Help() {
     setSubmittingSuggestion(false);
     if (!res.ok) {
       const data = await res.json() as { error?: string };
-      toast({ title: "Feil", description: data.error ?? "Kunne ikke sende forslag", variant: "destructive" });
+      toast({ title: t("common.error"), description: data.error ?? t("help.errorSuggestion"), variant: "destructive" });
       return;
     }
-    toast({ title: "Forslag sendt!", description: "Takk for tilbakemeldingen din." });
+    toast({ title: t("help.suggestionSent"), description: t("help.suggestionSentDesc") });
     setShowSuggestionForm(false);
     setSugTitle(""); setSugDesc(""); setSugPriority("medium");
     void loadSuggestions();
@@ -157,14 +157,13 @@ export default function Help() {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="bg-primary/20 p-2.5 rounded-lg">
           <HelpCircle className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Hjelp og støtte</h1>
-          <p className="text-sm text-muted-foreground">Send inn supportsaker eller forbedringsforslag</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("help.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("help.subtitle")}</p>
         </div>
       </div>
 
@@ -173,13 +172,13 @@ export default function Help() {
           <CardContent className="pt-5 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-primary shrink-0" />
             <div>
-              <p className="text-sm font-medium">Innlogging kreves</p>
+              <p className="text-sm font-medium">{t("help.loginRequired")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Du må{" "}
+                {t("help.loginRequiredDesc").split("logge inn")[0]}
                 <button onClick={() => navigate("/login")} className="text-primary hover:underline">
                   logge inn
-                </button>{" "}
-                for å sende inn saker og forslag.
+                </button>
+                {t("help.loginRequiredDesc").split("logge inn")[1]}
               </p>
             </div>
           </CardContent>
@@ -190,16 +189,16 @@ export default function Help() {
         <TabsList>
           <TabsTrigger value="tickets">
             <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-            Supportsaker
+            {t("help.tabTickets")}
             {tickets.filter(t => t.status !== "closed").length > 0 && (
               <span className="ml-1.5 bg-primary text-primary-foreground text-[10px] rounded-full px-1.5 py-0.5">
-                {tickets.filter(t => t.status !== "closed").length}
+                {tickets.filter(tk => tk.status !== "closed").length}
               </span>
             )}
           </TabsTrigger>
           <TabsTrigger value="suggestions">
             <Lightbulb className="w-3.5 h-3.5 mr-1.5" />
-            Forbedringsforslag
+            {t("help.tabSuggestions")}
             {suggestions.length > 0 && (
               <span className="ml-1.5 bg-muted text-muted-foreground text-[10px] rounded-full px-1.5 py-0.5">
                 {suggestions.length}
@@ -208,13 +207,13 @@ export default function Help() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ─── Support tickets tab ─── */}
+        {/* Support tickets tab */}
         <TabsContent value="tickets" className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               {tickets.length === 0
-                ? "Du har ingen åpne supportsaker"
-                : `${tickets.length} sak${tickets.length !== 1 ? "er" : ""} totalt`}
+                ? t("help.noTickets")
+                : t("help.ticketCount").replace("{{count}}", String(tickets.length))}
             </p>
             {isAuthenticated && (
               <Button
@@ -223,7 +222,7 @@ export default function Help() {
                 variant={showTicketForm ? "outline" : "default"}
               >
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Ny sak
+                {t("help.newTicket")}
               </Button>
             )}
           </div>
@@ -232,35 +231,35 @@ export default function Help() {
             <Card className="border-primary/30">
               <CardContent className="pt-5">
                 <form onSubmit={submitTicket} className="space-y-4">
-                  <h3 className="font-semibold text-sm">Ny supportsak</h3>
+                  <h3 className="font-semibold text-sm">{t("help.newTicketForm")}</h3>
                   <div className="space-y-1.5">
-                    <Label htmlFor="ticket-title">Tittel</Label>
+                    <Label htmlFor="ticket-title">{t("help.ticketTitleLabel")}</Label>
                     <Input
                       id="ticket-title"
-                      placeholder="Kort beskrivelse av problemet"
+                      placeholder={t("help.ticketTitlePlaceholder")}
                       value={ticketTitle}
                       onChange={(e) => setTicketTitle(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="ticket-cat">Kategori</Label>
+                    <Label htmlFor="ticket-cat">{t("help.categoryLabel")}</Label>
                     <Select value={ticketCategory} onValueChange={setTicketCategory}>
                       <SelectTrigger id="ticket-cat">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="feil">Feil/Bug</SelectItem>
-                        <SelectItem value="spørsmål">Spørsmål</SelectItem>
-                        <SelectItem value="annet">Annet</SelectItem>
+                        <SelectItem value="feil">{t("help.catBug")}</SelectItem>
+                        <SelectItem value="spørsmål">{t("help.catQuestion")}</SelectItem>
+                        <SelectItem value="annet">{t("help.catOther")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="ticket-desc">Beskrivelse</Label>
+                    <Label htmlFor="ticket-desc">{t("help.descLabel")}</Label>
                     <Textarea
                       id="ticket-desc"
-                      placeholder="Beskriv problemet i detalj..."
+                      placeholder={t("help.descPlaceholder")}
                       value={ticketDesc}
                       onChange={(e) => setTicketDesc(e.target.value)}
                       rows={4}
@@ -270,10 +269,10 @@ export default function Help() {
                   <div className="flex gap-2">
                     <Button type="submit" disabled={submittingTicket} size="sm">
                       {submittingTicket && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-                      Send sak
+                      {t("help.sendTicket")}
                     </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowTicketForm(false)}>
-                      Avbryt
+                      {t("common.cancel")}
                     </Button>
                   </div>
                 </form>
@@ -282,14 +281,14 @@ export default function Help() {
           )}
 
           {loadingTickets && (
-            <div className="text-center py-8 text-muted-foreground text-sm">Laster saker...</div>
+            <div className="text-center py-8 text-muted-foreground text-sm">{t("help.loadingTickets")}</div>
           )}
 
           {!loadingTickets && tickets.length === 0 && isAuthenticated && (
             <div className="text-center py-12 text-muted-foreground">
               <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Ingen supportsaker ennå</p>
-              <p className="text-xs mt-1">Trykk «Ny sak» for å komme i gang</p>
+              <p className="text-sm">{t("help.noTicketsYet")}</p>
+              <p className="text-xs mt-1">{t("help.noTicketsHint")}</p>
             </div>
           )}
 
@@ -336,7 +335,7 @@ export default function Help() {
 
                         {ticket.adminReply && (
                           <div className="bg-primary/8 border border-primary/20 rounded-lg p-3">
-                            <p className="text-xs font-semibold text-primary mb-1.5">Svar fra support</p>
+                            <p className="text-xs font-semibold text-primary mb-1.5">{t("help.adminReply")}</p>
                             <p className="text-sm whitespace-pre-wrap">{ticket.adminReply}</p>
                             {ticket.repliedAt && (
                               <p className="text-xs text-muted-foreground mt-1.5">
@@ -354,13 +353,13 @@ export default function Help() {
           </div>
         </TabsContent>
 
-        {/* ─── Suggestions tab ─── */}
+        {/* Suggestions tab */}
         <TabsContent value="suggestions" className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               {suggestions.length === 0
-                ? "Du har ingen forbedringsforslag"
-                : `${suggestions.length} forslag totalt`}
+                ? t("help.noSuggestions")
+                : t("help.suggestionCount").replace("{{count}}", String(suggestions.length))}
             </p>
             {isAuthenticated && (
               <Button
@@ -369,7 +368,7 @@ export default function Help() {
                 variant={showSuggestionForm ? "outline" : "default"}
               >
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Nytt forslag
+                {t("help.newSuggestion")}
               </Button>
             )}
           </div>
@@ -378,35 +377,35 @@ export default function Help() {
             <Card className="border-primary/30">
               <CardContent className="pt-5">
                 <form onSubmit={submitSuggestion} className="space-y-4">
-                  <h3 className="font-semibold text-sm">Nytt forbedringsforslag</h3>
+                  <h3 className="font-semibold text-sm">{t("help.newSuggestionForm")}</h3>
                   <div className="space-y-1.5">
-                    <Label htmlFor="sug-title">Tittel</Label>
+                    <Label htmlFor="sug-title">{t("help.ticketTitleLabel")}</Label>
                     <Input
                       id="sug-title"
-                      placeholder="Hva ønsker du å forbedre?"
+                      placeholder={t("help.sugTitlePlaceholder")}
                       value={sugTitle}
                       onChange={(e) => setSugTitle(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="sug-priority">Prioritet</Label>
+                    <Label htmlFor="sug-priority">{t("help.priorityLabel")}</Label>
                     <Select value={sugPriority} onValueChange={setSugPriority}>
                       <SelectTrigger id="sug-priority">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="low">Lav</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">Høy</SelectItem>
+                        <SelectItem value="low">{t("help.prioLow")}</SelectItem>
+                        <SelectItem value="medium">{t("help.prioMedium")}</SelectItem>
+                        <SelectItem value="high">{t("help.prioHigh")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="sug-desc">Beskrivelse</Label>
+                    <Label htmlFor="sug-desc">{t("help.descLabel")}</Label>
                     <Textarea
                       id="sug-desc"
-                      placeholder="Beskriv forbedringen du ønsker..."
+                      placeholder={t("help.sugDescPlaceholder")}
                       value={sugDesc}
                       onChange={(e) => setSugDesc(e.target.value)}
                       rows={4}
@@ -416,10 +415,10 @@ export default function Help() {
                   <div className="flex gap-2">
                     <Button type="submit" disabled={submittingSuggestion} size="sm">
                       {submittingSuggestion && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-                      Send forslag
+                      {t("help.sendSuggestion")}
                     </Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowSuggestionForm(false)}>
-                      Avbryt
+                      {t("common.cancel")}
                     </Button>
                   </div>
                 </form>
@@ -428,14 +427,14 @@ export default function Help() {
           )}
 
           {loadingSuggestions && (
-            <div className="text-center py-8 text-muted-foreground text-sm">Laster forslag...</div>
+            <div className="text-center py-8 text-muted-foreground text-sm">{t("help.loadingSuggestions")}</div>
           )}
 
           {!loadingSuggestions && suggestions.length === 0 && isAuthenticated && (
             <div className="text-center py-12 text-muted-foreground">
               <Lightbulb className="w-8 h-8 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Ingen forbedringsforslag ennå</p>
-              <p className="text-xs mt-1">Trykk «Nytt forslag» for å komme i gang</p>
+              <p className="text-sm">{t("help.noSuggestionsYet")}</p>
+              <p className="text-xs mt-1">{t("help.noSuggestionsHint")}</p>
             </div>
           )}
 
@@ -452,7 +451,7 @@ export default function Help() {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="font-medium text-sm">{sug.title}</span>
                           <Badge variant="outline" className={`text-[10px] ${prio.color}`}>
-                            {prio.label} prioritet
+                            {prio.label} {t("help.prioritySuffix")}
                           </Badge>
                           <Badge variant="outline" className={`text-[10px] ${status.color}`}>
                             {status.label}
@@ -461,7 +460,7 @@ export default function Help() {
                         <p className="text-sm text-muted-foreground line-clamp-2">{sug.description}</p>
                         {sug.adminNote && (
                           <div className="mt-2 bg-primary/8 border border-primary/20 rounded p-2">
-                            <p className="text-xs font-semibold text-primary mb-0.5">Admin-notat</p>
+                            <p className="text-xs font-semibold text-primary mb-0.5">{t("help.adminNote")}</p>
                             <p className="text-xs text-muted-foreground">{sug.adminNote}</p>
                           </div>
                         )}

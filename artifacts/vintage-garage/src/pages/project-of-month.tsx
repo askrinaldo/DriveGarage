@@ -15,6 +15,7 @@ import {
 import { ArrowLeft, Star, Heart, Trophy, Calendar, Car } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { LoadingState } from "@/components/ui-states";
+import { useTranslation } from "react-i18next";
 
 interface MonthProject {
   id: number;
@@ -58,16 +59,17 @@ interface UserVehicle {
   year: number | null;
 }
 
-const MONTH_NAMES = ["Januar", "Februar", "Mars", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Desember"];
-
 function authHeader(token: string | null): Record<string, string> {
   if (!token) return {};
   return { "x-user-token": token };
 }
 
 export default function ProjectOfMonth() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { isAuthenticated, token } = useUserAuth();
+
+  const MONTH_NAMES = t("projectOfMonth.months", { returnObjects: true }) as string[];
 
   const [data, setData] = useState<{ month: number; year: number; projects: MonthProject[] } | null>(null);
   const [winners, setWinners] = useState<Winner[]>([]);
@@ -129,11 +131,11 @@ export default function ProjectOfMonth() {
       void load();
     } else {
       const err = await res.json() as { error: string };
-      alert(err.error ?? "Noe gikk galt");
+      alert(err.error ?? t("common.error"));
     }
   }
 
-  if (loading) return <LoadingState message="Laster månedens prosjekt..." />;
+  if (loading) return <LoadingState message={t("projectOfMonth.loading")} />;
 
   const currentMonthName = data ? MONTH_NAMES[(data.month - 1)] : "";
 
@@ -147,10 +149,12 @@ export default function ProjectOfMonth() {
           <div>
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-400" />
-              <h1 className="text-2xl font-bold tracking-tight">Månedens prosjekt</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{t("projectOfMonth.title")}</h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              Stem på {currentMonthName} {data?.year}s beste prosjekt
+              {t("projectOfMonth.voteSubtitle")
+                .replace("{{month}}", currentMonthName)
+                .replace("{{year}}", String(data?.year ?? ""))}
             </p>
           </div>
         </div>
@@ -160,19 +164,19 @@ export default function ProjectOfMonth() {
             <DialogTrigger asChild>
               <Button size="sm" className="gap-2">
                 <Star className="w-4 h-4" />
-                Nominer prosjekt
+                {t("projectOfMonth.nominate")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Nominer et prosjekt</DialogTitle>
+                <DialogTitle>{t("projectOfMonth.nominateTitle")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Kjøretøy</Label>
+                  <Label className="text-sm">{t("projectOfMonth.vehicleField")}</Label>
                   <Select value={nomForm.vehicleId} onValueChange={(v) => setNomForm(f => ({ ...f, vehicleId: v }))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Velg kjøretøy..." />
+                      <SelectValue placeholder={t("projectOfMonth.vehiclePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {myVehicles.map(v => (
@@ -184,17 +188,17 @@ export default function ProjectOfMonth() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Prosjekttittel</Label>
+                  <Label className="text-sm">{t("projectOfMonth.projectTitleField")}</Label>
                   <Input
-                    placeholder="F.eks. «Komplett restaurering 1967 Volvo 122S»"
+                    placeholder={t("projectOfMonth.projectTitlePlaceholder")}
                     value={nomForm.title}
                     onChange={(e) => setNomForm(f => ({ ...f, title: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Beskrivelse (valgfritt)</Label>
+                  <Label className="text-sm">{t("projectOfMonth.descField")}</Label>
                   <Textarea
-                    placeholder="Beskriv hva som er gjort, hva som gjør prosjektet spesielt..."
+                    placeholder={t("projectOfMonth.descPlaceholder")}
                     value={nomForm.description}
                     onChange={(e) => setNomForm(f => ({ ...f, description: e.target.value }))}
                     rows={3}
@@ -202,9 +206,9 @@ export default function ProjectOfMonth() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setNomOpen(false)}>Avbryt</Button>
+                <Button variant="outline" onClick={() => setNomOpen(false)}>{t("common.cancel")}</Button>
                 <Button onClick={handleNominate} disabled={nominating || !nomForm.vehicleId || !nomForm.title}>
-                  {nominating ? "Nominerer..." : "Nominer"}
+                  {nominating ? t("projectOfMonth.nominating") : t("projectOfMonth.nominateBtn")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -216,17 +220,17 @@ export default function ProjectOfMonth() {
       <div>
         <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
           <Calendar className="w-4 h-4 text-primary" />
-          {currentMonthName} {data?.year} — Aktive nomineringer
+          {currentMonthName} {data?.year} — {t("projectOfMonth.activeNominations")}
         </h2>
 
         {!data?.projects.length ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
               <Star className="w-8 h-8 mx-auto mb-3 opacity-30" />
-              <p className="text-sm mb-3">Ingen nomineringer ennå denne måneden.</p>
+              <p className="text-sm mb-3">{t("projectOfMonth.noNominations")}</p>
               {isAuthenticated && (
                 <Button size="sm" variant="outline" onClick={() => setNomOpen(true)}>
-                  Vær den første til å nominere!
+                  {t("projectOfMonth.beFirst")}
                 </Button>
               )}
             </CardContent>
@@ -253,12 +257,14 @@ export default function ProjectOfMonth() {
                   )}
                   {i === 0 && (
                     <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/90 text-black">
-                      #1 Leder
+                      {t("projectOfMonth.leading")}
                     </div>
                   )}
                   <div className="absolute bottom-2 right-2">
                     <Badge variant="outline" className="bg-black/60 border-white/20 text-white text-[10px]">
-                      {project.vehicle ? `${project.vehicle.make} ${project.vehicle.model}${project.vehicle.year ? ` ${project.vehicle.year}` : ""}` : "Ukjent kjøretøy"}
+                      {project.vehicle
+                        ? `${project.vehicle.make} ${project.vehicle.model}${project.vehicle.year ? ` ${project.vehicle.year}` : ""}`
+                        : t("projectOfMonth.unknownVehicle")}
                     </Badge>
                   </div>
                 </div>
@@ -268,13 +274,15 @@ export default function ProjectOfMonth() {
                   {project.description && (
                     <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{project.description}</p>
                   )}
-                  <p className="text-[10px] text-muted-foreground mb-3">Nominert av {project.nominatorName}</p>
+                  <p className="text-[10px] text-muted-foreground mb-3">
+                    {t("projectOfMonth.nominatedBy")} {project.nominatorName}
+                  </p>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-sm">
                       <Heart className={`w-4 h-4 ${project.hasVoted ? "fill-red-400 text-red-400" : "text-muted-foreground"}`} />
                       <span className="font-medium">{project.voteCount}</span>
-                      <span className="text-muted-foreground text-xs">stemmer</span>
+                      <span className="text-muted-foreground text-xs">{t("projectOfMonth.votes")}</span>
                     </div>
                     <Button
                       size="sm"
@@ -284,7 +292,7 @@ export default function ProjectOfMonth() {
                       disabled={voting === project.id || !isAuthenticated}
                     >
                       <Heart className="w-3 h-3" />
-                      {project.hasVoted ? "Angre stemme" : "Stem"}
+                      {project.hasVoted ? t("projectOfMonth.voteRevoke") : t("projectOfMonth.vote")}
                     </Button>
                   </div>
                 </CardContent>
@@ -299,7 +307,7 @@ export default function ProjectOfMonth() {
         <div>
           <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-400" />
-            Tidligere vinnere
+            {t("projectOfMonth.pastWinners")}
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {winners.map(winner => (
@@ -316,7 +324,9 @@ export default function ProjectOfMonth() {
                     {MONTH_NAMES[(winner.month - 1)]} {winner.year}
                     {winner.vehicle && ` · ${winner.vehicle.make} ${winner.vehicle.model}`}
                   </p>
-                  <p className="text-[10px] text-amber-400 mt-0.5">{winner.voteCount} stemmer</p>
+                  <p className="text-[10px] text-amber-400 mt-0.5">
+                    {winner.voteCount} {t("projectOfMonth.votes")}
+                  </p>
                 </div>
               </div>
             ))}

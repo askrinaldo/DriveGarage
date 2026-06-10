@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useParams } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +15,6 @@ import { LoadingState, ErrorState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Car, Bike, Save } from "lucide-react";
@@ -28,23 +27,23 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTranslation } from "react-i18next";
 
-const vehicleSchema = z.object({
-  make: z.string().min(1, "Merke er påkrevd"),
-  model: z.string().min(1, "Modell er påkrevd"),
-  year: z.coerce.number().min(1886, "Ugyldig år").max(new Date().getFullYear() + 1, "Ugyldig år"),
-  type: z.enum(["car", "motorcycle"]),
-  registrationNumber: z.string().optional().nullable(),
-  color: z.string().optional().nullable(),
-  mileage: z.coerce.number().min(0).optional().nullable(),
-  finnUrl: z.string().url("Må være en gyldig URL").optional().nullable().or(z.literal('')),
-  notes: z.string().optional().nullable(),
-  imageUrl: z.string().url("Må være en gyldig URL").optional().nullable().or(z.literal('')),
-});
-
-type VehicleFormValues = z.infer<typeof vehicleSchema>;
+type VehicleFormValues = {
+  make: string;
+  model: string;
+  year: number;
+  type: "car" | "motorcycle";
+  registrationNumber?: string | null;
+  color?: string | null;
+  mileage?: number | null;
+  finnUrl?: string | null;
+  notes?: string | null;
+  imageUrl?: string | null;
+};
 
 export default function VehicleForm() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const params = useParams();
   const isNew = !params.id || params.id === "new";
@@ -52,6 +51,19 @@ export default function VehicleForm() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const vehicleSchema = useMemo(() => z.object({
+    make: z.string().min(1, t("vehicleForm.makeRequired")),
+    model: z.string().min(1, t("vehicleForm.modelRequired")),
+    year: z.coerce.number().min(1886, t("vehicleForm.invalidYear")).max(new Date().getFullYear() + 1, t("vehicleForm.invalidYear")),
+    type: z.enum(["car", "motorcycle"]),
+    registrationNumber: z.string().optional().nullable(),
+    color: z.string().optional().nullable(),
+    mileage: z.coerce.number().min(0).optional().nullable(),
+    finnUrl: z.string().url(t("vehicleForm.invalidUrl")).optional().nullable().or(z.literal('')),
+    notes: z.string().optional().nullable(),
+    imageUrl: z.string().url(t("vehicleForm.invalidUrl")).optional().nullable().or(z.literal('')),
+  }), [t]);
 
   const { data: vehicle, isLoading, isError } = useGetVehicle(id!, {
     query: { enabled: !!id, queryKey: getGetVehicleQueryKey(id!) }
@@ -82,7 +94,7 @@ export default function VehicleForm() {
         make: vehicle.make,
         model: vehicle.model,
         year: vehicle.year,
-        type: vehicle.type as any,
+        type: vehicle.type as "car" | "motorcycle",
         registrationNumber: vehicle.registrationNumber || "",
         color: vehicle.color || "",
         mileage: vehicle.mileage,
@@ -94,7 +106,6 @@ export default function VehicleForm() {
   }, [vehicle, isNew, form]);
 
   const onSubmit = (data: VehicleFormValues) => {
-    // Transform empty strings to null for optional URL fields
     const formattedData = {
       ...data,
       finnUrl: data.finnUrl || null,
@@ -107,28 +118,28 @@ export default function VehicleForm() {
     if (isNew) {
       createMutation.mutate({ data: formattedData as any }, {
         onSuccess: (newVehicle) => {
-          toast({ title: "Kjøretøy lagt til" });
+          toast({ title: t("vehicleForm.addedSuccess") });
           setLocation(`/vehicles/${newVehicle.id}`);
         },
         onError: () => {
-          toast({ title: "Kunne ikke legge til kjøretøy", variant: "destructive" });
+          toast({ title: t("vehicleForm.addError"), variant: "destructive" });
         }
       });
     } else {
       updateMutation.mutate({ id: id!, data: formattedData as any }, {
         onSuccess: () => {
-          toast({ title: "Kjøretøy oppdatert" });
+          toast({ title: t("vehicleForm.updatedSuccess") });
           queryClient.invalidateQueries({ queryKey: getGetVehicleQueryKey(id!) });
           setLocation(`/vehicles/${id}`);
         },
         onError: () => {
-          toast({ title: "Kunne ikke oppdatere kjøretøy", variant: "destructive" });
+          toast({ title: t("vehicleForm.updateError"), variant: "destructive" });
         }
       });
     }
   };
 
-  if (!isNew && isLoading) return <LoadingState message="Laster kjøretøydetaljer..." />;
+  if (!isNew && isLoading) return <LoadingState message={t("vehicleForm.loadingDetails")} />;
   if (!isNew && isError) return <ErrorState onRetry={() => window.location.reload()} />;
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -140,8 +151,10 @@ export default function VehicleForm() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{isNew ? "Legg til kjøretøy" : "Rediger kjøretøy"}</h1>
-          <p className="text-muted-foreground mt-1">Skriv inn kjøretøyets detaljer nedenfor.</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isNew ? t("vehicleForm.addTitle") : t("vehicleForm.editTitle")}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t("vehicleForm.subtitle")}</p>
         </div>
       </div>
 
@@ -149,7 +162,7 @@ export default function VehicleForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Card className="bg-card">
             <CardHeader>
-              <CardTitle>Grunnleggende informasjon</CardTitle>
+              <CardTitle>{t("vehicleForm.basicInfo")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -157,7 +170,7 @@ export default function VehicleForm() {
                 name="type"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Kjøretøytype</FormLabel>
+                    <FormLabel>{t("vehicleForm.vehicleType")}</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -169,14 +182,14 @@ export default function VehicleForm() {
                             <RadioGroupItem value="car" className="sr-only" />
                           </FormControl>
                           <Car className="w-5 h-5 text-muted-foreground" />
-                          <FormLabel className="font-normal cursor-pointer w-full">Bil</FormLabel>
+                          <FormLabel className="font-normal cursor-pointer w-full">{t("vehicleForm.car")}</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-md bg-sidebar flex-1 cursor-pointer [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5 transition-colors">
                           <FormControl>
                             <RadioGroupItem value="motorcycle" className="sr-only" />
                           </FormControl>
                           <Bike className="w-5 h-5 text-muted-foreground" />
-                          <FormLabel className="font-normal cursor-pointer w-full">Motorsykkel</FormLabel>
+                          <FormLabel className="font-normal cursor-pointer w-full">{t("vehicleForm.motorcycle")}</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -191,7 +204,7 @@ export default function VehicleForm() {
                   name="year"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Årsmodell</FormLabel>
+                      <FormLabel>{t("vehicleForm.year")}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -204,7 +217,7 @@ export default function VehicleForm() {
                   name="make"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Merke</FormLabel>
+                      <FormLabel>{t("vehicleForm.make")}</FormLabel>
                       <FormControl>
                         <Input placeholder="f.eks. Porsche" {...field} />
                       </FormControl>
@@ -217,7 +230,7 @@ export default function VehicleForm() {
                   name="model"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Modell</FormLabel>
+                      <FormLabel>{t("vehicleForm.model")}</FormLabel>
                       <FormControl>
                         <Input placeholder="f.eks. 911" {...field} />
                       </FormControl>
@@ -233,7 +246,7 @@ export default function VehicleForm() {
                   name="registrationNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Registreringsnummer</FormLabel>
+                      <FormLabel>{t("vehicleForm.regNumber")}</FormLabel>
                       <FormControl>
                         <Input placeholder="f.eks. AB12345" className="font-mono uppercase" {...field} value={field.value || ''} />
                       </FormControl>
@@ -246,7 +259,7 @@ export default function VehicleForm() {
                   name="color"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Farge</FormLabel>
+                      <FormLabel>{t("vehicleForm.color")}</FormLabel>
                       <FormControl>
                         <Input placeholder="f.eks. Sølv" {...field} value={field.value || ''} />
                       </FormControl>
@@ -259,7 +272,7 @@ export default function VehicleForm() {
                   name="mileage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Kilometerstand (km)</FormLabel>
+                      <FormLabel>{t("vehicleForm.mileage")}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} value={field.value || ''} />
                       </FormControl>
@@ -273,7 +286,7 @@ export default function VehicleForm() {
 
           <Card className="bg-card">
             <CardHeader>
-              <CardTitle>Lenker & Notater</CardTitle>
+              <CardTitle>{t("vehicleForm.linksNotes")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -281,11 +294,11 @@ export default function VehicleForm() {
                 name="finnUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Finn.no annonse (URL)</FormLabel>
+                    <FormLabel>{t("vehicleForm.finnUrl")}</FormLabel>
                     <FormControl>
                       <Input placeholder="https://www.finn.no/..." type="url" {...field} value={field.value || ''} />
                     </FormControl>
-                    <FormDescription>Lenke til den opprinnelige annonsen</FormDescription>
+                    <FormDescription>{t("vehicleForm.finnUrlDesc")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -295,7 +308,7 @@ export default function VehicleForm() {
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bilde (URL)</FormLabel>
+                    <FormLabel>{t("vehicleForm.imageUrl")}</FormLabel>
                     <FormControl>
                       <Input placeholder="https://..." type="url" {...field} value={field.value || ''} />
                     </FormControl>
@@ -308,9 +321,9 @@ export default function VehicleForm() {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notater</FormLabel>
+                    <FormLabel>{t("vehicleForm.notes")}</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Understellsnummer, nøkkelkoder, spesielle egenskaper..." className="min-h-[100px]" {...field} value={field.value || ''} />
+                      <Textarea placeholder={t("vehicleForm.notesPlaceholder")} className="min-h-[100px]" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -321,13 +334,13 @@ export default function VehicleForm() {
 
           <div className="flex justify-end gap-4">
             <Button variant="outline" type="button" onClick={() => setLocation(isNew ? "/vehicles" : `/vehicles/${id}`)}>
-              Avbryt
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Lagrer..." : (
+              {isPending ? t("common.saving") : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  Lagre kjøretøy
+                  {t("vehicleForm.saveBtn")}
                 </>
               )}
             </Button>

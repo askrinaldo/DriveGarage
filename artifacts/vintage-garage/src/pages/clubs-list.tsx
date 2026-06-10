@@ -9,12 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Users, MapPin, Car, Bike } from "lucide-react";
-
-const typeLabel: Record<string, string> = {
-  car: "Bil",
-  motorcycle: "Motorsykkel",
-  both: "Bil og motorsykkel",
-};
+import { useTranslation } from "react-i18next";
 
 const typeColor: Record<string, string> = {
   car: "bg-blue-500/20 text-blue-300",
@@ -34,40 +29,47 @@ const TypeIcon = ({ type }: { type: string }) => {
 };
 
 export default function ClubsList() {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<string>("all");
+
+  const typeLabel: Record<string, string> = {
+    car: t("clubs.typeCar"),
+    motorcycle: t("clubs.typeMotorcycle"),
+    both: t("clubs.typeBoth"),
+  };
 
   const { data: clubs, isLoading, isError, refetch } = useListClubs(
     filter === "all" ? {} : { type: filter },
     { query: { queryKey: getListClubsQueryKey(filter === "all" ? {} : { type: filter }) } }
   );
 
-  if (isLoading) return <LoadingState message="Laster klubber..." />;
+  if (isLoading) return <LoadingState message={t("clubs.loading")} />;
   if (isError) return <ErrorState onRetry={refetch} />;
+
+  const filters = [
+    { value: "all", label: t("clubs.filterAll") },
+    { value: "car", label: t("clubs.filterCar") },
+    { value: "motorcycle", label: t("clubs.filterMotorcycle") },
+    { value: "both", label: t("clubs.filterBoth") },
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Klubber</h1>
-          <p className="text-muted-foreground mt-1">
-            Finn og bli med i veteranklubber for biler og motorsykler.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("clubs.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("clubs.subtitle")}</p>
         </div>
         <Link href="/clubs/new">
           <Button className="shrink-0">
             <Plus className="w-4 h-4 mr-2" />
-            Opprett klubb
+            {t("clubs.createClub")}
           </Button>
         </Link>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {[
-          { value: "all", label: "Alle" },
-          { value: "car", label: "Bil" },
-          { value: "motorcycle", label: "Motorsykkel" },
-          { value: "both", label: "Begge" },
-        ].map((f) => (
+        {filters.map((f) => (
           <Button
             key={f.value}
             variant={filter === f.value ? "default" : "outline"}
@@ -84,14 +86,12 @@ export default function ClubsList() {
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
             <Users className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">Ingen klubber funnet</h3>
-          <p className="text-muted-foreground mb-6 max-w-sm">
-            Vær den første til å opprette en veteranklubb i ditt område.
-          </p>
+          <h3 className="text-lg font-semibold mb-2">{t("clubs.noClubsTitle")}</h3>
+          <p className="text-muted-foreground mb-6 max-w-sm">{t("clubs.noClubsDesc")}</p>
           <Link href="/clubs/new">
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Opprett klubb
+              {t("clubs.createClub")}
             </Button>
           </Link>
         </div>
@@ -144,7 +144,10 @@ export default function ClubsList() {
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      <span>{club.memberCount} {club.memberCount === 1 ? "medlem" : "medlemmer"}</span>
+                      <span>
+                        {club.memberCount}{" "}
+                        {club.memberCount === 1 ? t("clubs.member") : t("clubs.members")}
+                      </span>
                     </div>
                     {club.location && (
                       <div className="flex items-center gap-1 truncate">

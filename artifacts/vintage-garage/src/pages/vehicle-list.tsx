@@ -3,26 +3,28 @@ import { useListVehicles, getListVehiclesQueryKey } from "@workspace/api-client-
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Car, Gauge, Calendar, Bike } from "lucide-react";
+import { Plus, Car, Gauge, Bike } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 export default function VehicleList() {
+  const { t } = useTranslation();
   const { data: vehicles, isLoading, isError, refetch } = useListVehicles({
     query: { queryKey: getListVehiclesQueryKey() }
   });
 
-  if (isLoading) return <LoadingState message="Laster garasjen..." />;
+  if (isLoading) return <LoadingState message={t("vehicleList.loading")} />;
   if (isError) return <ErrorState onRetry={refetch} />;
 
   if (!vehicles || vehicles.length === 0) {
     return (
       <EmptyState
         icon={Car}
-        title="Garasjen din er tom"
-        description="Legg til ditt første kjøretøy for å begynne å spore servicehistorikk og kvitteringer."
+        title={t("vehicleList.emptyTitle")}
+        description={t("vehicleList.emptyDesc")}
         action={
           <Link href="/vehicles/new">
-            <Button><Plus className="w-4 h-4 mr-2" /> Legg til kjøretøy</Button>
+            <Button><Plus className="w-4 h-4 mr-2" /> {t("vehicleList.addVehicle")}</Button>
           </Link>
         }
       />
@@ -33,11 +35,11 @@ export default function VehicleList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Garasjen min</h1>
-          <p className="text-muted-foreground mt-1">Administrer kjøretøyene dine og deres historikk.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("vehicleList.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("vehicleList.subtitle")}</p>
         </div>
         <Link href="/vehicles/new">
-          <Button><Plus className="w-4 h-4 mr-2" /> Legg til kjøretøy</Button>
+          <Button><Plus className="w-4 h-4 mr-2" /> {t("vehicleList.addVehicle")}</Button>
         </Link>
       </div>
 

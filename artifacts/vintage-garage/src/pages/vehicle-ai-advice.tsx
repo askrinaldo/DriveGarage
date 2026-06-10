@@ -3,10 +3,12 @@ import { useParams, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Loader2, AlertCircle, RefreshCw, Bot } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Params { id: string }
 
 export default function VehicleAiAdvice() {
+  const { t } = useTranslation();
   const params = useParams<Params>();
   const vehicleId = parseInt(params.id, 10);
   const [, navigate] = useLocation();
@@ -77,8 +79,8 @@ export default function VehicleAiAdvice() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">AI Vedlikeholdsanbefaling</h1>
-          <p className="text-sm text-muted-foreground">Personlige råd basert på kjøretøyets historikk</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("aiAdvice.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("aiAdvice.subtitle")}</p>
         </div>
       </div>
 
@@ -88,13 +90,13 @@ export default function VehicleAiAdvice() {
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Bot className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-lg font-semibold mb-2">Klar til analyse</h2>
+            <h2 className="text-lg font-semibold mb-2">{t("aiAdvice.readyTitle")}</h2>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6 leading-relaxed">
-              AI-en analyserer kjøretøyets servicehistorikk og genererer personlige vedlikeholdsanbefalinger spesifikke for merke og modell.
+              {t("aiAdvice.readyDesc")}
             </p>
             <Button onClick={loadAdvice} size="lg">
               <Sparkles className="w-4 h-4 mr-2" />
-              Generer anbefalinger
+              {t("aiAdvice.generate")}
             </Button>
           </CardContent>
         </Card>
@@ -104,7 +106,7 @@ export default function VehicleAiAdvice() {
         <Card>
           <CardContent className="pt-10 pb-10 text-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-sm text-muted-foreground">Analyserer servicehistorikk...</p>
+            <p className="text-sm text-muted-foreground">{t("aiAdvice.analyzing")}</p>
           </CardContent>
         </Card>
       )}
@@ -113,11 +115,11 @@ export default function VehicleAiAdvice() {
         <Card className="border-destructive/20">
           <CardContent className="pt-8 pb-8 text-center">
             <AlertCircle className="w-8 h-8 text-destructive mx-auto mb-3" />
-            <p className="text-sm font-medium mb-1">Noe gikk galt</p>
-            <p className="text-xs text-muted-foreground mb-4">Kunne ikke hente anbefalinger. Prøv igjen.</p>
+            <p className="text-sm font-medium mb-1">{t("aiAdvice.errorTitle")}</p>
+            <p className="text-xs text-muted-foreground mb-4">{t("aiAdvice.errorDesc")}</p>
             <Button variant="outline" onClick={loadAdvice}>
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Prøv igjen
+              {t("aiAdvice.retry")}
             </Button>
           </CardContent>
         </Card>
@@ -131,17 +133,17 @@ export default function VehicleAiAdvice() {
                 {source === "ai" ? (
                   <>
                     <Sparkles className="w-4 h-4 text-primary" />
-                    AI-analyse
+                    {t("aiAdvice.aiLabel")}
                     <span className="ml-auto text-[10px] font-normal text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                      Generert av AI
+                      {t("aiAdvice.aiGenerated")}
                     </span>
                   </>
                 ) : (
                   <>
                     <Bot className="w-4 h-4 text-primary" />
-                    Vedlikeholdsanbefalinger
+                    {t("aiAdvice.ruleLabel")}
                     <span className="ml-auto text-[10px] font-normal text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border">
-                      Regelbasert
+                      {t("aiAdvice.ruleBased")}
                     </span>
                   </>
                 )}
@@ -160,8 +162,8 @@ export default function VehicleAiAdvice() {
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <div className="text-xs text-amber-300/90">
-                    <span className="font-semibold">AI-modus ikke aktivert.</span>{" "}
-                    Legg til din OpenAI API-nøkkel som secret (<code>OPENAI_API_KEY</code>) for personlige AI-anbefalinger. Nå vises regelbaserte råd.
+                    <span className="font-semibold">{t("aiAdvice.noAiNote")}</span>{" "}
+                    {t("aiAdvice.noAiDesc")}
                   </div>
                 </div>
               </CardContent>
@@ -171,7 +173,7 @@ export default function VehicleAiAdvice() {
           <div className="flex justify-center pb-4">
             <Button variant="outline" onClick={loadAdvice} size="sm">
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Oppdater anbefalinger
+              {t("aiAdvice.refresh")}
             </Button>
           </div>
         </>

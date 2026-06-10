@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import {
   Loader2, Trash2, Gauge, Calendar,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface Params { id: string }
 
@@ -39,15 +40,10 @@ interface Reminder {
   status: "ok" | "due_soon" | "overdue";
 }
 
-const STATUS_CONFIG = {
-  ok: { label: "OK", color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", icon: CheckCircle2 },
-  due_soon: { label: "Snart forfalt", color: "bg-amber-500/15 text-amber-300 border-amber-500/30", icon: Clock },
-  overdue: { label: "Forfalt", color: "bg-destructive/15 text-destructive border-destructive/30", icon: AlertTriangle },
-};
-
 function ReminderForm({
   onSuccess, vehicleId, existing,
 }: { onSuccess: () => void; vehicleId: number; existing?: Reminder }) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [title, setTitle] = useState(existing?.title ?? "");
   const [description, setDescription] = useState(existing?.description ?? "");
@@ -81,10 +77,10 @@ function ReminderForm({
         }),
       });
       if (!res.ok) throw new Error();
-      toast({ title: existing ? "Påminnelse oppdatert" : "Påminnelse opprettet" });
+      toast({ title: existing ? t("reminders.updated") : t("reminders.created") });
       onSuccess();
     } catch {
-      toast({ title: "Noe gikk galt", variant: "destructive" });
+      toast({ title: t("reminders.error"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -93,25 +89,25 @@ function ReminderForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
-        <Label>Tittel *</Label>
+        <Label>{t("reminders.formTitle")}</Label>
         <Input placeholder="f.eks. Oljeskift" value={title} onChange={(e) => setTitle(e.target.value)} required />
       </div>
       <div className="space-y-1.5">
-        <Label>Beskrivelse</Label>
+        <Label>{t("reminders.formDesc")}</Label>
         <Textarea placeholder="Ekstra detaljer..." value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
       </div>
       <div className="space-y-1.5">
-        <Label>Type påminnelse</Label>
+        <Label>{t("reminders.formType")}</Label>
         <div className="flex gap-2">
-          {(["date", "mileage", "both"] as const).map((t) => (
+          {(["date", "mileage", "both"] as const).map((tp) => (
             <Button
-              key={t}
+              key={tp}
               type="button"
               size="sm"
-              variant={type === t ? "default" : "outline"}
-              onClick={() => setType(t)}
+              variant={type === tp ? "default" : "outline"}
+              onClick={() => setType(tp)}
             >
-              {t === "date" ? "Dato" : t === "mileage" ? "Km-stand" : "Begge"}
+              {tp === "date" ? t("reminders.typeDate") : tp === "mileage" ? t("reminders.typeMileage") : t("reminders.typeBoth")}
             </Button>
           ))}
         </div>
@@ -120,11 +116,11 @@ function ReminderForm({
       {(type === "date" || type === "both") && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>Forfallsdato</Label>
+            <Label>{t("reminders.dueDate")}</Label>
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Repeter hvert (måneder)</Label>
+            <Label>{t("reminders.repeatMonths")}</Label>
             <Input type="number" min="1" placeholder="12" value={intervalMonths} onChange={(e) => setIntervalMonths(e.target.value)} />
           </div>
         </div>
@@ -133,11 +129,11 @@ function ReminderForm({
       {(type === "mileage" || type === "both") && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>Forfaller ved km</Label>
+            <Label>{t("reminders.dueMileage")}</Label>
             <Input type="number" min="0" placeholder="15000" value={dueMileage} onChange={(e) => setDueMileage(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Repeter hver (km)</Label>
+            <Label>{t("reminders.repeatMileage")}</Label>
             <Input type="number" min="0" placeholder="5000" value={intervalMileage} onChange={(e) => setIntervalMileage(e.target.value)} />
           </div>
         </div>
@@ -145,17 +141,24 @@ function ReminderForm({
 
       <Button type="submit" className="w-full" disabled={loading}>
         {loading && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-        {existing ? "Lagre" : "Opprett påminnelse"}
+        {existing ? t("reminders.saveBtn") : t("reminders.createBtn")}
       </Button>
     </form>
   );
 }
 
 export default function VehicleReminders() {
+  const { t } = useTranslation();
   const params = useParams<Params>();
   const vehicleId = parseInt(params.id, 10);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+
+  const STATUS_CONFIG = {
+    ok: { label: t("reminders.statusOk"), color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", icon: CheckCircle2 },
+    due_soon: { label: t("reminders.statusDueSoon"), color: "bg-amber-500/15 text-amber-300 border-amber-500/30", icon: Clock },
+    overdue: { label: t("reminders.statusOverdue"), color: "bg-destructive/15 text-destructive border-destructive/30", icon: AlertTriangle },
+  };
 
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,7 +176,7 @@ export default function VehicleReminders() {
   useEffect(() => { load(); }, [load]);
 
   async function handleComplete(reminder: Reminder) {
-    const mileageStr = window.prompt("Nåværende km-stand (valgfritt):");
+    const mileageStr = window.prompt(t("reminders.completeMileage"));
     const mileage = mileageStr ? parseInt(mileageStr, 10) : undefined;
     try {
       await fetch(`/api/vehicles/${vehicleId}/reminders/${reminder.id}/complete`, {
@@ -181,20 +184,20 @@ export default function VehicleReminders() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mileage }),
       });
-      toast({ title: `"${reminder.title}" markert som utført` });
+      toast({ title: `"${reminder.title}" ${t("reminders.completedTitle")}` });
       load();
     } catch {
-      toast({ title: "Noe gikk galt", variant: "destructive" });
+      toast({ title: t("reminders.error"), variant: "destructive" });
     }
   }
 
   async function handleDelete(id: number) {
     await fetch(`/api/vehicles/${vehicleId}/reminders/${id}`, { method: "DELETE" });
-    toast({ title: "Påminnelse slettet" });
+    toast({ title: t("reminders.deleted") });
     load();
   }
 
-  if (loading) return <LoadingState message="Laster påminnelser..." />;
+  if (loading) return <LoadingState message={t("reminders.loading")} />;
   if (error) return <ErrorState onRetry={load} />;
 
   const overdue = reminders.filter((r) => r.status === "overdue");
@@ -208,18 +211,18 @@ export default function VehicleReminders() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">Servicepåminnelser</h1>
-          <p className="text-sm text-muted-foreground">Automatiske påminnelser for vedlikehold</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("reminders.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("reminders.subtitle")}</p>
         </div>
         <Dialog open={newOpen} onOpenChange={setNewOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Ny påminnelse
+              {t("reminders.newReminder")}
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Ny servicepåminnelse</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("reminders.newReminderTitle")}</DialogTitle></DialogHeader>
             <ReminderForm onSuccess={() => { setNewOpen(false); load(); }} vehicleId={vehicleId} />
           </DialogContent>
         </Dialog>
@@ -232,21 +235,21 @@ export default function VehicleReminders() {
             <CardContent className="pt-4 pb-4 text-center">
               <AlertTriangle className={`w-5 h-5 mx-auto mb-1 ${overdue.length > 0 ? "text-destructive" : "text-muted-foreground"}`} />
               <div className={`text-2xl font-bold ${overdue.length > 0 ? "text-destructive" : "text-muted-foreground"}`}>{overdue.length}</div>
-              <div className="text-xs text-muted-foreground">Forfalt</div>
+              <div className="text-xs text-muted-foreground">{t("reminders.summaryOverdue")}</div>
             </CardContent>
           </Card>
           <Card className={dueSoon.length > 0 ? "border-amber-500/30" : ""}>
             <CardContent className="pt-4 pb-4 text-center">
               <Clock className={`w-5 h-5 mx-auto mb-1 ${dueSoon.length > 0 ? "text-amber-400" : "text-muted-foreground"}`} />
               <div className={`text-2xl font-bold ${dueSoon.length > 0 ? "text-amber-400" : "text-muted-foreground"}`}>{dueSoon.length}</div>
-              <div className="text-xs text-muted-foreground">Snart</div>
+              <div className="text-xs text-muted-foreground">{t("reminders.summarySoon")}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 pb-4 text-center">
               <CheckCircle2 className="w-5 h-5 mx-auto mb-1 text-emerald-400" />
               <div className="text-2xl font-bold text-emerald-400">{ok.length}</div>
-              <div className="text-xs text-muted-foreground">OK</div>
+              <div className="text-xs text-muted-foreground">{t("reminders.summaryOk")}</div>
             </CardContent>
           </Card>
         </div>
@@ -255,11 +258,11 @@ export default function VehicleReminders() {
       {reminders.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm font-medium mb-1">Ingen påminnelser ennå</p>
-          <p className="text-xs mb-4">Legg til servicepåminnelser for å holde styr på vedlikehold.</p>
+          <p className="text-sm font-medium mb-1">{t("reminders.noReminders")}</p>
+          <p className="text-xs mb-4">{t("reminders.noRemindersDesc")}</p>
           <Button size="sm" onClick={() => setNewOpen(true)}>
             <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Legg til første påminnelse
+            {t("reminders.addFirst")}
           </Button>
         </div>
       ) : (
@@ -308,7 +311,7 @@ export default function VehicleReminders() {
                         {reminder.lastCompleted && (
                           <span className="flex items-center gap-1 text-emerald-400/70">
                             <CheckCircle2 className="w-3 h-3" />
-                            Sist: {new Date(reminder.lastCompleted).toLocaleDateString("nb-NO")}
+                            {t("reminders.last")} {new Date(reminder.lastCompleted).toLocaleDateString("nb-NO")}
                           </span>
                         )}
                       </div>
@@ -321,7 +324,7 @@ export default function VehicleReminders() {
                         onClick={() => handleComplete(reminder)}
                       >
                         <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Utført
+                        {t("reminders.complete")}
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -331,12 +334,12 @@ export default function VehicleReminders() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Slett påminnelse?</AlertDialogTitle>
-                            <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
+                            <AlertDialogTitle>{t("reminders.deleteTitle")}</AlertDialogTitle>
+                            <AlertDialogDescription>{t("reminders.deleteDesc")}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(reminder.id)} className="bg-destructive text-destructive-foreground">Slett</AlertDialogAction>
+                            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(reminder.id)} className="bg-destructive text-destructive-foreground">{t("common.delete")}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

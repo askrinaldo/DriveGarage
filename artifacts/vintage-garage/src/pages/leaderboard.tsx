@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Trophy, Car, Wrench, Star, Medal, Crown } from "lucide-react";
 import { LoadingState } from "@/components/ui-states";
+import { useTranslation } from "react-i18next";
 
 interface LeaderEntry {
   id: number;
@@ -15,12 +16,6 @@ interface LeaderEntry {
   services: number;
   score: number;
 }
-
-const TIER_LABELS: Record<string, string> = {
-  free: "Gratis",
-  standard: "Standard",
-  premium: "Premium",
-};
 
 const TIER_COLORS: Record<string, string> = {
   free: "text-muted-foreground bg-muted/30 border-border",
@@ -40,9 +35,16 @@ function RankIcon({ rank }: { rank: number }) {
 }
 
 export default function Leaderboard() {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const [entries, setEntries] = useState<LeaderEntry[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const TIER_LABELS: Record<string, string> = {
+    free: t("leaderboard.tierFree"),
+    standard: t("leaderboard.tierStandard"),
+    premium: t("leaderboard.tierPremium"),
+  };
 
   useEffect(() => {
     void (async () => {
@@ -52,10 +54,11 @@ export default function Leaderboard() {
     })();
   }, []);
 
-  if (loading) return <LoadingState message="Laster leaderboard..." />;
+  if (loading) return <LoadingState message={t("leaderboard.loading")} />;
 
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
+  void rest;
 
   return (
     <div className="space-y-6 pb-10">
@@ -66,9 +69,9 @@ export default function Leaderboard() {
         <div>
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Leaderboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("leaderboard.title")}</h1>
           </div>
-          <p className="text-sm text-muted-foreground">Topp-brukere rangert etter aktivitetspoeng</p>
+          <p className="text-sm text-muted-foreground">{t("leaderboard.subtitle")}</p>
         </div>
       </div>
 
@@ -137,13 +140,13 @@ export default function Leaderboard() {
       {/* Full table */}
       <Card>
         <CardHeader className="pb-2 pt-4">
-          <CardTitle className="text-sm">Alle rangeringer</CardTitle>
+          <CardTitle className="text-sm">{t("leaderboard.allRankings")}</CardTitle>
         </CardHeader>
         <CardContent className="pb-2">
           {entries.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
               <Trophy className="w-8 h-8 mx-auto mb-3 opacity-30" />
-              Ingen brukere ennå
+              {t("leaderboard.noUsers")}
             </div>
           ) : (
             <div className="divide-y divide-border/50">
@@ -197,11 +200,11 @@ export default function Leaderboard() {
 
       {/* Legend */}
       <div className="rounded-lg border border-border bg-muted/10 p-4 text-xs text-muted-foreground space-y-1">
-        <p className="font-medium text-foreground mb-2">Hvordan poeng beregnes</p>
+        <p className="font-medium text-foreground mb-2">{t("leaderboard.pointsTitle")}</p>
         <div className="grid grid-cols-2 gap-1">
-          <span>🚗 Kjøretøy registrert</span><span className="font-mono">× 50 p</span>
-          <span>🔧 Serviceoppføring</span><span className="font-mono">× 10 p</span>
-          <span>⭐ Månedens prosjekt</span><span className="font-mono">+ 200 p</span>
+          <span>🚗 {t("leaderboard.vehiclePoints")}</span><span className="font-mono">× 50 p</span>
+          <span>🔧 {t("leaderboard.servicePoints")}</span><span className="font-mono">× 10 p</span>
+          <span>⭐ {t("leaderboard.projectPoints")}</span><span className="font-mono">+ 200 p</span>
         </div>
       </div>
     </div>
