@@ -369,22 +369,6 @@ export default function MembershipCard() {
                       {profile.stats.vehicleCount}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-[9px] uppercase tracking-widest" style={{ color: `${tier.color}70` }}>
-                      {t("memberCard.service")}
-                    </div>
-                    <div className="text-xl font-bold mt-0.5" style={{ color: tier.color }}>
-                      {profile.stats.serviceCount}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[9px] uppercase tracking-widest" style={{ color: `${tier.color}70` }}>
-                      {t("memberCard.points")}
-                    </div>
-                    <div className="text-xl font-bold mt-0.5" style={{ color: tier.color }}>
-                      {profile.stats.score}
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -434,27 +418,6 @@ export default function MembershipCard() {
           </Button>
         </div>
 
-        {/* Score breakdown */}
-        <div className="max-w-lg mx-auto no-print">
-          <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-            <h3 className="font-semibold text-sm">{t("memberCard.pointsTitle")}</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-muted-foreground">
-                <span>{t("memberCard.vehiclePointsLabel")} ({profile.stats.vehicleCount} × 50 p)</span>
-                <span className="font-mono">{profile.stats.vehicleCount * 50}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>{t("memberCard.servicePointsLabel")} ({profile.stats.serviceCount} × 10 p)</span>
-                <span className="font-mono">{profile.stats.serviceCount * 10}</span>
-              </div>
-              <div className="flex justify-between font-semibold border-t border-border pt-2">
-                <span>{t("memberCard.total")}</span>
-                <span className="font-mono text-primary">{profile.stats.score}</span>
-              </div>
-            </div>
-            <p className="text-[11px] text-muted-foreground">{t("memberCard.pointsDesc")}</p>
-          </div>
-        </div>
       </div>
     </>
   );
