@@ -100,6 +100,7 @@ export function useUserAuth() {
   const { session: clerkSession } = useSession();
 
   const [dbProfile, setDbProfile] = useState<DbUserProfile | null>(null);
+  const [dbProfileLoading, setDbProfileLoading] = useState(true);
   const [adminSession, setAdminSession] = useState<AdminSession | null>(
     () => loadAdminSession()
   );
@@ -111,8 +112,10 @@ export function useUserAuth() {
     if (!authLoaded) return;
     if (!isSignedIn || !clerkSession) {
       setDbProfile(null);
+      setDbProfileLoading(false);
       return;
     }
+    setDbProfileLoading(true);
     clerkSession.getToken().then((token) => {
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -122,7 +125,8 @@ export function useUserAuth() {
       .then((data: { user: DbUserProfile | null } | null) => {
         setDbProfile(data?.user ?? null);
       })
-      .catch(() => setDbProfile(null));
+      .catch(() => setDbProfile(null))
+      .finally(() => setDbProfileLoading(false));
   }, [isSignedIn, authLoaded, clerkSession]);
 
   // ── Admin email/password login (fallback) ─────────────────────────────────
@@ -288,10 +292,12 @@ export function useUserAuth() {
 
   const isAuthenticated = !!effectiveSession;
   const isSuperAdmin = effectiveSession?.role === "super_admin";
+  const isAuthLoading = !authLoaded || (!adminSession && dbProfileLoading);
 
   return {
     session: effectiveSession,
     isAuthenticated,
+    isAuthLoading,
     isSuperAdmin,
     name: effectiveSession?.name ?? null,
     email: effectiveSession?.email ?? null,

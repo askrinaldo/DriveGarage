@@ -1914,7 +1914,7 @@ function FinanceInsightSection({ token }: { token: string | null }) {
 
 export default function Admin() {
   const [, navigate] = useLocation();
-  const { isSuperAdmin, token, isAuthenticated } = useUserAuth();
+  const { isSuperAdmin, token, isAuthenticated, isAuthLoading } = useUserAuth();
 
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [users, setUsers] = useState<DetailedUser[]>([]);
@@ -1952,10 +1952,11 @@ export default function Admin() {
   }, [token]);
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!isAuthenticated) { navigate("/login"); return; }
     if (!isSuperAdmin) { navigate("/"); return; }
     void load();
-  }, [isAuthenticated, isSuperAdmin, load, navigate]);
+  }, [isAuthenticated, isAuthLoading, isSuperAdmin, load, navigate]);
 
   const openTickets = tickets.filter(t => t.status === "open").length;
 

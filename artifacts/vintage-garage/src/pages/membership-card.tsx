@@ -30,7 +30,7 @@ function formatMemberNumber(id: number) {
 export default function MembershipCard() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const { isAuthenticated, token } = useUserAuth();
+  const { isAuthenticated, isAuthLoading, token } = useUserAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,13 +43,14 @@ export default function MembershipCard() {
   const months = t("memberCard.months", { returnObjects: true }) as string[];
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!isAuthenticated) { navigate("/login"); return; }
     void (async () => {
       const res = await fetch("/api/profile/me", { headers: { "x-user-token": token ?? "" } });
       if (res.ok) setProfile(await res.json() as Profile);
       setLoading(false);
     })();
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, isAuthLoading, token, navigate]);
 
   if (loading) return <LoadingState message={t("memberCard.loading")} />;
   if (!profile) return null;

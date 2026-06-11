@@ -46,7 +46,7 @@ function authHeader(token: string | null): Record<string, string> {
 
 export default function TenantSettings() {
   const [, navigate] = useLocation();
-  const { isAuthenticated, token, tenantId, tenantRole } = useUserAuth();
+  const { isAuthenticated, isAuthLoading, token, tenantId, tenantRole } = useUserAuth();
 
   const [tenant, setTenant] = useState<TenantDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,9 +71,10 @@ export default function TenantSettings() {
   }, [tenantId, token]);
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!isAuthenticated) { navigate("/login"); return; }
     void load();
-  }, [isAuthenticated, load, navigate]);
+  }, [isAuthenticated, isAuthLoading, load, navigate]);
 
   async function saveName() {
     if (!tenantId || !editName.trim()) return;

@@ -72,7 +72,7 @@ function formatMemberSince(dateStr: string) {
 export default function Profile() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const { isAuthenticated, token } = useUserAuth();
+  const { isAuthenticated, isAuthLoading, token } = useUserAuth();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -90,6 +90,7 @@ export default function Profile() {
   };
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!isAuthenticated) { navigate("/login"); return; }
     const headers = { "x-user-token": token ?? "" };
     void Promise.all([
@@ -104,7 +105,7 @@ export default function Profile() {
       }
       setLoading(false);
     });
-  }, [isAuthenticated, token, navigate]);
+  }, [isAuthenticated, isAuthLoading, token, navigate]);
 
   async function saveName() {
     if (!newName.trim() || newName === profile?.name) { setEditingName(false); return; }
