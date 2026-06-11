@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown,
   User, ChevronDown, HelpCircle, Palette, CreditCard,
-  Star, IdCard, Building2, ChevronRight, Settings, Menu, Sun, Moon,
+  IdCard, Building2, ChevronRight, Settings, Menu, Sun, Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
@@ -48,7 +48,6 @@ export function Layout({ children }: LayoutProps) {
     { href: "/dashboard",       label: t("nav.overview"),      icon: LayoutDashboard, gradient: "from-indigo-500 to-cyan-500"   },
     { href: "/vehicles",        label: t("nav.myGarage"),      icon: Car,             gradient: "from-sky-500 to-blue-500"      },
     { href: "/clubs",           label: t("nav.clubs"),         icon: Users,           gradient: "from-violet-500 to-purple-500" },
-    { href: "/prosjekt",        label: t("nav.projectOfMonth"),icon: Star,            gradient: "from-amber-500 to-orange-400"  },
     { href: "/membership-card", label: t("nav.membershipCard"),icon: IdCard,          gradient: "from-cyan-500 to-teal-500"     },
     { href: "/billing",         label: t("nav.subscription"),  icon: CreditCard,      gradient: "from-emerald-500 to-teal-500"  },
     { href: "/help",            label: t("nav.help"),          icon: HelpCircle,      gradient: "from-slate-400 to-slate-500"   },

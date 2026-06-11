@@ -43,7 +43,6 @@ import Help from "@/pages/help";
 import VehicleTransfer from "@/pages/vehicle-transfer";
 import Billing from "@/pages/billing";
 import MembershipCard from "@/pages/membership-card";
-import ProjectOfMonth from "@/pages/project-of-month";
 import TenantSettings from "@/pages/tenant-settings";
 import TenantInvite from "@/pages/tenant-invite";
 import TenantNew from "@/pages/tenant-new";
@@ -139,7 +138,6 @@ function AppRoutes() {
         <Route path="/billing" component={Billing} />
         <Route path="/admin" component={Admin} />
         <Route path="/membership-card" component={MembershipCard} />
-        <Route path="/prosjekt" component={ProjectOfMonth} />
         <Route path="/org/settings" component={TenantSettings} />
         <Route path="/tenant-invite/:code" component={TenantInvite} />
         <Route path="/tenant-new" component={TenantNew} />
