@@ -94,7 +94,6 @@ export default function Profile() {
     const headers = { "x-user-token": token ?? "" };
     void Promise.all([
       fetch("/api/profile/me", { headers }).then(r => r.ok ? r.json() as Promise<ProfileData> : null),
-      fetch("/api/profile/leaderboard").then(r => r.ok ? r.json() as Promise<{ id: number; name: string }[]> : null),
     ]).then(([prof]) => {
       if (prof) {
         setProfile(prof);
