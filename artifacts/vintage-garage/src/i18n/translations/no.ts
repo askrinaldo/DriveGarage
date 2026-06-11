@@ -469,7 +469,7 @@ export const no = {
     vehiclePointsLabel: "Kjøretøy",
     servicePointsLabel: "Serviceoppføringer",
     total: "Totalt",
-    pointsDesc: "Poeng øker med aktivitet — legg til kjøretøy, logg service og delta i klubber for å klatre på leaderboardet.",
+    pointsDesc: "Poeng øker med aktivitet — legg til kjøretøy, logg service og delta i klubber.",
     tierFree: "Gratis",
     tierStandard: "Standard",
     tierPremium: "Premium",

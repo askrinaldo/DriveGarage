@@ -471,7 +471,7 @@ export const sv: Translations = {
     vehiclePointsLabel: "Fordon",
     servicePointsLabel: "Serviceposter",
     total: "Totalt",
-    pointsDesc: "Poäng ökar med aktivitet — lägg till fordon, logga service och delta i klubbar för att klättra på topplistan.",
+    pointsDesc: "Poäng ökar med aktivitet — lägg till fordon, logga service och delta i klubbar.",
     tierFree: "Gratis",
     tierStandard: "Standard",
     tierPremium: "Premium",

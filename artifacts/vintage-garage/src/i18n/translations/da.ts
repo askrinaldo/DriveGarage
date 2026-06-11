@@ -471,7 +471,7 @@ export const da: Translations = {
     vehiclePointsLabel: "Køretøjer",
     servicePointsLabel: "Serviceindtastninger",
     total: "I alt",
-    pointsDesc: "Point stiger med aktivitet — tilføj køretøjer, log service og deltag i klubber for at klatre på ranglisten.",
+    pointsDesc: "Point stiger med aktivitet — tilføj køretøjer, log service og deltag i klubber.",
     tierFree: "Gratis",
     tierStandard: "Standard",
     tierPremium: "Premium",

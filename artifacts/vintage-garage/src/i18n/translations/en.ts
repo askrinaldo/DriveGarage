@@ -471,7 +471,7 @@ export const en: Translations = {
     vehiclePointsLabel: "Vehicles",
     servicePointsLabel: "Service entries",
     total: "Total",
-    pointsDesc: "Points grow with activity — add vehicles, log service and join clubs to climb the leaderboard.",
+    pointsDesc: "Points grow with activity — add vehicles, log service and join clubs.",
     tierFree: "Free",
     tierStandard: "Standard",
     tierPremium: "Premium",
