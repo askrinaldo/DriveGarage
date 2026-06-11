@@ -294,11 +294,29 @@ export function useUserAuth() {
   const isSuperAdmin = effectiveSession?.role === "super_admin";
   const isAuthLoading = !authLoaded || (!adminSession && dbProfileLoading);
 
+  /**
+   * Returns the correct auth headers for API fetch calls.
+   * - Admin JWT users  → { "x-user-token": "<jwt>" }
+   * - Clerk users      → { "Authorization": "Bearer <clerk-token>" }
+   * Always await this before a fetch call that requires auth.
+   */
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    if (adminSession?.token) {
+      return { "x-user-token": adminSession.token };
+    }
+    if (clerkSession) {
+      const t = await clerkSession.getToken();
+      if (t) return { "Authorization": `Bearer ${t}` };
+    }
+    return {};
+  }, [adminSession, clerkSession]);
+
   return {
     session: effectiveSession,
     isAuthenticated,
     isAuthLoading,
     isSuperAdmin,
+    getAuthHeaders,
     name: effectiveSession?.name ?? null,
     email: effectiveSession?.email ?? null,
     role: effectiveSession?.role ?? null,

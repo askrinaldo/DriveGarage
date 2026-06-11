@@ -157,7 +157,7 @@ function MotorcycleSvg({ color }: { color: string }) {
 export default function MembershipCard() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const { isAuthenticated, isAuthLoading, token } = useUserAuth();
+  const { isAuthenticated, isAuthLoading, getAuthHeaders } = useUserAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -168,11 +168,12 @@ export default function MembershipCard() {
     if (isAuthLoading) return;
     if (!isAuthenticated) { navigate("/login"); return; }
     void (async () => {
-      const res = await fetch("/api/profile/me", { headers: { "x-user-token": token ?? "" } });
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch("/api/profile/me", { headers: authHeaders });
       if (res.ok) setProfile(await res.json() as Profile);
       setLoading(false);
     })();
-  }, [isAuthenticated, isAuthLoading, token, navigate]);
+  }, [isAuthenticated, isAuthLoading, getAuthHeaders, navigate]);
 
   const [downloading, setDownloading] = useState(false);
 

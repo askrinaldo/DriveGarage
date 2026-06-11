@@ -72,7 +72,7 @@ function formatMemberSince(dateStr: string) {
 export default function Profile() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const { isAuthenticated, isAuthLoading, token } = useUserAuth();
+  const { isAuthenticated, isAuthLoading, getAuthHeaders } = useUserAuth();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -92,10 +92,11 @@ export default function Profile() {
   useEffect(() => {
     if (isAuthLoading) return;
     if (!isAuthenticated) { navigate("/login"); return; }
-    const headers = { "x-user-token": token ?? "" };
-    void Promise.all([
-      fetch("/api/profile/me", { headers }).then(r => r.ok ? r.json() as Promise<ProfileData> : null),
-    ]).then(([prof]) => {
+    void (async () => {
+      const headers = await getAuthHeaders();
+      const [prof] = await Promise.all([
+        fetch("/api/profile/me", { headers }).then(r => r.ok ? r.json() as Promise<ProfileData> : null),
+      ]);
       if (prof) {
         setProfile(prof);
         setNewName(prof.name);
@@ -104,15 +105,16 @@ export default function Profile() {
           .then(a => { if (a) setAchievements(a); });
       }
       setLoading(false);
-    });
-  }, [isAuthenticated, isAuthLoading, token, navigate]);
+    })();
+  }, [isAuthenticated, isAuthLoading, getAuthHeaders, navigate]);
 
   async function saveName() {
     if (!newName.trim() || newName === profile?.name) { setEditingName(false); return; }
     setSavingName(true);
+    const authHeaders = await getAuthHeaders();
     const res = await fetch("/api/users/me/preferences", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-user-token": token ?? "" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({ name: newName.trim() }),
     });
     if (res.ok) {
