@@ -464,6 +464,7 @@ export const sv: Translations = {
     service: "Service",
     points: "Poäng",
     memberSince: "Medlem sedan",
+    scanGarage: "Skanna garage",
     access: "Åtkomst",
     savePrint: "Spara / skriv ut",
     downloadPng: "Ladda ner bild",

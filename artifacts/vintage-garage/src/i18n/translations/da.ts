@@ -464,6 +464,7 @@ export const da: Translations = {
     service: "Service",
     points: "Point",
     memberSince: "Medlem siden",
+    scanGarage: "Skan garage",
     access: "Adgang",
     savePrint: "Gem / udskriv",
     downloadPng: "Download billede",

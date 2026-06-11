@@ -6,6 +6,7 @@ import { useUserAuth } from "@/hooks/use-user-auth";
 import { LoadingState } from "@/components/ui-states";
 import { useTranslation } from "react-i18next";
 import html2canvas from "html2canvas";
+import { QRCodeSVG } from "qrcode.react";
 
 interface Profile {
   id: number;
@@ -372,7 +373,7 @@ export default function MembershipCard() {
                 </div>
               </div>
 
-              {/* Bottom row: member since + email */}
+              {/* Bottom row: member since + QR code */}
               <div className="flex items-end justify-between mt-2">
                 <div>
                   <div className="text-[9px] uppercase tracking-widest" style={{ color: `${tier.color}60` }}>
@@ -381,10 +382,23 @@ export default function MembershipCard() {
                   <div className="text-xs font-semibold mt-0.5" style={{ color: "#cbd5e1" }}>
                     {memberSinceStr}
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[9px]" style={{ color: `${tier.color}50` }}>
+                  <div className="text-[9px] mt-1" style={{ color: `${tier.color}50` }}>
                     {profile.email}
+                  </div>
+                </div>
+                {/* QR code linking to public garage */}
+                <div className="flex flex-col items-center gap-0.5">
+                  <div className="rounded p-0.5" style={{ background: "#fff" }}>
+                    <QRCodeSVG
+                      value={`${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, "")}/garage/${encodeURIComponent(profile.name)}`}
+                      size={52}
+                      bgColor="#ffffff"
+                      fgColor="#0f172a"
+                      level="M"
+                    />
+                  </div>
+                  <div className="text-[7px] uppercase tracking-widest" style={{ color: `${tier.color}60` }}>
+                    {t("memberCard.scanGarage")}
                   </div>
                 </div>
               </div>

@@ -255,4 +255,38 @@ router.get("/profile/leaderboard", async (req, res): Promise<void> => {
   res.json(scored.slice(0, 20));
 });
 
+// ─── Public garage profile by name ───────────────────────────────────────────
+router.get("/garage/:username", async (req, res): Promise<void> => {
+  const { username } = req.params;
+
+  const [user] = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      subscriptionTier: usersTable.subscriptionTier,
+      createdAt: usersTable.createdAt,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.name, username))
+    .limit(1);
+
+  if (!user) { res.status(404).json({ error: "Bruker ikke funnet" }); return; }
+
+  const vehicles = await db
+    .select({
+      id: vehiclesTable.id,
+      make: vehiclesTable.make,
+      model: vehiclesTable.model,
+      year: vehiclesTable.year,
+      type: vehiclesTable.type,
+      color: vehiclesTable.color,
+      mileage: vehiclesTable.mileage,
+      imageUrl: vehiclesTable.imageUrl,
+    })
+    .from(vehiclesTable)
+    .where(eq(vehiclesTable.userId, user.id));
+
+  res.json({ user, vehicles });
+});
+
 export default router;

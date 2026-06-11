@@ -49,6 +49,7 @@ import TenantNew from "@/pages/tenant-new";
 import Profile from "@/pages/profile";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
+import PublicGarage from "@/pages/public-garage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -143,6 +144,7 @@ function AppRoutes() {
         <Route path="/tenant-new" component={TenantNew} />
         <Route path="/profile" component={Profile} />
         <Route path="/help" component={Help} />
+        <Route path="/garage/:username" component={PublicGarage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

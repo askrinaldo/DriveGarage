@@ -462,6 +462,7 @@ export const no = {
     service: "Service",
     points: "Poeng",
     memberSince: "Medlem siden",
+    scanGarage: "Skann garasje",
     access: "Tilgang",
     savePrint: "Lagre / skriv ut",
     downloadPng: "Last ned bilde",
