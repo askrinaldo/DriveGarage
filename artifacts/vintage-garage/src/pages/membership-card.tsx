@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Download } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { LoadingState } from "@/components/ui-states";
 import { useTranslation } from "react-i18next";
+import html2canvas from "html2canvas";
 
 interface Profile {
   id: number;
@@ -173,8 +174,29 @@ export default function MembershipCard() {
     })();
   }, [isAuthenticated, isAuthLoading, token, navigate]);
 
+  const [downloading, setDownloading] = useState(false);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = async () => {
+    if (!cardRef.current) return;
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 3,
+        useCORS: true,
+        logging: false,
+      });
+      const link = document.createElement("a");
+      link.download = `drivegarage-${profile?.name?.replace(/\s+/g, "-").toLowerCase() ?? "card"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (loading) return <LoadingState message={t("memberCard.loading")} />;
@@ -390,13 +412,24 @@ export default function MembershipCard() {
           </div>
         </div>
 
-        {/* Print button */}
-        <div className="flex justify-center no-print">
-          <Button className="gap-2" onClick={handlePrint}
-            style={{ background: tier.color, color: "#fff", borderColor: tier.color }}
+        {/* Action buttons */}
+        <div className="flex justify-center gap-3 no-print">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleDownload}
+            disabled={downloading}
+          >
+            <Download className="w-4 h-4" />
+            {downloading ? t("memberCard.downloading") : t("memberCard.downloadPng")}
+          </Button>
+          <Button
+            className="gap-2"
+            onClick={handlePrint}
+            style={{ background: tier.color, color: "#fff", border: `1px solid ${tier.color}` }}
           >
             <Printer className="w-4 h-4" />
-            {t("memberCard.savePrint")}
+            {t("memberCard.print")}
           </Button>
         </div>
 
