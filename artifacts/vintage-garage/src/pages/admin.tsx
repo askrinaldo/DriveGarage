@@ -219,10 +219,7 @@ const NAV_ITEMS: Array<{
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function authHeader(token: string | null): Record<string, string> {
-  if (!token) return {};
-  return { "x-user-token": token };
-}
+type GetHeaders = () => Promise<Record<string, string>>;
 
 function formatNOK(kr: number) {
   return `kr ${kr.toLocaleString("nb-NO")}`;
@@ -334,10 +331,10 @@ const ChartTooltipStyle = {
 // ─── User detail slide-over ───────────────────────────────────────────────────
 
 function UserDetailPanel({
-  user, token, onClose, onUpdate,
+  user, getHeaders, onClose, onUpdate,
 }: {
   user: DetailedUser;
-  token: string | null;
+  getHeaders: GetHeaders;
   onClose: () => void;
   onUpdate: () => void;
 }) {
@@ -348,7 +345,7 @@ function UserDetailPanel({
     setSaving(true);
     await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeader(token) },
+      headers: { "Content-Type": "application/json", ...await getHeaders() },
       body: JSON.stringify({ isActive: !user.isActive }),
     });
     setSaving(false);
@@ -360,7 +357,7 @@ function UserDetailPanel({
     setChangingTier(true);
     await fetch(`/api/admin/users/${user.id}/subscription`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeader(token) },
+      headers: { "Content-Type": "application/json", ...await getHeaders() },
       body: JSON.stringify({ subscriptionTier: tier }),
     });
     setChangingTier(false);
@@ -487,10 +484,10 @@ function UserDetailPanel({
 // ─── Ticket item ──────────────────────────────────────────────────────────────
 
 function TicketItem({
-  ticket, token, expanded, onToggle, onUpdate,
+  ticket, getHeaders, expanded, onToggle, onUpdate,
 }: {
   ticket: AdminTicket;
-  token: string | null;
+  getHeaders: GetHeaders;
   expanded: boolean;
   onToggle: () => void;
   onUpdate: () => void;
@@ -503,7 +500,7 @@ function TicketItem({
     setSaving(true);
     await fetch(`/api/admin/support/tickets/${ticket.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeader(token) },
+      headers: { "Content-Type": "application/json", ...await getHeaders() },
       body: JSON.stringify({ adminReply: reply, status }),
     });
     setSaving(false);
@@ -766,10 +763,10 @@ function OverviewSection({
 // ─── CRM section ──────────────────────────────────────────────────────────────
 
 function CrmSection({
-  users, token, onUpdate,
+  users, getHeaders, onUpdate,
 }: {
   users: DetailedUser[];
-  token: string | null;
+  getHeaders: GetHeaders;
   onUpdate: () => void;
 }) {
   const [search, setSearch] = useState("");
@@ -916,7 +913,7 @@ function CrmSection({
             />
             <UserDetailPanel
               user={selectedUser}
-              token={token}
+              getHeaders={getHeaders}
               onClose={() => setSelectedUser(null)}
               onUpdate={onUpdate}
             />
@@ -929,20 +926,21 @@ function CrmSection({
 
 // ─── Payments section ─────────────────────────────────────────────────────────
 
-function PaymentsSection({ token }: { token: string | null }) {
+function PaymentsSection({ getHeaders }: { getHeaders: GetHeaders }) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (!token) return;
     setLoading(true);
-    fetch("/api/admin/invoices", { headers: authHeader(token) })
-      .then(r => r.json() as Promise<Invoice[]>)
-      .then(data => { setInvoices(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [token]);
+    getHeaders().then(h =>
+      fetch("/api/admin/invoices", { headers: h })
+        .then(r => r.json() as Promise<Invoice[]>)
+        .then(data => { setInvoices(data); setLoading(false); })
+        .catch(() => setLoading(false))
+    );
+  }, [getHeaders]);
 
   const filtered = invoices.filter(inv => {
     const matchSearch = !search || inv.customerEmail.toLowerCase().includes(search.toLowerCase()) || inv.id.toLowerCase().includes(search.toLowerCase());
@@ -1069,17 +1067,18 @@ function PaymentsSection({ token }: { token: string | null }) {
 
 // ─── Subscriptions section ────────────────────────────────────────────────────
 
-function SubscriptionsSection({ token }: { token: string | null }) {
+function SubscriptionsSection({ getHeaders }: { getHeaders: GetHeaders }) {
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
-    fetch("/api/admin/subscriptions", { headers: authHeader(token) })
-      .then(r => r.json() as Promise<Subscription[]>)
-      .then(data => { setSubs(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [token]);
+    getHeaders().then(h =>
+      fetch("/api/admin/subscriptions", { headers: h })
+        .then(r => r.json() as Promise<Subscription[]>)
+        .then(data => { setSubs(data); setLoading(false); })
+        .catch(() => setLoading(false))
+    );
+  }, [getHeaders]);
 
   const active = subs.filter(s => s.stripe?.status === "active").length;
   const canceling = subs.filter(s => s.stripe?.cancelAtPeriodEnd).length;
@@ -1166,11 +1165,11 @@ function SubscriptionsSection({ token }: { token: string | null }) {
 // ─── Support section ──────────────────────────────────────────────────────────
 
 function SupportSection({
-  tickets, suggestions, token, onUpdate,
+  tickets, suggestions, getHeaders, onUpdate,
 }: {
   tickets: AdminTicket[];
   suggestions: AdminSuggestion[];
-  token: string | null;
+  getHeaders: GetHeaders;
   onUpdate: () => void;
 }) {
   const [tab, setTab] = useState<"tickets" | "suggestions">("tickets");
@@ -1235,7 +1234,7 @@ function SupportSection({
               <TicketItem
                 key={ticket.id}
                 ticket={ticket}
-                token={token}
+                getHeaders={getHeaders}
                 expanded={expandedTicket === ticket.id}
                 onToggle={() => setExpandedTicket(expandedTicket === ticket.id ? null : ticket.id)}
                 onUpdate={onUpdate}
@@ -1251,7 +1250,7 @@ function SupportSection({
             <div className="text-center py-12 text-white/30 text-sm">Ingen forslag ennå</div>
           ) : (
             suggestions.map(sug => (
-              <SuggestionItem key={sug.id} suggestion={sug} token={token} onUpdate={onUpdate} />
+              <SuggestionItem key={sug.id} suggestion={sug} getHeaders={getHeaders} onUpdate={onUpdate} />
             ))
           )}
         </div>
@@ -1261,10 +1260,10 @@ function SupportSection({
 }
 
 function SuggestionItem({
-  suggestion, token, onUpdate,
+  suggestion, getHeaders, onUpdate,
 }: {
   suggestion: AdminSuggestion;
-  token: string | null;
+  getHeaders: GetHeaders;
   onUpdate: () => void;
 }) {
   const [status, setStatus] = useState(suggestion.status);
@@ -1275,7 +1274,7 @@ function SuggestionItem({
     setSaving(true);
     await fetch(`/api/admin/suggestions/${suggestion.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeader(token) },
+      headers: { "Content-Type": "application/json", ...await getHeaders() },
       body: JSON.stringify({ status, adminNote: note }),
     });
     setSaving(false);
@@ -1338,14 +1337,14 @@ function SuggestionItem({
 
 // ─── Clubs section ────────────────────────────────────────────────────────────
 
-function ClubsSection({ clubs, token, onUpdate }: { clubs: Club[]; token: string | null; onUpdate: () => void }) {
+function ClubsSection({ clubs, getHeaders, onUpdate }: { clubs: Club[]; getHeaders: GetHeaders; onUpdate: () => void }) {
   const [suspendReason, setSuspendReason] = useState<Record<number, string>>({});
 
   async function toggleClub(club: Club) {
     const reason = suspendReason[club.id] ?? "";
     await fetch(`/api/admin/clubs/${club.id}/suspend`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeader(token) },
+      headers: { "Content-Type": "application/json", ...await getHeaders() },
       body: JSON.stringify({ suspend: !club.isSuspended, reason }),
     });
     onUpdate();
@@ -1435,18 +1434,19 @@ function ClubsSection({ clubs, token, onUpdate }: { clubs: Club[]; token: string
 
 // ─── System Health section ─────────────────────────────────────────────────────
 
-function SystemHealthSection({ token }: { token: string | null }) {
+function SystemHealthSection({ getHeaders }: { getHeaders: GetHeaders }) {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
-    if (!token) return;
     setLoading(true);
-    fetch("/api/admin/system-health", { headers: authHeader(token) })
-      .then(r => r.json() as Promise<SystemHealth>)
-      .then(data => { setHealth(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [token]);
+    getHeaders().then(h =>
+      fetch("/api/admin/system-health", { headers: h })
+        .then(r => r.json() as Promise<SystemHealth>)
+        .then(data => { setHealth(data); setLoading(false); })
+        .catch(() => setLoading(false))
+    );
+  }, [getHeaders]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -1568,17 +1568,18 @@ function SystemHealthSection({ token }: { token: string | null }) {
 
 // ─── Audit section ────────────────────────────────────────────────────────────
 
-function AuditSection({ token }: { token: string | null }) {
+function AuditSection({ getHeaders }: { getHeaders: GetHeaders }) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
-    fetch("/api/admin/audit-log", { headers: authHeader(token) })
-      .then(r => r.json() as Promise<AuditLog[]>)
-      .then(data => { setLogs(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [token]);
+    getHeaders().then(h =>
+      fetch("/api/admin/audit-log", { headers: h })
+        .then(r => r.json() as Promise<AuditLog[]>)
+        .then(data => { setLogs(data); setLoading(false); })
+        .catch(() => setLoading(false))
+    );
+  }, [getHeaders]);
 
   return (
     <div>
@@ -1722,7 +1723,7 @@ function ChatMessage({ role, content }: { role: "user" | "assistant"; content: s
   );
 }
 
-function FinanceInsightSection({ token }: { token: string | null }) {
+function FinanceInsightSection({ getHeaders }: { getHeaders: GetHeaders }) {
   const [insight, setInsight] = useState<FinanceInsight | null>(null);
   const [loading, setLoading] = useState(true);
   const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
@@ -1731,13 +1732,14 @@ function FinanceInsightSection({ token }: { token: string | null }) {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!token) return;
-    fetch("/api/admin/finance-insight", { headers: authHeader(token) })
-      .then(r => r.json())
-      .then((data: FinanceInsight) => setInsight(data))
-      .catch(() => {/* ignore */})
-      .finally(() => setLoading(false));
-  }, [token]);
+    getHeaders().then(h =>
+      fetch("/api/admin/finance-insight", { headers: h })
+        .then(r => r.json())
+        .then((data: FinanceInsight) => setInsight(data))
+        .catch(() => {/* ignore */})
+        .finally(() => setLoading(false))
+    );
+  }, [getHeaders]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1752,7 +1754,7 @@ function FinanceInsightSection({ token }: { token: string | null }) {
     try {
       const res = await fetch("/api/admin/finance-chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader(token) },
+        headers: { "Content-Type": "application/json", ...await getHeaders() },
         body: JSON.stringify({ question, metrics: insight.metrics }),
       });
       const data = await res.json() as { answer: string };
@@ -1773,7 +1775,7 @@ function FinanceInsightSection({ token }: { token: string | null }) {
         sub="Automatisk analyse av inntekter, abonnementer og brukervekst"
         action={
           <button
-            onClick={() => { setLoading(true); setInsight(null); if (token) { fetch("/api/admin/finance-insight", { headers: authHeader(token) }).then(r => r.json()).then((d: FinanceInsight) => setInsight(d)).finally(() => setLoading(false)); } }}
+            onClick={() => { setLoading(true); setInsight(null); getHeaders().then(h => fetch("/api/admin/finance-insight", { headers: h }).then(r => r.json()).then((d: FinanceInsight) => setInsight(d)).finally(() => setLoading(false))); }}
             className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -1914,7 +1916,7 @@ function FinanceInsightSection({ token }: { token: string | null }) {
 
 export default function Admin() {
   const [, navigate] = useLocation();
-  const { isSuperAdmin, token, isAuthenticated, isAuthLoading } = useUserAuth();
+  const { isSuperAdmin, getAuthHeaders, isAuthenticated, isAuthLoading } = useUserAuth();
 
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [users, setUsers] = useState<DetailedUser[]>([]);
@@ -1928,9 +1930,8 @@ export default function Admin() {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const load = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
-    const h = authHeader(token);
+    const h = await getAuthHeaders();
     const [usersRes, clubsRes, statsRes, billingRes, mrrRes, ticketsRes, suggestionsRes] = await Promise.all([
       fetch("/api/admin/users-detailed", { headers: h }),
       fetch("/api/admin/clubs", { headers: h }),
@@ -1949,7 +1950,7 @@ export default function Admin() {
     if (suggestionsRes.ok) setSuggestions(await suggestionsRes.json() as AdminSuggestion[]);
     setLastRefresh(new Date());
     setLoading(false);
-  }, [token]);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -2058,33 +2059,33 @@ export default function Admin() {
               <OverviewSection stats={stats} billingStats={billingStats} mrrHistory={mrrHistory} />
             )}
             {activeSection === "ai" && (
-              <FinanceInsightSection token={token} />
+              <FinanceInsightSection getHeaders={getAuthHeaders} />
             )}
             {activeSection === "crm" && (
-              <CrmSection users={users} token={token} onUpdate={load} />
+              <CrmSection users={users} getHeaders={getAuthHeaders} onUpdate={load} />
             )}
             {activeSection === "payments" && (
-              <PaymentsSection token={token} />
+              <PaymentsSection getHeaders={getAuthHeaders} />
             )}
             {activeSection === "subscriptions" && (
-              <SubscriptionsSection token={token} />
+              <SubscriptionsSection getHeaders={getAuthHeaders} />
             )}
             {activeSection === "support" && (
               <SupportSection
                 tickets={tickets}
                 suggestions={suggestions}
-                token={token}
+                getHeaders={getAuthHeaders}
                 onUpdate={load}
               />
             )}
             {activeSection === "clubs" && (
-              <ClubsSection clubs={clubs} token={token} onUpdate={load} />
+              <ClubsSection clubs={clubs} getHeaders={getAuthHeaders} onUpdate={load} />
             )}
             {activeSection === "system" && (
-              <SystemHealthSection token={token} />
+              <SystemHealthSection getHeaders={getAuthHeaders} />
             )}
             {activeSection === "audit" && (
-              <AuditSection token={token} />
+              <AuditSection getHeaders={getAuthHeaders} />
             )}
           </motion.div>
         </AnimatePresence>
