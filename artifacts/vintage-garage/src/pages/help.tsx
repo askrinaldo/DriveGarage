@@ -42,7 +42,7 @@ interface Suggestion {
 export default function Help() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const { isAuthenticated, token } = useUserAuth();
+  const { isAuthenticated, getAuthHeaders } = useUserAuth();
   const { toast } = useToast();
 
   const CATEGORY_LABELS: Record<string, string> = {
@@ -88,25 +88,23 @@ export default function Help() {
   const [sugPriority, setSugPriority] = useState("medium");
   const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
 
-  function authHeaders(): Record<string, string> {
-    return token ? { "x-user-token": token } : {};
-  }
-
   const loadTickets = useCallback(async () => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setLoadingTickets(true);
-    const res = await fetch("/api/support/tickets", { headers: authHeaders() });
+    const headers = await getAuthHeaders();
+    const res = await fetch("/api/support/tickets", { headers });
     if (res.ok) setTickets(await res.json() as SupportTicket[]);
     setLoadingTickets(false);
-  }, [token]);
+  }, [isAuthenticated, getAuthHeaders]);
 
   const loadSuggestions = useCallback(async () => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setLoadingSuggestions(true);
-    const res = await fetch("/api/suggestions", { headers: authHeaders() });
+    const headers = await getAuthHeaders();
+    const res = await fetch("/api/suggestions", { headers });
     if (res.ok) setSuggestions(await res.json() as Suggestion[]);
     setLoadingSuggestions(false);
-  }, [token]);
+  }, [isAuthenticated, getAuthHeaders]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -118,9 +116,10 @@ export default function Help() {
   async function submitTicket(e: React.FormEvent) {
     e.preventDefault();
     setSubmittingTicket(true);
+    const authHeaders = await getAuthHeaders();
     const res = await fetch("/api/support/tickets", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({ title: ticketTitle, description: ticketDesc, category: ticketCategory }),
     });
     setSubmittingTicket(false);
@@ -138,9 +137,10 @@ export default function Help() {
   async function submitSuggestion(e: React.FormEvent) {
     e.preventDefault();
     setSubmittingSuggestion(true);
+    const authHeaders = await getAuthHeaders();
     const res = await fetch("/api/suggestions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({ title: sugTitle, description: sugDesc, priority: sugPriority }),
     });
     setSubmittingSuggestion(false);
