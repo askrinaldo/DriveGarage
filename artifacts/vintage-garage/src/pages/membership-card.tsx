@@ -214,16 +214,18 @@ export default function MembershipCard() {
       {/* Print styles */}
       <style>{`
         @media print {
-          body > * { display: none !important; }
-          #membership-print-root { display: block !important; }
-          #membership-print-root .no-print { display: none !important; }
-          #membership-print-root .print-card-wrapper {
-            display: flex !important;
+          body * { visibility: hidden; }
+          #membership-print-root,
+          #membership-print-root * { visibility: visible; }
+          #membership-print-root {
+            position: fixed;
+            inset: 0;
+            display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             background: white;
           }
+          #membership-print-root .no-print { display: none !important; }
           @page {
             size: A4 landscape;
             margin: 10mm;

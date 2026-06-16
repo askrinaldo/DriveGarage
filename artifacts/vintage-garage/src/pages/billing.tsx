@@ -87,38 +87,38 @@ function PriceCard({
           {selectedPrice ? (
             <div>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-white">
+                <span className="text-3xl font-black text-foreground">
                   {formatAmount(selectedPrice.unit_amount, selectedPrice.currency)}
                 </span>
-                <span className="text-white/40 text-sm">/{intervalLabel(selectedPrice.recurring?.interval ?? "month")}</span>
+                <span className="text-muted-foreground text-sm">/{intervalLabel(selectedPrice.recurring?.interval ?? "month")}</span>
               </div>
               {yearlyPrice && monthlyPrice && (
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={() => setBillingCycle("month")}
-                    className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${billingCycle === "month" ? "bg-white/10 text-white" : "text-white/35 hover:text-white/60"}`}
+                    className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${billingCycle === "month" ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground/60"}`}
                   >{t("billing.monthly")}</button>
                   <button
                     onClick={() => setBillingCycle("year")}
-                    className={`text-xs px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${billingCycle === "year" ? "bg-white/10 text-white" : "text-white/35 hover:text-white/60"}`}
+                    className={`text-xs px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${billingCycle === "year" ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground/60"}`}
                   >
                     {t("billing.yearly")}
-                    <span className="text-green-400 text-[10px] font-semibold">-17%</span>
+                    <span className="text-green-500 text-[10px] font-semibold">-17%</span>
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-black text-white">{t("billing.free")}</span>
-              <span className="text-white/40 text-sm">{t("billing.forever")}</span>
+              <span className="text-3xl font-black text-foreground">{t("billing.free")}</span>
+              <span className="text-muted-foreground text-sm">{t("billing.forever")}</span>
             </div>
           )}
         </div>
 
         <ul className="space-y-2 mb-6">
           {Array.isArray(features) && features.map((f) => (
-            <li key={f} className="flex items-start gap-2 text-sm text-white/65">
+            <li key={f} className="flex items-start gap-2 text-sm text-foreground/65">
               <CheckCircle2 className={`w-4 h-4 ${meta.iconColor} mt-0.5 shrink-0 opacity-80`} />
               {f}
             </li>
@@ -130,7 +130,7 @@ function PriceCard({
             className={`w-full h-10 font-semibold rounded-xl border-0 transition-all duration-200
               ${isPopular
                 ? "bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-900/30"
-                : "bg-white/10 hover:bg-white/15 text-white"
+                : "bg-foreground/10 hover:bg-foreground/15 text-foreground"
               }
             `}
             onClick={() => onCheckout(selectedPrice.price_id)}
@@ -142,7 +142,7 @@ function PriceCard({
             }
           </Button>
         ) : isCurrent ? (
-          <div className="h-10 flex items-center justify-center text-sm text-white/30 font-medium">
+          <div className="h-10 flex items-center justify-center text-sm text-muted-foreground font-medium">
             {t("billing.currentPlan")}
           </div>
         ) : null}
