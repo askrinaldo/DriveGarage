@@ -1981,7 +1981,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="flex gap-0 min-h-[calc(100vh-4rem)] -mx-6 -mt-6">
+    <div data-admin className="flex gap-0 min-h-[calc(100vh-4rem)] -mx-6 -mt-6">
       {/* Left admin nav */}
       <aside className="w-52 shrink-0 border-r border-white/6 bg-black/20 flex flex-col pt-4 pb-6 sticky top-0 h-screen overflow-y-auto">
         {/* Admin header */}

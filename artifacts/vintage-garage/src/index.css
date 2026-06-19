@@ -230,3 +230,52 @@
     inset: -1px;
   }
 }
+
+/* ─── Admin panel: light-mode overrides ────────────────────────────────────── */
+
+html.light-mode [data-admin] {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+html.light-mode [data-admin] aside {
+  background: hsl(var(--sidebar)) !important;
+  border-color: hsl(var(--sidebar-border)) !important;
+}
+
+/* All white text → dark foreground */
+html.light-mode [data-admin] [class*="text-white"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Muted / dimmer white text → muted foreground */
+html.light-mode [data-admin] [class*="text-white/2"],
+html.light-mode [data-admin] [class*="text-white/3"],
+html.light-mode [data-admin] [class*="text-white/4"],
+html.light-mode [data-admin] [class*="text-white/5"],
+html.light-mode [data-admin] [class*="text-white/6"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Dark hardcoded backgrounds → theme background */
+html.light-mode [data-admin] [class*="bg-\[#0d1117\]"],
+html.light-mode [data-admin] [class*="bg-black"] {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* White-tinted bg hover states → subtle muted */
+html.light-mode [data-admin] [class*="bg-white/"] {
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* Borders */
+html.light-mode [data-admin] [class*="border-white"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Chart tooltip & recharts background */
+html.light-mode [data-admin] .recharts-tooltip-wrapper > div {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
