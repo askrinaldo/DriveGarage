@@ -9,7 +9,8 @@ import {
   useCreateServiceRecord,
   useUpdateServiceRecord,
   getListServiceRecordsQueryKey,
-  useGetVehicle
+  useGetVehicle,
+  getGetVehicleQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -57,7 +58,7 @@ export default function ServiceForm() {
   const queryClient = useQueryClient();
 
   const { data: vehicle, isLoading: vehicleLoading } = useGetVehicle(vehicleId, {
-    query: { enabled: !!vehicleId }
+    query: { enabled: !!vehicleId, queryKey: getGetVehicleQueryKey(vehicleId) }
   });
 
   const { data: service, isLoading: serviceLoading, isError } = useGetServiceRecord(vehicleId, serviceId!, {
@@ -122,7 +123,7 @@ export default function ServiceForm() {
         }
       });
     } else {
-      updateMutation.mutate({ id: serviceId!, data: formattedData as any }, {
+      updateMutation.mutate({ vehicleId, id: serviceId!, data: formattedData as any }, {
         onSuccess: () => {
           toast({ title: "Servicepost oppdatert" });
           queryClient.invalidateQueries({ queryKey: getListServiceRecordsQueryKey(vehicleId) });

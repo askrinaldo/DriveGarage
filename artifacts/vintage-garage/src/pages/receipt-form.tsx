@@ -5,7 +5,8 @@ import { z } from "zod";
 import { 
   useCreateReceipt,
   getListReceiptsQueryKey,
-  useGetVehicle
+  useGetVehicle,
+  getGetVehicleQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +48,7 @@ export default function ReceiptForm() {
   const queryClient = useQueryClient();
 
   const { data: vehicle, isLoading: vehicleLoading } = useGetVehicle(vehicleId, {
-    query: { enabled: !!vehicleId }
+    query: { enabled: !!vehicleId, queryKey: getGetVehicleQueryKey(vehicleId) }
   });
 
   const createMutation = useCreateReceipt();
@@ -181,7 +182,7 @@ export default function ReceiptForm() {
               </div>
 
               <div className="space-y-3">
-                <FormLabel>Skann kvittering (Valgfritt)</FormLabel>
+                <p className="text-sm font-medium leading-none">Skann kvittering (Valgfritt)</p>
                 <div className="flex items-center gap-4">
                   <Button type="button" variant="outline" className="relative overflow-hidden">
                     <Camera className="w-4 h-4 mr-2" />

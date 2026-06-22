@@ -340,7 +340,7 @@ export default function VehicleDetail() {
   };
 
   const handleDeleteService = (serviceId: number) => {
-    deleteService.mutate({ id: serviceId }, {
+    deleteService.mutate({ vehicleId: id, id: serviceId }, {
       onSuccess: () => {
         toast({ title: "Servicepost slettet" });
         queryClient.invalidateQueries({ queryKey: getListServiceRecordsQueryKey(id) });
@@ -352,7 +352,7 @@ export default function VehicleDetail() {
   };
 
   const handleDeleteReceipt = (receiptId: number) => {
-    deleteReceipt.mutate({ id: receiptId }, {
+    deleteReceipt.mutate({ vehicleId: id, id: receiptId }, {
       onSuccess: () => {
         toast({ title: "Kvittering slettet" });
         queryClient.invalidateQueries({ queryKey: getListReceiptsQueryKey(id) });
@@ -364,7 +364,7 @@ export default function VehicleDetail() {
   };
 
   const handleDeleteTrip = (tripId: number) => {
-    deleteTrip.mutate({ id: tripId }, {
+    deleteTrip.mutate({ vehicleId: id, id: tripId }, {
       onSuccess: () => {
         toast({ title: "Tur slettet" });
         queryClient.invalidateQueries({ queryKey: getListTripLogsQueryKey(id) });

@@ -9,7 +9,8 @@ import {
   useCreateTripLog,
   useUpdateTripLog,
   getListTripLogsQueryKey,
-  useGetVehicle
+  useGetVehicle,
+  getGetVehicleQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -54,7 +55,7 @@ export default function TripForm() {
   const queryClient = useQueryClient();
 
   const { data: vehicle, isLoading: vehicleLoading } = useGetVehicle(vehicleId, {
-    query: { enabled: !!vehicleId }
+    query: { enabled: !!vehicleId, queryKey: getGetVehicleQueryKey(vehicleId) }
   });
 
   const { data: trip, isLoading: tripLoading, isError } = useGetTripLog(vehicleId, tripId!, {
@@ -117,7 +118,7 @@ export default function TripForm() {
         }
       });
     } else {
-      updateMutation.mutate({ id: tripId!, data: formattedData as any }, {
+      updateMutation.mutate({ vehicleId, id: tripId!, data: formattedData as any }, {
         onSuccess: () => {
           toast({ title: "Tur oppdatert" });
           queryClient.invalidateQueries({ queryKey: getListTripLogsQueryKey(vehicleId) });

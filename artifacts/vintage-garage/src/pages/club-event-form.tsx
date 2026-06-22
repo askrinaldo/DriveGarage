@@ -38,7 +38,8 @@ export default function ClubEventForm() {
   const isEdit = !!eventId;
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { token, memberName, isAuthenticated } = useClubAuth(clubId);
+  const { getToken, memberName, isAuthenticated } = useClubAuth(clubId);
+  const token = getToken();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

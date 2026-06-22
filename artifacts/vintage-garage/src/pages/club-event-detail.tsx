@@ -120,7 +120,8 @@ export default function ClubEventDetail() {
   const eventId = parseInt(params.eventId, 10);
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { token, memberName, role, isAuthenticated } = useClubAuth(clubId);
+  const { getToken, memberName, role, isAuthenticated } = useClubAuth(clubId);
+  const token = getToken();
 
   const [event, setEvent] = useState<ClubEvent | null>(null);
   const [loading, setLoading] = useState(true);

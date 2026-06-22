@@ -185,13 +185,13 @@ export default function Billing() {
   const handleCheckout = (priceId: string) => {
     if (!isAuthenticated) { navigate("/login"); return; }
     checkout.mutate(priceId, {
-      onError: (e) => toast({ title: t("billing.error"), description: e.message, variant: "destructive" }),
+      onError: (e: Error) => toast({ title: t("billing.error"), description: e.message, variant: "destructive" }),
     });
   };
 
   const handlePortal = () => {
     portal.mutate(undefined, {
-      onError: (e) => toast({ title: t("billing.error"), description: e.message, variant: "destructive" }),
+      onError: (e: Error) => toast({ title: t("billing.error"), description: e.message, variant: "destructive" }),
     });
   };
 
