@@ -278,9 +278,40 @@ export default function Billing() {
         </div>
 
         {prices.length === 0 && (
-          <div className="mt-6 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
-            <Loader2 className="w-5 h-5 animate-spin text-indigo-400 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">{t("billing.loadingPrices")}</p>
+          <div className="mt-6 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
+              Planlagte oppgraderingsalternativer
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <button
+                disabled
+                className="flex items-center justify-between gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3.5 opacity-70 cursor-not-allowed"
+              >
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-indigo-300">Standard — kr 69/mnd</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Ubegrenset kjøretøy, AI-råd, eksport</p>
+                </div>
+                <div className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5 whitespace-nowrap">
+                  Vipps snart
+                </div>
+              </button>
+              <button
+                disabled
+                className="flex items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3.5 opacity-70 cursor-not-allowed"
+              >
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-amber-300">Premium — kr 129/mnd</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Alt i Standard + klubber, markedsplass</p>
+                </div>
+                <div className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5 whitespace-nowrap">
+                  Vipps snart
+                </div>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 text-center">
+              Se fullstendig oversikt på{" "}
+              <a href="/pricing" className="underline hover:text-foreground transition-colors">prisingsiden</a>
+            </p>
           </div>
         )}
       </div>

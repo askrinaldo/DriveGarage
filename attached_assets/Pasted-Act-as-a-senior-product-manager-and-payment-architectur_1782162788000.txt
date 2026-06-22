@@ -1,0 +1,158 @@
+Act as a senior product manager and payment architecture engineer.
+
+Project: DriveGarage
+
+We are preparing for a meeting with Vipps.
+
+Important:
+
+* We will NOT use Stripe.
+* Vipps is the intended payment provider.
+* Vipps integration is NOT implemented yet.
+* We do not have final Vipps merchant/API credentials yet.
+* We want a 7-day free trial.
+* After the trial, the user should pay through Vipps recurring payments after explicit user approval.
+* Do not implement the Vipps API yet.
+* Do not add fake payment logic.
+* Do not remove existing Stripe files yet; only keep documenting Stripe as legacy/not planned.
+* Focus on product packaging, pricing readiness, billing architecture and meeting preparation.
+
+Tasks:
+
+1. Audit current billing/payment code
+   Check whether the project contains:
+
+* Stripe client
+* Stripe routes
+* webhook handlers
+* billing pages
+* subscription tables
+* plan/feature gating logic
+* payment status fields
+* trial logic
+* admin billing tools
+
+Return what exists and whether it is active or legacy.
+
+2. Define DriveGarage pricing model proposal
+   Create a simple pricing proposal for the Vipps meeting:
+
+* 7-day free trial
+* monthly subscription after trial
+* optional yearly subscription later
+* clear feature limits for trial vs paid
+
+Suggested model:
+Trial:
+
+* 7 days full access
+* no payment charged until trial ends
+* user must approve recurring Vipps agreement before billing can start
+
+Paid:
+
+* multiple/unlimited vehicles
+* service history
+* receipt storage
+* trip logs
+* reminders
+* clubs/invites if included
+* export later as premium feature
+
+3. Billing state model
+   Propose internal subscription states:
+
+* trialing
+* active
+* past_due
+* canceled
+* expired
+* payment_failed
+* pending_vipps_agreement
+* exempt_internal
+
+Define what each state means and what the user can access.
+
+4. Superadmin/payment exemption requirements
+   Plan, but do not implement:
+
+* superadmin users must be managed explicitly
+* do not hardcode admin access only by email in code
+* allow manual payment exemption for internal/admin/test/partner accounts
+* every exemption should have reason, createdBy, createdAt and optional expiresAt
+* superadmin access should be audited
+* superadmin should not automatically see all private user data unless a specific support/admin action requires it
+
+5. Vipps architecture plan
+   Design how Vipps Recurring Payments should integrate later:
+
+* backend-only API calls
+* store Vipps agreementId securely
+* store subscription status locally
+* handle webhooks/callbacks
+* never expose Vipps secrets to frontend
+* frontend only starts/continues payment flow
+* backend verifies payment/agreement state
+
+6. Required future environment variables
+   List proposed future env vars:
+
+* VIPPS_CLIENT_ID
+* VIPPS_CLIENT_SECRET
+* VIPPS_SUBSCRIPTION_KEY
+* VIPPS_MERCHANT_SERIAL_NUMBER
+* VIPPS_ENVIRONMENT
+* VIPPS_CALLBACK_URL
+* VIPPS_RETURN_URL
+
+Do not require them at startup yet until Vipps implementation starts.
+
+7. Trial behavior
+   Plan exact flow:
+
+* user signs up
+* subscription row is created with trialStart and trialEndsAt
+* user sees trial countdown
+* before trial ends, user is asked to approve Vipps recurring agreement
+* if agreement is approved, billing starts after trial
+* if not approved, account moves to expired/limited access
+* no surprise charging without clear user approval
+
+8. UI readiness for meeting
+   Add or plan simple visible pages/sections if safe:
+
+* Pricing page
+* Billing status page
+* Trial banner
+* “Betal med Vipps” placeholder button marked not active yet
+* Clear copy: “Vipps-betaling kommer snart” if not implemented
+
+Only add placeholders if they cannot confuse users into thinking real payment works.
+
+9. Vipps meeting checklist
+   Create a checklist of what we need to ask Vipps:
+
+* Which Vipps product should we use for 7-day trial + recurring billing?
+* Best practice for trial periods before first charge
+* Required merchant/sales unit setup
+* Webhook/callback requirements
+* Test environment access
+* Approval flow
+* Cancellation/refund flow
+* Lead time for recurring charges
+* Required user messaging
+* Pricing/fees
+* Go-live checklist
+
+10. Deliverable
+    Return:
+
+* current billing code audit
+* recommended pricing/package model
+* proposed subscription state model
+* superadmin/payment exemption plan
+* Vipps integration architecture
+* trial flow
+* meeting checklist
+* files changed
+* what should not be implemented yet

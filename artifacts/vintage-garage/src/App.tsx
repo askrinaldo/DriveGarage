@@ -53,6 +53,8 @@ import PrivacyPage from "@/pages/privacy";
 import TermsPage from "@/pages/terms";
 import CookiesPage from "@/pages/cookies";
 import ContactPage from "@/pages/contact";
+import PricingPage from "@/pages/pricing";
+import Billing from "@/pages/billing";
 import { CookieNotice } from "@/components/cookie-notice";
 
 const queryClient = new QueryClient({
@@ -82,7 +84,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/", "/sign-in", "/sign-up", "/privacy", "/terms", "/cookies", "/contact"];
+const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/", "/sign-in", "/sign-up", "/privacy", "/terms", "/cookies", "/contact", "/pricing"];
 
 function AppRoutes() {
   const [location] = useLocation();
@@ -106,6 +108,7 @@ function AppRoutes() {
         <Route path="/terms" component={TermsPage} />
         <Route path="/cookies" component={CookiesPage} />
         <Route path="/contact" component={ContactPage} />
+        <Route path="/pricing" component={PricingPage} />
         <Route path="/">
           {isLoaded && isSignedIn ? <Redirect to="/dashboard" /> : <LandingPage />}
         </Route>
@@ -151,6 +154,7 @@ function AppRoutes() {
         <Route path="/tenant-new" component={TenantNew} />
         <Route path="/profile" component={Profile} />
         <Route path="/help" component={Help} />
+        <Route path="/billing" component={Billing} />
         <Route path="/garage/:username" component={PublicGarage} />
         <Route component={NotFound} />
       </Switch>
