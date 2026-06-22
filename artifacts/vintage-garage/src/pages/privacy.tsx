@@ -70,9 +70,13 @@ export default function PrivacyPage() {
 
         <p className="mt-4"><strong className="text-white">3.6 Betalingsinformasjon</strong></p>
         <p>
-          Dersom du kjøper et betalt abonnement, behandles betalingsinformasjon av Stripe Inc.
-          DriveGarage lagrer ikke kortopplysninger. Vi mottar kun bekreftelse på
-          abonnementsstatus fra Stripe.
+          Betalingsløsning er planlagt via <strong className="text-white">Vipps</strong>, men er ikke aktivert ennå.
+          Ingen betalingsinformasjon samles inn eller behandles på nåværende tidspunkt.
+          Planlagt modell: 7 dagers gratis prøveperiode, deretter løpende betalingsavtale.
+          Ingen betaling trekkes før brukeren tydelig har godkjent en betalingsavtale.
+        </p>
+        <p className="text-amber-300/80 text-xs">
+          [Betalingsleverandør, databehandleravtale og oppdatert personverntekst konfigureres ved aktivering av betalingsmodulen.]
         </p>
       </LegalSection>
 
@@ -106,9 +110,12 @@ export default function PrivacyPage() {
             <p className="font-medium text-white mb-1">Clerk Inc. — Autentisering</p>
             <p className="text-xs">Behandler navn, e-post og innloggingsdata. Clerk er sertifisert under EU-U.S. Data Privacy Framework. Se <a href="https://clerk.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">clerk.com/privacy</a>.</p>
           </div>
-          <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
-            <p className="font-medium text-white mb-1">Stripe Inc. — Betalingsbehandling</p>
-            <p className="text-xs">Behandler betalingsinformasjon ved kjøp av abonnement. Se <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">stripe.com/privacy</a>.</p>
+          <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-4">
+            <p className="font-medium text-amber-300 mb-1">Betalingsintegrasjon — ikke aktivert ennå</p>
+            <p className="text-xs text-[#8899bb]">
+              Betalingsløsning via Vipps er planlagt, men ikke implementert. Ingen betalingsdata behandles per i dag.
+              Når betaling aktiveres, oppdateres denne seksjonen med gjeldende leverandør og databehandleravtale.
+            </p>
           </div>
           <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
             <p className="font-medium text-white mb-1">Drifts-/databaseleverandør</p>

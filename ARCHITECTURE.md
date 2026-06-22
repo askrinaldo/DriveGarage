@@ -621,6 +621,79 @@ See `artifacts/api-server/src/lib/envValidation.ts` for the full spec and startu
 | `CLERK_SECRET_KEY` | ✅ | `app.ts` | Secret — server-side only, never in frontend bundle |
 | `SESSION_SECRET` | ✅ | `middleware/userAuth.ts` | JWT signing secret — server-side only |
 | `PORT` | optional | `index.ts` | Default 8080 |
-| `STRIPE_SECRET_KEY` | optional* | `lib/stripeClient.ts` | Server-side only — *required when billing re-enabled |
-| `STRIPE_WEBHOOK_SECRET` | optional* | `webhookHandlers.ts` | *required when billing re-enabled |
+| `STRIPE_SECRET_KEY` | legacy* | `lib/stripeClient.ts` | Server-side only — *legacy, see Section 12 |
+| `STRIPE_WEBHOOK_SECRET` | legacy* | `webhookHandlers.ts` | *legacy, see Section 12 |
 | `REPLIT_DOMAINS` | optional | `app.ts` CORS | Comma-separated. In production, restricts CORS origins |
+
+---
+
+## 12. Payment Provider — Status and Roadmap
+
+> **Updated June 2026.**
+
+### Current status
+
+| Item | Status |
+|------|--------|
+| Billing module (frontend `billing.tsx`) | ⚠️ Renders with placeholder prices — no real payment flow |
+| Stripe integration (`lib/stripeClient.ts`, `webhookHandlers.ts`, `routes/billing.ts`) | 🔴 **Legacy / not planned** — see below |
+| Vipps integration | ⬜ **Intended future provider** — not implemented |
+| Any payment taken from users | ✅ **None** — no payment is processed at this time |
+
+---
+
+### Stripe — legacy code, not the chosen provider
+
+Stripe code was scaffolded in an earlier phase but **Stripe is not the chosen payment provider for DriveGarage**. The following files contain Stripe-specific code that should be removed once Vipps is implemented and verified:
+
+| File | What to remove |
+|------|----------------|
+| `artifacts/api-server/src/lib/stripeClient.ts` | Entire file — Stripe SDK init |
+| `artifacts/api-server/src/webhookHandlers.ts` | Entire file — Stripe webhook logic |
+| `artifacts/api-server/src/routes/billing.ts` | Stripe-specific routes (currently disabled) |
+| `artifacts/vintage-garage/src/hooks/use-subscription.ts` | `useStripePrices`, `useCreateCheckout`, `useCustomerPortal` hooks |
+| `artifacts/vintage-garage/src/pages/billing.tsx` | Stripe-specific UI and hook calls — replace with Vipps flow |
+| `STRIPE_SECRET_KEY` env var | Remove from secrets after Stripe code is deleted |
+| `STRIPE_WEBHOOK_SECRET` env var | Remove from secrets after Stripe code is deleted |
+
+**⚠️ Do NOT remove Stripe code until Vipps is implemented and verified in production.**
+
+---
+
+### Vipps — intended payment provider
+
+**Planned model:**
+- 7-day free trial (no payment information collected during trial)
+- Recurring Vipps payment after explicit user approval of a Vipps payment agreement
+- No payment is charged without the user clearly approving a Vipps recurring agreement
+
+**Requirements before implementation:**
+- [ ] Register as a Vipps merchant at [vipps.no/developer](https://developer.vippsmobilepay.com/)
+- [ ] Obtain Vipps API credentials: `VIPPS_CLIENT_ID`, `VIPPS_CLIENT_SECRET`, `VIPPS_SUBSCRIPTION_KEY`, `VIPPS_MSN` (merchant serial number)
+- [ ] Choose Vipps product: **Recurring** (for subscriptions) — `POST /recurring/v3/agreements`
+- [ ] Implement backend: create agreement → redirect to Vipps approval → webhook for status updates
+- [ ] Update legal pages (`/privacy`, `/terms`, `/cookies`) with Vipps as data processor
+- [ ] Sign Vipps data processor agreement (DPA)
+- [ ] Legal review of updated payment terms before go-live
+
+**Relevant Vipps API docs:**
+- Recurring API: `https://developer.vippsmobilepay.com/docs/APIs/recurring-api/`
+- Agreements: `POST /recurring/v3/agreements` → charge model
+- Webhooks: `POST /recurring/v3/agreements/{agreementId}/charges` for status updates
+
+**Recommended implementation phase:** After Phase 5 (validation + error normalization) — ensures clean API surface before adding payment integration.
+
+---
+
+### Legal pages — payment wording
+
+The following legal pages already reflect the "Vipps planned, not yet active" state:
+
+| Page | Status |
+|------|--------|
+| `/privacy` (§3.6, §5 tredjeparter) | ✅ Updated — Vipps planned, no Stripe |
+| `/terms` (§5 abonnement og betaling) | ✅ Updated — Vipps model documented |
+| `/cookies` (tredjeparter) | ✅ Updated — Vipps placeholder, no Stripe |
+| `/billing` (UI notice banner) | ✅ Banner: "Betalingsløsning er ikke aktivert ennå" |
+
+All public-facing payment wording correctly states no payment is active and Vipps is the planned provider.

@@ -125,12 +125,13 @@ export default function CookiesPage() {
               <a href="https://clerk.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">Clerks personvernerklæring</a>.
             </p>
           </div>
-          <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
-            <p className="font-medium text-white text-sm mb-1">Stripe Inc. — Betalinger</p>
+          <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-4">
+            <p className="font-medium text-amber-300 text-sm mb-1">Betalingsleverandør — ikke aktivert ennå</p>
             <p className="text-xs text-[#8899bb]">
-              Dersom du gjennomfører en betaling, kan Stripe sette egne kapsler for
-              svindelforebygging og betalingssikkerhet. Se{" "}
-              <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">Stripes personvernerklæring</a>.
+              Betalingsløsning via <strong className="text-white/80">Vipps</strong> er planlagt, men ikke implementert.
+              Vipps vil, når aktivert, kunne sette egne kapsler for autentisering og svindelforebygging under
+              betalingsprosessen. Denne seksjonen oppdateres med konkrete detaljer ved aktivering.
+              Se <a href="https://vipps.no/privatliv" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">Vipps' personvernerklæring</a> for fremtidig referanse.
             </p>
           </div>
         </div>

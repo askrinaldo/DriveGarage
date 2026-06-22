@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useUserAuth } from "@/hooks/use-user-auth";
 import {
   HelpCircle, MessageSquare, Lightbulb, Plus, ChevronDown, ChevronUp,
   AlertCircle, Clock, CheckCircle2, XCircle, Loader2,
+  Scale, FileText, Info, Mail,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -476,6 +477,59 @@ export default function Help() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <div className="border-t pt-6 mt-2">
+        <div className="flex items-center gap-2 mb-4">
+          <Scale className="w-4 h-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold">Juridisk og personvern</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Link href="/privacy">
+            <Card className="cursor-pointer hover:border-primary/30 transition-colors">
+              <CardContent className="pt-4 pb-4 flex items-center gap-2.5">
+                <Scale className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Personvern</p>
+                  <p className="text-xs text-muted-foreground">GDPR / Datatilsynet</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/terms">
+            <Card className="cursor-pointer hover:border-primary/30 transition-colors">
+              <CardContent className="pt-4 pb-4 flex items-center gap-2.5">
+                <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Vilkår for bruk</p>
+                  <p className="text-xs text-muted-foreground">Brukeravtale</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/cookies">
+            <Card className="cursor-pointer hover:border-primary/30 transition-colors">
+              <CardContent className="pt-4 pb-4 flex items-center gap-2.5">
+                <Info className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Informasjonskapsler</p>
+                  <p className="text-xs text-muted-foreground">Lokal lagring</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/contact">
+            <Card className="cursor-pointer hover:border-primary/30 transition-colors">
+              <CardContent className="pt-4 pb-4 flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Kontakt oss</p>
+                  <p className="text-xs text-muted-foreground">Support og spørsmål</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

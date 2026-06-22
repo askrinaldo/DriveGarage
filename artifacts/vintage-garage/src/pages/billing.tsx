@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2, Loader2, ExternalLink, Zap, Star, Shield,
-  CreditCard, Calendar, ArrowRight, Sparkles,
+  CreditCard, Calendar, ArrowRight, Sparkles, Info,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -217,6 +217,18 @@ export default function Billing() {
           <h1 className="text-2xl font-black text-foreground tracking-tight">{t("billing.title")}</h1>
         </div>
         <p className="text-muted-foreground text-sm ml-10">{t("billing.subtitle")}</p>
+      </div>
+
+      <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-4 flex items-start gap-3">
+        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-amber-300">Betalingsløsning er ikke aktivert ennå</p>
+          <p className="text-xs text-amber-300/70 mt-1 leading-relaxed">
+            DriveGarage planlegger betaling via <strong className="text-amber-200">Vipps</strong> med 7 dagers gratis prøveperiode.
+            Ingen betaling trekkes og ingen betalingsinformasjon lagres på nåværende tidspunkt.
+            Aktivering vil kreve eksplisitt godkjenning av en Vipps-betalingsavtale.
+          </p>
+        </div>
       </div>
 
       {subStatus && (

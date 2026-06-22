@@ -1,0 +1,81 @@
+Act as a senior full-stack developer and privacy/product cleanup engineer.
+
+Project: DriveGarage
+
+We are doing Phase 4.5 only: legal page discoverability + Vipps payment wording cleanup.
+
+Current status:
+
+* /privacy, /terms, /cookies and /contact were added.
+* Cookie notice exists.
+* No analytics/tracking exists.
+* Product direction is Vipps, not Stripe.
+* Vipps is not implemented yet.
+* Planned model: 7-day free trial, then recurring Vipps payment after user approval.
+
+Important:
+
+* Do not implement Vipps API.
+* Do not add real payment flows.
+* Do not delete Stripe code yet.
+* Do not change database schema.
+* Do not change auth.
+* Do not change billing logic.
+* Only improve discoverability, wording and documentation.
+
+Tasks:
+
+1. Make legal pages easy to find
+   Ensure Privacy, Terms, Cookies and Contact are reachable from:
+
+* landing page footer
+* sign-in page
+* sign-up page
+* authenticated app layout/sidebar/settings area if such a place exists
+
+If there is no suitable settings/help area, add a simple “Legal” or “Hjelp og juridisk” section in the safest existing location.
+
+2. Audit payment wording
+   Search the codebase/docs/pages for:
+
+* Stripe
+* stripe
+* payment
+* billing
+* subscription
+* abonnement
+* betaling
+* Vipps
+
+3. Update public wording
+   Update legal pages and visible UI so they do not imply Stripe is the chosen active provider.
+
+Use wording like:
+
+* “Betalingsløsning er planlagt via Vipps, men er ikke aktivert ennå.”
+* “7 dagers gratis prøveperiode planlegges.”
+* “Ingen betaling trekkes før brukeren tydelig har godkjent betalingsavtale.”
+
+4. Update documentation
+   Update ARCHITECTURE.md:
+
+* Stripe is legacy/not planned.
+* Vipps is intended future payment provider.
+* Vipps implementation requires merchant setup/API credentials.
+* TODO: remove Stripe code after Vipps architecture is implemented and verified.
+
+5. Validate
+
+* Run frontend typecheck.
+* Run backend typecheck if backend code/imports changed.
+* Confirm all legal pages load.
+* Confirm legal links are visible from logged-out and logged-in areas.
+
+Deliverable:
+
+* files changed
+* where legal pages are now linked
+* payment wording found/changed
+* remaining Stripe code if any
+* typecheck result
+* next recommended phase

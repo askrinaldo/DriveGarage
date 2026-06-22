@@ -65,17 +65,24 @@ export default function TermsPage() {
 
       <LegalSection title="5. Abonnement og betaling">
         <p>
-          DriveGarage tilbyr gratisnivå og betalte abonnementer. Betalingsbehandling utføres av
-          Stripe Inc. Abonnementer fornyes automatisk med mindre de sies opp.
+          DriveGarage tilbyr gratisnivå og planlagte betalte abonnementer.
+          <strong className="text-white"> Betalingsmodulen er ikke aktivert ennå.</strong>{" "}
+          Ingen betaling trekkes fra noen bruker på nåværende tidspunkt.
+        </p>
+        <p>
+          Planlagt betalingsmodell:
         </p>
         <LegalList items={[
+          "Betalingsløsning via Vipps — krever separat godkjenning fra brukeren",
+          "7 dagers gratis prøveperiode planlegges — ingen betalingsinformasjon innhentes i prøveperioden",
+          "Ingen betaling trekkes før brukeren tydelig har godkjent en betalingsavtale (Vipps-avtale)",
           "Priser oppgis inkl. MVA der det er aktuelt",
           "Oppsigelse kan gjøres når som helst; tilgang beholdes til periodens slutt",
-          "Refusjon ytes i henhold til norsk angrerettlov der det er aktuelt",
-          "Vi forbeholder oss retten til å justere priser med 30 dagers varsel",
+          "Refusjon ytes i henhold til norsk angrerettlov",
+          "Prisendringer varsles med minimum 30 dagers forhåndsvarsel",
         ]} />
         <p className="text-amber-300/80 text-xs">
-          [Betalingsvilkår gjennomgås av juridisk rådgiver og tilpasses til angrerettloven.]
+          [Betalingsvilkår gjennomgås av juridisk rådgiver og tilpasses norsk angrerettlov og Vipps' vilkår ved aktivering.]
         </p>
       </LegalSection>
 

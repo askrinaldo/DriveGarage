@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown,
   User, ChevronDown, HelpCircle, Palette, CreditCard,
   IdCard, Building2, ChevronRight, Settings, Menu, Sun, Moon,
+  Scale, FileText, Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
@@ -256,6 +257,22 @@ export function Layout({ children }: LayoutProps) {
                 </div>
                 <ThemeControls />
               </div>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Juridisk</p>
+              </div>
+              <DropdownMenuItem onClick={() => navigate("/privacy")} className="gap-2 text-xs">
+                <Scale className="w-3.5 h-3.5 mr-2" />
+                Personvernerklæring
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/terms")} className="gap-2 text-xs">
+                <FileText className="w-3.5 h-3.5 mr-2" />
+                Vilkår for bruk
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/contact")} className="gap-2 text-xs">
+                <Mail className="w-3.5 h-3.5 mr-2" />
+                Kontakt
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10">
                 <LogOut className="w-4 h-4 mr-2" />
