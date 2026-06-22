@@ -147,7 +147,7 @@ router.post(
       })
       .returning();
 
-    await audit(clubId, actor.memberName, "event.created", "event", event!.id, title.trim());
+    await audit({ clubId, actorName: actor.memberName, action: "event.created", targetType: "event", targetId: event!.id, targetName: title.trim() });
 
     const members = await db
       .select()
@@ -233,7 +233,7 @@ router.patch(
       .where(eq(clubEventsTable.id, eventId))
       .returning();
 
-    await audit(clubId, actor.memberName, "event.updated", "event", eventId, existing.title);
+    await audit({ clubId, actorName: actor.memberName, action: "event.updated", targetType: "event", targetId: eventId, targetName: existing.title });
     res.json(updated);
   }
 );
@@ -265,7 +265,7 @@ router.delete(
     }
 
     await db.delete(clubEventsTable).where(eq(clubEventsTable.id, eventId));
-    await audit(clubId, actor.memberName, "event.deleted", "event", eventId, existing.title);
+    await audit({ clubId, actorName: actor.memberName, action: "event.deleted", targetType: "event", targetId: eventId, targetName: existing.title });
     res.json({ ok: true });
   }
 );

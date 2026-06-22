@@ -51,7 +51,11 @@ router.post("/vehicles/:vehicleId/receipts", parseUserAuth, requireUser, async (
   }
   const [receipt] = await db
     .insert(receiptsTable)
-    .values({ ...parsed.data, vehicleId: params.data.vehicleId })
+    .values({
+      ...parsed.data,
+      vehicleId: params.data.vehicleId,
+      amount: parsed.data.amount != null ? String(parsed.data.amount) : null,
+    })
     .returning();
   res.status(201).json(receipt);
 });

@@ -54,7 +54,12 @@ router.post("/vehicles/:vehicleId/trip-logs", parseUserAuth, requireUser, async 
   }
   const [log] = await db
     .insert(tripLogsTable)
-    .values({ ...parsed.data, vehicleId: params.data.vehicleId })
+    .values({
+      ...parsed.data,
+      vehicleId: params.data.vehicleId,
+      distanceKm: parsed.data.distanceKm != null ? String(parsed.data.distanceKm) : null,
+      fuelUsedLiters: parsed.data.fuelUsedLiters != null ? String(parsed.data.fuelUsedLiters) : null,
+    })
     .returning();
   res.status(201).json(log);
 });
@@ -101,7 +106,11 @@ router.patch("/vehicles/:vehicleId/trip-logs/:id", parseUserAuth, requireUser, a
   }
   const [log] = await db
     .update(tripLogsTable)
-    .set(parsed.data)
+    .set({
+      ...parsed.data,
+      distanceKm: parsed.data.distanceKm != null ? String(parsed.data.distanceKm) : null,
+      fuelUsedLiters: parsed.data.fuelUsedLiters != null ? String(parsed.data.fuelUsedLiters) : null,
+    })
     .where(and(eq(tripLogsTable.id, params.data.id), eq(tripLogsTable.vehicleId, params.data.vehicleId)))
     .returning();
   if (!log) {

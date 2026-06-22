@@ -54,7 +54,11 @@ router.post("/vehicles/:vehicleId/service-records", parseUserAuth, requireUser, 
   }
   const [record] = await db
     .insert(serviceRecordsTable)
-    .values({ ...parsed.data, vehicleId: params.data.vehicleId })
+    .values({
+      ...parsed.data,
+      vehicleId: params.data.vehicleId,
+      cost: parsed.data.cost != null ? String(parsed.data.cost) : null,
+    })
     .returning();
   res.status(201).json(record);
 });
@@ -101,7 +105,10 @@ router.patch("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireU
   }
   const [record] = await db
     .update(serviceRecordsTable)
-    .set(parsed.data)
+    .set({
+      ...parsed.data,
+      cost: parsed.data.cost != null ? String(parsed.data.cost) : null,
+    })
     .where(and(eq(serviceRecordsTable.id, params.data.id), eq(serviceRecordsTable.vehicleId, params.data.vehicleId)))
     .returning();
   if (!record) {
