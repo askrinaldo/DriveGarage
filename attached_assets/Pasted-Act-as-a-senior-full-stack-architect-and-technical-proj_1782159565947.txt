@@ -1,0 +1,100 @@
+Act as a senior full-stack architect and technical project lead.
+
+Project: DriveGarage
+
+We have just completed important security hardening:
+
+* env validation
+* CORS hardening
+* global error handler
+* write/auth/read rate limit middleware
+* basic club route authentication
+* ownerName/memberName spoofing fix
+
+Now we are doing Step 1: project structure only.
+
+Important:
+Do not implement new features.
+Do not redesign Clubs yet.
+Do not add invitations yet.
+Do not refactor everything at once.
+First create a safe structure plan and only make low-risk documentation/folder improvements.
+
+Tasks:
+
+1. Map current structure
+   Inspect the current codebase and list:
+
+* frontend folders/files
+* backend folders/files
+* routes
+* middleware
+* database/schema files
+* auth helpers
+* validation/config files
+* shared types/components
+
+2. Identify structure risks
+   Find:
+
+* files with too many responsibilities
+* routes containing business logic that should become services
+* duplicated auth/ownership checks
+* database queries spread across route handlers
+* missing validation layer
+* unclear frontend feature boundaries
+* unclear backend module boundaries
+* config/env code that should be centralized
+
+3. Recommend target architecture
+   Propose a scalable feature-based structure for:
+
+* vehicles
+* service records
+* receipts
+* trip logs
+* stats/dashboard
+* clubs
+* invites
+* users/profile
+* settings
+* admin/system
+* integrations/API keys
+
+Include backend, frontend and shared folders.
+
+4. Create migration phases
+   Make a safe phased migration plan:
+
+* Phase 1: architecture documentation and folder conventions
+* Phase 2: centralize auth/middleware/helpers
+* Phase 3: extract services from routes
+* Phase 4: add validation schemas
+* Phase 5: organize frontend by feature
+* Phase 6: prepare clubs/invites module
+
+Each phase must be testable before moving on.
+
+5. Safe changes allowed now
+   You may only:
+
+* add ARCHITECTURE.md or docs
+* add folder placeholders if useful
+* add comments/TODOs where future extraction is needed
+* move tiny helper files only if risk is very low and imports are updated safely
+
+Do not change app behavior.
+Do not change database schema.
+Do not change auth logic.
+Do not change club logic yet.
+
+6. Deliverable
+   Return:
+
+* current structure summary
+* target structure proposal
+* main risks
+* migration phases
+* files changed
+* what should be done next
+* what should not be touched yet

@@ -14,6 +14,8 @@ import { parseUserAuth, requireUser } from "../middleware/userAuth";
 
 const router: IRouter = Router();
 
+// TODO Phase 2: extract to lib/vehicleOwnership.ts — same function is duplicated
+// in serviceRecords.ts and receipts.ts. See ARCHITECTURE.md R2.
 async function assertVehicleOwnership(
   vehicleId: number,
   tenantId: number | null | undefined,
