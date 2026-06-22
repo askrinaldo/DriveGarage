@@ -49,7 +49,6 @@ export function Layout({ children }: LayoutProps) {
     { href: "/vehicles",        label: t("nav.myGarage"),      icon: Car,             gradient: "from-sky-500 to-blue-500"      },
     { href: "/clubs",           label: t("nav.clubs"),         icon: Users,           gradient: "from-violet-500 to-purple-500" },
     { href: "/membership-card", label: t("nav.membershipCard"),icon: IdCard,          gradient: "from-cyan-500 to-teal-500"     },
-    { href: "/billing",         label: t("nav.subscription"),  icon: CreditCard,      gradient: "from-emerald-500 to-teal-500"  },
     { href: "/help",            label: t("nav.help"),          icon: HelpCircle,      gradient: "from-slate-400 to-slate-500"   },
   ];
 

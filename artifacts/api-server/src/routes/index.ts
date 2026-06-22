@@ -22,7 +22,7 @@ import supportRouter from "./support";
 import chatRouter from "./chat";
 import chatHistoryRouter from "./chatHistory";
 import vehicleTransfersRouter from "./vehicleTransfers";
-import billingRouter from "./billing";
+// import billingRouter from "./billing"; // temporarily disabled
 import adminRouter from "./admin";
 import financeInsightRouter from "./financeInsight";
 import projectsRouter from "./projects";
@@ -53,7 +53,7 @@ router.use(chatRouter);
 router.use(chatHistoryRouter);
 router.use(vehicleTransfersRouter);
 router.use(clubsRouter);
-router.use(billingRouter);
+// router.use(billingRouter); // temporarily disabled
 router.use(adminRouter);
 router.use(financeInsightRouter);
 router.use(projectsRouter);

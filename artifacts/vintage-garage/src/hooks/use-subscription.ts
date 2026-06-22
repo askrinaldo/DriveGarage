@@ -1,5 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUserToken } from "./use-user-auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type SubscriptionTier = "free" | "standard" | "premium";
 
@@ -30,74 +29,44 @@ export interface StripePrice {
   recurring: { interval: string } | null;
 }
 
-function authHeaders(): HeadersInit {
-  const token = getUserToken();
-  return token
-    ? { "Content-Type": "application/json", "x-user-token": token }
-    : { "Content-Type": "application/json" };
-}
+const STUB_SUB: SubscriptionInfo = {
+  tier: "free",
+  status: null,
+  stripeSubscription: null,
+};
 
 export function useSubscription() {
-  return useQuery<SubscriptionInfo>({
-    queryKey: ["subscription"],
-    queryFn: async () => {
-      const res = await fetch("/api/billing/subscription", { headers: authHeaders() });
-      if (!res.ok) throw new Error("Could not load subscription");
-      return res.json() as Promise<SubscriptionInfo>;
-    },
-    staleTime: 30_000,
-  });
+  return {
+    data: STUB_SUB,
+    isLoading: false,
+    isError: false,
+  };
 }
 
 export function useStripePrices() {
-  return useQuery<{ prices: StripePrice[] }>({
-    queryKey: ["stripe-prices"],
-    queryFn: async () => {
-      const res = await fetch("/api/billing/prices");
-      if (!res.ok) throw new Error("Could not load prices");
-      return res.json() as Promise<{ prices: StripePrice[] }>;
-    },
-    staleTime: 5 * 60_000,
-  });
+  return {
+    data: { prices: [] as StripePrice[] },
+    isLoading: false,
+    isError: false,
+  };
 }
 
 export function useCreateCheckout() {
-  return useMutation({
-    mutationFn: async (priceId: string) => {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ priceId }),
-      });
-      if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        throw new Error(err.error ?? "Checkout feilet");
-      }
-      return res.json() as Promise<{ url: string }>;
-    },
-    onSuccess: (data) => {
-      window.location.href = data.url;
-    },
-  });
+  return {
+    mutate: (_priceId?: string, _opts?: unknown) => {},
+    mutateAsync: async (_priceId?: string) => { throw new Error("Billing er midlertidig deaktivert"); },
+    isPending: false,
+    isError: false,
+  };
 }
 
 export function useCustomerPortal() {
-  return useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/billing/portal", {
-        method: "POST",
-        headers: authHeaders(),
-      });
-      if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        throw new Error(err.error ?? "Portal feilet");
-      }
-      return res.json() as Promise<{ url: string }>;
-    },
-    onSuccess: (data) => {
-      window.location.href = data.url;
-    },
-  });
+  return {
+    mutate: (_arg?: unknown, _opts?: unknown) => {},
+    mutateAsync: async () => { throw new Error("Billing er midlertidig deaktivert"); },
+    isPending: false,
+    isError: false,
+  };
 }
 
 export function useInvalidateSubscription() {

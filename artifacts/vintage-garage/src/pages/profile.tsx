@@ -239,26 +239,6 @@ export default function Profile() {
             ))}
           </div>
 
-          {/* Upgrade CTA */}
-          {profile.subscriptionTier === "free" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              onClick={() => navigate("/billing")}
-              className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-900/20 to-orange-900/10 p-4 cursor-pointer hover:border-amber-500/40 transition-colors group"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <Crown className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-bold text-amber-300">{t("profile.upgradeTitle")}</span>
-              </div>
-              <p className="text-xs text-muted-foreground/80 mb-3">{t("profile.upgradeDesc")}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-400">{t("profile.upgradeFrom")}</span>
-                <ChevronRight className="w-4 h-4 text-amber-400/60 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </motion.div>
-          )}
         </motion.div>
 
         {/* Badges + security */}
@@ -372,15 +352,6 @@ export default function Profile() {
                 <p className="text-xs font-semibold text-foreground/60">{t("profile.subscriptionLabel")}</p>
                 <p className={`text-sm font-bold ${tier.text}`}>{tierLabel}</p>
               </div>
-              {profile.subscriptionTier !== "premium" && (
-                <Button
-                  size="sm"
-                  onClick={() => navigate("/billing")}
-                  className="text-xs bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-foreground border-0 h-7"
-                >
-                  {t("profile.upgrade")}
-                </Button>
-              )}
             </div>
           </div>
         </motion.div>

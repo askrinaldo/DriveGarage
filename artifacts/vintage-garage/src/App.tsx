@@ -41,7 +41,6 @@ import Register from "@/pages/register";
 import Admin from "@/pages/admin";
 import Help from "@/pages/help";
 import VehicleTransfer from "@/pages/vehicle-transfer";
-import Billing from "@/pages/billing";
 import MembershipCard from "@/pages/membership-card";
 import TenantSettings from "@/pages/tenant-settings";
 import TenantInvite from "@/pages/tenant-invite";
@@ -136,7 +135,6 @@ function AppRoutes() {
         <Route path="/clubs/:id/audit-log" component={ClubAuditLog} />
         <Route path="/clubs/:id/edit" component={ClubForm} />
         <Route path="/clubs/:id" component={ClubDetail} />
-        <Route path="/billing" component={Billing} />
         <Route path="/admin" component={Admin} />
         <Route path="/membership-card" component={MembershipCard} />
         <Route path="/org/settings" component={TenantSettings} />
