@@ -1,0 +1,87 @@
+Act as a senior backend security engineer.
+
+Critical issue in DriveGarage:
+Users authenticated with Clerk/Google can currently see vehicles, service records, activity, clubs or dashboard data that do not belong to them.
+
+This means the app is not properly user-isolated.
+
+Goal:
+Implement strict per-user data isolation using Clerk user identity as the source of truth.
+
+Requirements:
+
+1. Identify authenticated user
+- Use Clerk server-side auth.
+- Get the current authenticated Clerk userId on every protected backend request.
+- Never trust userId sent from the frontend.
+
+2. Scope all user-owned data
+Every private/user-owned table must have an owner field, for example:
+- userId
+or if tenant model exists:
+- tenantId + userId
+
+Apply this to:
+- vehicles
+- service records
+- mileage/logbook entries
+- dashboard stats
+- recent activity
+- clubs joined by user
+- member cards
+- uploads/images/files
+- settings/profile data
+
+3. Fix all database queries
+Update every SELECT/INSERT/UPDATE/DELETE so it is scoped server-side:
+
+Example:
+- SELECT vehicles WHERE userId = currentClerkUserId
+- UPDATE vehicles SET ... WHERE id = vehicleId AND userId = currentClerkUserId
+- DELETE vehicles WHERE id = vehicleId AND userId = currentClerkUserId
+
+Do not fetch by id alone.
+
+4. Fix dashboard data
+The dashboard must only calculate stats from the current user’s data:
+- vehicle count
+- service count
+- total spent
+- total km
+- recent activity
+- category summaries
+- clubs
+
+Remove or hide demo/global seed data unless it belongs to the current user.
+
+5. Migration/backfill
+Inspect the database schema.
+If userId is missing:
+- add userId columns
+- add indexes on userId
+- update relations
+- add constraints where appropriate
+
+For existing demo data:
+- either delete it from production/dev visible data
+- or mark it as demo-only and never return it for real authenticated users
+
+6. Security checks
+Add backend authorization tests/manual checks:
+- User A cannot see User B vehicles
+- User A cannot edit/delete User B vehicles
+- User A dashboard stats do not include User B data
+- Direct API calls with another resource id return 404 or 403
+
+7. Frontend
+Update frontend API calls if needed, but do not pass userId from frontend as authorization.
+Frontend may display current user info from Clerk, but backend must enforce ownership.
+
+Important:
+Do not only fix the dashboard visually.
+Fix the backend data access layer/API routes so isolation is guaranteed everywhere.
+
+After implementation:
+- summarize all changed files
+- explain how user isolation now works
+- list any remaining risks or TODOs

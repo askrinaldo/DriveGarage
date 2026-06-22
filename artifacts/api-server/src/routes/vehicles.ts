@@ -15,20 +15,17 @@ import { getUserTier } from "../lib/subscriptionTier";
 
 const router: IRouter = Router();
 
+function ownershipClause(tenantId: number | null | undefined, userId: number) {
+  if (tenantId) return eq(vehiclesTable.tenantId, tenantId);
+  return eq(vehiclesTable.userId, userId);
+}
+
 router.get("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<void> => {
-  const tenantId = req.userAuth!.tenantId;
-  if (!tenantId) {
-    // Fallback: userId filter for old tokens
-    const vehicles = await db.select().from(vehiclesTable)
-      .where(eq(vehiclesTable.userId, req.userAuth!.userId))
-      .orderBy(vehiclesTable.createdAt);
-    res.json(vehicles);
-    return;
-  }
+  const { tenantId, userId } = req.userAuth!;
   const vehicles = await db
     .select()
     .from(vehiclesTable)
-    .where(eq(vehiclesTable.tenantId, tenantId))
+    .where(ownershipClause(tenantId, userId))
     .orderBy(vehiclesTable.createdAt);
   res.json(vehicles);
 });
@@ -40,18 +37,14 @@ router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<v
     return;
   }
 
-  const userId = req.userAuth!.userId;
-  const tenantId = req.userAuth!.tenantId;
+  const { userId, tenantId } = req.userAuth!;
   const tier = await getUserTier(userId);
 
   if (tier === "free") {
-    const whereClause = tenantId
-      ? eq(vehiclesTable.tenantId, tenantId)
-      : eq(vehiclesTable.userId, userId);
     const [{ value: vehicleCount }] = await db
       .select({ value: count() })
       .from(vehiclesTable)
-      .where(whereClause);
+      .where(ownershipClause(tenantId, userId));
 
     if (vehicleCount >= 1) {
       res.status(403).json({
@@ -63,17 +56,24 @@ router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<v
     }
   }
 
-  const [vehicle] = await db.insert(vehiclesTable).values({ ...parsed.data, userId, tenantId: tenantId ?? null }).returning();
+  const [vehicle] = await db
+    .insert(vehiclesTable)
+    .values({ ...parsed.data, userId, tenantId: tenantId ?? null })
+    .returning();
   res.status(201).json(vehicle);
 });
 
-router.get("/vehicles/:id", async (req, res): Promise<void> => {
+router.get("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = GetVehicleParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, params.data.id));
+  const { tenantId, userId } = req.userAuth!;
+  const [vehicle] = await db
+    .select()
+    .from(vehiclesTable)
+    .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)));
   if (!vehicle) {
     res.status(404).json({ error: "Vehicle not found" });
     return;
@@ -81,13 +81,17 @@ router.get("/vehicles/:id", async (req, res): Promise<void> => {
   res.json(vehicle);
 });
 
-router.get("/vehicles/:id/export", async (req, res): Promise<void> => {
+router.get("/vehicles/:id/export", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = ExportVehicleDataParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [vehicle] = await db.select().from(vehiclesTable).where(eq(vehiclesTable.id, params.data.id));
+  const { tenantId, userId } = req.userAuth!;
+  const [vehicle] = await db
+    .select()
+    .from(vehiclesTable)
+    .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)));
   if (!vehicle) {
     res.status(404).json({ error: "Vehicle not found" });
     return;
@@ -113,7 +117,7 @@ router.get("/vehicles/:id/export", async (req, res): Promise<void> => {
   });
 });
 
-router.patch("/vehicles/:id", async (req, res): Promise<void> => {
+router.patch("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = UpdateVehicleParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -124,10 +128,11 @@ router.patch("/vehicles/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const { tenantId, userId } = req.userAuth!;
   const [vehicle] = await db
     .update(vehiclesTable)
     .set(parsed.data)
-    .where(eq(vehiclesTable.id, params.data.id))
+    .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)))
     .returning();
   if (!vehicle) {
     res.status(404).json({ error: "Vehicle not found" });
@@ -136,13 +141,17 @@ router.patch("/vehicles/:id", async (req, res): Promise<void> => {
   res.json(vehicle);
 });
 
-router.delete("/vehicles/:id", async (req, res): Promise<void> => {
+router.delete("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = DeleteVehicleParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [vehicle] = await db.delete(vehiclesTable).where(eq(vehiclesTable.id, params.data.id)).returning();
+  const { tenantId, userId } = req.userAuth!;
+  const [vehicle] = await db
+    .delete(vehiclesTable)
+    .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)))
+    .returning();
   if (!vehicle) {
     res.status(404).json({ error: "Vehicle not found" });
     return;

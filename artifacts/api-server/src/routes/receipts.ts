@@ -1,19 +1,38 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, receiptsTable } from "@workspace/db";
+import { db, vehiclesTable, receiptsTable } from "@workspace/db";
 import {
   CreateReceiptBody,
   CreateReceiptParams,
   ListReceiptsParams,
   DeleteReceiptParams,
 } from "@workspace/api-zod";
+import { parseUserAuth, requireUser } from "../middleware/userAuth";
 
 const router: IRouter = Router();
 
-router.get("/vehicles/:vehicleId/receipts", async (req, res): Promise<void> => {
+async function assertVehicleOwnership(
+  vehicleId: number,
+  tenantId: number | null | undefined,
+  userId: number,
+): Promise<boolean> {
+  const clause = tenantId
+    ? and(eq(vehiclesTable.id, vehicleId), eq(vehiclesTable.tenantId, tenantId))
+    : and(eq(vehiclesTable.id, vehicleId), eq(vehiclesTable.userId, userId));
+  const [vehicle] = await db.select({ id: vehiclesTable.id }).from(vehiclesTable).where(clause);
+  return !!vehicle;
+}
+
+router.get("/vehicles/:vehicleId/receipts", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = ListReceiptsParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
     return;
   }
   const items = await db
@@ -24,7 +43,7 @@ router.get("/vehicles/:vehicleId/receipts", async (req, res): Promise<void> => {
   res.json(items);
 });
 
-router.post("/vehicles/:vehicleId/receipts", async (req, res): Promise<void> => {
+router.post("/vehicles/:vehicleId/receipts", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = CreateReceiptParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -35,6 +54,12 @@ router.post("/vehicles/:vehicleId/receipts", async (req, res): Promise<void> => 
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
+    return;
+  }
   const [receipt] = await db
     .insert(receiptsTable)
     .values({ ...parsed.data, vehicleId: params.data.vehicleId })
@@ -42,10 +67,16 @@ router.post("/vehicles/:vehicleId/receipts", async (req, res): Promise<void> => 
   res.status(201).json(receipt);
 });
 
-router.delete("/vehicles/:vehicleId/receipts/:id", async (req, res): Promise<void> => {
+router.delete("/vehicles/:vehicleId/receipts/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = DeleteReceiptParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
     return;
   }
   const [receipt] = await db

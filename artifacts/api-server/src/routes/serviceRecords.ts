@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, serviceRecordsTable } from "@workspace/db";
+import { db, vehiclesTable, serviceRecordsTable } from "@workspace/db";
 import {
   CreateServiceRecordBody,
   CreateServiceRecordParams,
@@ -10,13 +10,32 @@ import {
   UpdateServiceRecordBody,
   DeleteServiceRecordParams,
 } from "@workspace/api-zod";
+import { parseUserAuth, requireUser } from "../middleware/userAuth";
 
 const router: IRouter = Router();
 
-router.get("/vehicles/:vehicleId/service-records", async (req, res): Promise<void> => {
+async function assertVehicleOwnership(
+  vehicleId: number,
+  tenantId: number | null | undefined,
+  userId: number,
+): Promise<boolean> {
+  const clause = tenantId
+    ? and(eq(vehiclesTable.id, vehicleId), eq(vehiclesTable.tenantId, tenantId))
+    : and(eq(vehiclesTable.id, vehicleId), eq(vehiclesTable.userId, userId));
+  const [vehicle] = await db.select({ id: vehiclesTable.id }).from(vehiclesTable).where(clause);
+  return !!vehicle;
+}
+
+router.get("/vehicles/:vehicleId/service-records", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = ListServiceRecordsParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
     return;
   }
   const records = await db
@@ -27,7 +46,7 @@ router.get("/vehicles/:vehicleId/service-records", async (req, res): Promise<voi
   res.json(records);
 });
 
-router.post("/vehicles/:vehicleId/service-records", async (req, res): Promise<void> => {
+router.post("/vehicles/:vehicleId/service-records", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = CreateServiceRecordParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -38,6 +57,12 @@ router.post("/vehicles/:vehicleId/service-records", async (req, res): Promise<vo
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
+    return;
+  }
   const [record] = await db
     .insert(serviceRecordsTable)
     .values({ ...parsed.data, vehicleId: params.data.vehicleId })
@@ -45,10 +70,16 @@ router.post("/vehicles/:vehicleId/service-records", async (req, res): Promise<vo
   res.status(201).json(record);
 });
 
-router.get("/vehicles/:vehicleId/service-records/:id", async (req, res): Promise<void> => {
+router.get("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = GetServiceRecordParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
     return;
   }
   const [record] = await db
@@ -62,7 +93,7 @@ router.get("/vehicles/:vehicleId/service-records/:id", async (req, res): Promise
   res.json(record);
 });
 
-router.patch("/vehicles/:vehicleId/service-records/:id", async (req, res): Promise<void> => {
+router.patch("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = UpdateServiceRecordParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -71,6 +102,12 @@ router.patch("/vehicles/:vehicleId/service-records/:id", async (req, res): Promi
   const parsed = UpdateServiceRecordBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
     return;
   }
   const [record] = await db
@@ -85,10 +122,16 @@ router.patch("/vehicles/:vehicleId/service-records/:id", async (req, res): Promi
   res.json(record);
 });
 
-router.delete("/vehicles/:vehicleId/service-records/:id", async (req, res): Promise<void> => {
+router.delete("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = DeleteServiceRecordParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const { tenantId, userId } = req.userAuth!;
+  const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
+  if (!owned) {
+    res.status(404).json({ error: "Vehicle not found" });
     return;
   }
   const [record] = await db

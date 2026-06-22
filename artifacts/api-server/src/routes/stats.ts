@@ -1,31 +1,66 @@
 import { Router, type IRouter } from "express";
 import { db, vehiclesTable, serviceRecordsTable, tripLogsTable } from "@workspace/db";
-import { sql, desc } from "drizzle-orm";
+import { sql, desc, eq, and, inArray } from "drizzle-orm";
+import { parseUserAuth, requireUser } from "../middleware/userAuth";
 
 const router: IRouter = Router();
 
-router.get("/stats/dashboard", async (_req, res): Promise<void> => {
+function ownershipClause(tenantId: number | null | undefined, userId: number) {
+  if (tenantId) return eq(vehiclesTable.tenantId, tenantId);
+  return eq(vehiclesTable.userId, userId);
+}
+
+router.get("/stats/dashboard", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+  const { tenantId, userId } = req.userAuth!;
+
   const [vehicleStats] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(vehiclesTable);
+    .from(vehiclesTable)
+    .where(ownershipClause(tenantId, userId));
+
+  const userVehicleIds = await db
+    .select({ id: vehiclesTable.id })
+    .from(vehiclesTable)
+    .where(ownershipClause(tenantId, userId));
+
+  const vehicleIdList = userVehicleIds.map((v) => v.id);
+
+  if (vehicleIdList.length === 0) {
+    res.json({
+      totalVehicles: 0,
+      totalServiceRecords: 0,
+      totalSpent: 0,
+      vehiclesWithFinnUrl: 0,
+      totalTripKm: 0,
+      servicesByCategory: [],
+    });
+    return;
+  }
 
   const [serviceStats] = await db
     .select({
       count: sql<number>`count(*)::int`,
       totalSpent: sql<number>`coalesce(sum(cost::numeric), 0)::float`,
     })
-    .from(serviceRecordsTable);
+    .from(serviceRecordsTable)
+    .where(inArray(serviceRecordsTable.vehicleId, vehicleIdList));
 
   const [vehiclesWithFinn] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(vehiclesTable)
-    .where(sql`finn_url is not null and finn_url != ''`);
+    .where(
+      and(
+        ownershipClause(tenantId, userId),
+        sql`finn_url is not null and finn_url != ''`,
+      ),
+    );
 
   const [tripStats] = await db
     .select({
       totalTripKm: sql<number>`coalesce(sum(distance_km::numeric), 0)::float`,
     })
-    .from(tripLogsTable);
+    .from(tripLogsTable)
+    .where(inArray(tripLogsTable.vehicleId, vehicleIdList));
 
   const categoryRows = await db
     .select({
@@ -33,6 +68,7 @@ router.get("/stats/dashboard", async (_req, res): Promise<void> => {
       count: sql<number>`count(*)::int`,
     })
     .from(serviceRecordsTable)
+    .where(inArray(serviceRecordsTable.vehicleId, vehicleIdList))
     .groupBy(serviceRecordsTable.category);
 
   res.json({
@@ -45,7 +81,21 @@ router.get("/stats/dashboard", async (_req, res): Promise<void> => {
   });
 });
 
-router.get("/stats/recent-activity", async (_req, res): Promise<void> => {
+router.get("/stats/recent-activity", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+  const { tenantId, userId } = req.userAuth!;
+
+  const userVehicleIds = await db
+    .select({ id: vehiclesTable.id })
+    .from(vehiclesTable)
+    .where(ownershipClause(tenantId, userId));
+
+  const vehicleIdList = userVehicleIds.map((v) => v.id);
+
+  if (vehicleIdList.length === 0) {
+    res.json([]);
+    return;
+  }
+
   const rows = await db
     .select({
       id: serviceRecordsTable.id,
@@ -58,6 +108,7 @@ router.get("/stats/recent-activity", async (_req, res): Promise<void> => {
     })
     .from(serviceRecordsTable)
     .leftJoin(vehiclesTable, sql`vehicles.id = service_records.vehicle_id`)
+    .where(inArray(serviceRecordsTable.vehicleId, vehicleIdList))
     .orderBy(desc(serviceRecordsTable.serviceDate))
     .limit(10);
 
