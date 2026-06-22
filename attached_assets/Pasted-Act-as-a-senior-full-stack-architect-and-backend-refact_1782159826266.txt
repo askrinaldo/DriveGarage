@@ -1,0 +1,83 @@
+Act as a senior full-stack architect and backend refactoring engineer.
+
+Project: DriveGarage
+
+We are now doing Phase 2 only: centralize shared middleware/helpers with no behavior changes.
+
+Current status:
+
+* Phase 1 is complete.
+* ARCHITECTURE.md exists.
+* routes/index.ts has been grouped by domain.
+* TODO comments were added to serviceRecords.ts, receipts.ts and tripLogs.ts.
+* services/.gitkeep and features/.gitkeep were added.
+* Important security hardening is already implemented.
+* User isolation is already improved.
+
+Goal:
+Perform only low-risk structural cleanup by centralizing shared middleware/helpers.
+
+Important rules:
+
+* Do not add new features.
+* Do not redesign Clubs.
+* Do not change database schema.
+* Do not remove local auth yet.
+* Do not change Clerk auth behavior.
+* Do not change route behavior.
+* Do not change frontend behavior.
+* This should be pure file organization + import updates + typecheck.
+
+Tasks:
+
+1. Move middleware files into one clear middleware folder
+
+* Inspect current middleware-related files.
+* If middlewares/clerkProxyMiddleware.ts exists, move it to middleware/clerkProxyMiddleware.ts.
+* Keep existing middleware/rateLimiter.ts where it is.
+* Update imports.
+* Make sure naming is consistent: use middleware/, not both middleware/ and middlewares/.
+
+2. Extract vehicle ownership helper
+
+* serviceRecords.ts, receipts.ts and tripLogs.ts currently duplicate or reference duplicated assertVehicleOwnership logic.
+* Extract this logic into a shared helper:
+  lib/vehicleOwnership.ts
+* The helper must:
+
+  * use authenticated user context from req.userAuth or equivalent existing auth type
+  * verify that the vehicle belongs to the current user/tenant
+  * return 404 behavior for non-owned vehicles, preserving current behavior
+* Update the three route files to use the shared helper.
+* Do not change the authorization rules, only centralize them.
+
+3. Move shared integration helpers
+
+* If stripeClient.ts exists and is currently outside lib/, move it into lib/stripeClient.ts.
+* If mailer.ts exists and is currently outside lib/, move it into lib/mailer.ts.
+* Update imports.
+* Do not change Stripe or mail behavior.
+* Do not add new Stripe/email features.
+
+4. Update documentation
+
+* Update ARCHITECTURE.md with Phase 2 completed items.
+* Add a short note about where middleware, ownership helpers and integration helpers now live.
+
+5. Validation
+
+* Run typecheck.
+* Start/restart workflows if needed.
+* Confirm no route behavior changed.
+* Confirm existing auth still works.
+* Confirm vehicle ownership routes still return 404 for non-owned vehicle IDs.
+
+6. Deliverable
+   Return:
+
+* files moved
+* imports updated
+* files changed
+* typecheck result
+* any risks found
+* next recommended phase

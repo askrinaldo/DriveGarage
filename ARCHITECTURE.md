@@ -41,25 +41,24 @@ artifacts/api-server/src/
 ├── app.ts                   # Express app: CORS, middleware stack, error handler
 ├── index.ts                 # HTTP server entry point
 ├── socket.ts                # Socket.IO server setup
-├── mailer.ts                # Nodemailer helper (transactional email)
-├── stripeClient.ts          # Stripe SDK init              ← TODO: move to lib/
-├── webhookHandlers.ts       # Stripe webhook logic         ← TODO: move to lib/
+├── webhookHandlers.ts       # Stripe webhook logic
 │
 ├── lib/
 │   ├── audit.ts             # Structured audit log helper
 │   ├── envValidation.ts     # Startup env-var validation
 │   ├── logger.ts            # Pino logger singleton
+│   ├── mailer.ts            # Nodemailer helper (transactional email) ← moved Phase 2
 │   ├── seedAdmin.ts         # Dev seed helper
-│   └── subscriptionTier.ts  # Tier lookup from DB
+│   ├── stripeClient.ts      # Stripe SDK init                         ← moved Phase 2
+│   ├── subscriptionTier.ts  # Tier lookup from DB
+│   └── vehicleOwnership.ts  # assertVehicleOwnership() shared helper  ← extracted Phase 2
 │
-├── middleware/              # Request-level middleware (per-route or global)
+├── middleware/              # Request-level middleware — single folder (merged Phase 2)
 │   ├── auth.ts              # Club JWT: parseAuth, requireClubRole, signClubToken
+│   ├── clerkProxyMiddleware.ts  # Clerk FAPI proxy               ← moved Phase 2
 │   ├── clerkUserAuth.ts     # Clerk → DB user bridge; sets req.userAuth
 │   ├── rateLimiter.ts       # express-rate-limit presets
 │   └── userAuth.ts          # Legacy JWT + Clerk user gate: parseUserAuth, requireUser
-│
-├── middlewares/             # ⚠ DUPLICATE FOLDER — only clerkProxyMiddleware.ts
-│   └── clerkProxyMiddleware.ts  ← TODO Phase 2: merge into middleware/
 │
 └── routes/                  # 23 flat route files — no domain grouping
     ├── [core vehicle domain]
@@ -211,10 +210,7 @@ Route guards:
 
 **All private routes enforce:**  
 `parseUserAuth → requireUser → ownershipClause(tenantId, userId)` in every WHERE clause.  
-Sub-resources (service records, receipts, trip logs) use `assertVehicleOwnership()` to verify the parent vehicle before any DB access.
-
-> **⚠ TODO (Phase 3):** `assertVehicleOwnership` is copy-pasted in three route files
-> (serviceRecords.ts, receipts.ts, tripLogs.ts). Extract to `lib/vehicleOwnership.ts`.
+Sub-resources (service records, receipts, trip logs) use `assertVehicleOwnership()` from `lib/vehicleOwnership.ts` to verify the parent vehicle before any DB access.
 
 ---
 
@@ -224,10 +220,10 @@ Sub-resources (service records, receipts, trip logs) use `assertVehicleOwnership
 
 | # | Risk | Location | Fix |
 |---|------|----------|-----|
-| R1 | Duplicate auth-folder | `middleware/` vs `middlewares/` | Merge into `middleware/` |
-| R2 | `assertVehicleOwnership` copy-pasted × 3 | serviceRecords, receipts, tripLogs | Extract to `lib/vehicleOwnership.ts` |
+| R1 | ~~Duplicate auth-folder~~ | ~~`middleware/` vs `middlewares/`~~ | ✅ Fixed Phase 2 |
+| R2 | ~~`assertVehicleOwnership` copy-pasted × 3~~ | ~~serviceRecords, receipts, tripLogs~~ | ✅ Fixed Phase 2 |
 | R3 | Routes contain full DB query logic | All route files | Extract to `services/` layer |
-| R4 | `stripeClient.ts` + `webhookHandlers.ts` at root | api-server/src/ | Move to `lib/` |
+| R4 | ~~`stripeClient.ts` + `mailer.ts` at root~~ | ~~api-server/src/~~ | ✅ Fixed Phase 2 |
 | R5 | `App.tsx` imports 35+ page components | vintage-garage | Split into feature routers |
 | R6 | Club auth (JWT) entirely separate from user auth | middleware/auth.ts | Phase 6: unify on Clerk userId |
 
@@ -365,7 +361,7 @@ artifacts/vintage-garage/src/
 
 ## 9. Migration Phases
 
-### Phase 1 — Architecture documentation ✅ (this document)
+### Phase 1 — Architecture documentation ✅
 - [x] Map current structure
 - [x] Identify risks
 - [x] Propose target architecture
@@ -376,20 +372,19 @@ artifacts/vintage-garage/src/
 
 ---
 
-### Phase 2 — Centralize middleware and shared helpers
+### Phase 2 — Centralize middleware and shared helpers ✅
 **Goal:** Eliminate duplication and the split middleware folders.
 
-Steps (low risk, update imports carefully):
-1. Move `middlewares/clerkProxyMiddleware.ts` → `middleware/clerkProxyMiddleware.ts`
-2. Update `app.ts` import path
-3. Move `mailer.ts` → `lib/mailer.ts`
-4. Move `stripeClient.ts` → `lib/stripeClient.ts`
-5. Move `webhookHandlers.ts` → `lib/webhookHandlers.ts`
-6. Extract `assertVehicleOwnership` to `lib/vehicleOwnership.ts` (R2)
-7. Update the 3 route files that copy-paste it
-8. Delete empty `middlewares/` folder
+- [x] Moved `middlewares/clerkProxyMiddleware.ts` → `middleware/clerkProxyMiddleware.ts`
+- [x] Updated `app.ts` import path
+- [x] Moved `mailer.ts` → `lib/mailer.ts`; updated `routes/clubInvitations.ts`
+- [x] Moved `stripeClient.ts` → `lib/stripeClient.ts`; updated `routes/billing.ts`, `webhookHandlers.ts`, `index.ts`
+- [x] Extracted `assertVehicleOwnership` to `lib/vehicleOwnership.ts` (R2 fixed)
+- [x] Updated `serviceRecords.ts`, `receipts.ts`, `tripLogs.ts` to import from shared helper
+- [x] Deleted empty `middlewares/` folder
+- [x] Removed now-unused `vehiclesTable` imports from the 3 route files
 
-**Test:** `pnpm --filter @workspace/api-server run typecheck` must pass. Restart API server, all existing routes must respond.
+**No behavior change. All existing route behavior and auth preserved.**
 
 ---
 
@@ -472,6 +467,6 @@ See `artifacts/api-server/src/lib/envValidation.ts` for the full spec and startu
 | `CLERK_SECRET_KEY` | ✅ | `app.ts` | Secret — server-side only, never in frontend bundle |
 | `SESSION_SECRET` | ✅ | `middleware/userAuth.ts` | JWT signing secret — server-side only |
 | `PORT` | optional | `index.ts` | Default 8080 |
-| `STRIPE_SECRET_KEY` | optional* | `stripeClient.ts` | Server-side only — *required when billing re-enabled |
+| `STRIPE_SECRET_KEY` | optional* | `lib/stripeClient.ts` | Server-side only — *required when billing re-enabled |
 | `STRIPE_WEBHOOK_SECRET` | optional* | `webhookHandlers.ts` | *required when billing re-enabled |
 | `REPLIT_DOMAINS` | optional | `app.ts` CORS | Comma-separated. In production, restricts CORS origins |

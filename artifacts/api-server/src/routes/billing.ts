@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
-import { getUncachableStripeClient } from "../stripeClient";
+import { getUncachableStripeClient } from "../lib/stripeClient";
 
 const router = Router();
 

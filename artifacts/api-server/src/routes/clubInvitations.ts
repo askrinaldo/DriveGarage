@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and, gt } from "drizzle-orm";
 import { db, clubsTable, clubMembersTable, clubInvitationsTable } from "@workspace/db";
 import { randomBytes } from "crypto";
-import { sendInvitationEmail } from "../mailer";
+import { sendInvitationEmail } from "../lib/mailer";
 import { requireClubRole } from "../middleware/auth";
 import { audit } from "../lib/audit";
 

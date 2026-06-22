@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, vehiclesTable, tripLogsTable } from "@workspace/db";
+import { db, tripLogsTable } from "@workspace/db";
 import {
   CreateTripLogBody,
   CreateTripLogParams,
@@ -11,22 +11,9 @@ import {
   DeleteTripLogParams,
 } from "@workspace/api-zod";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
+import { assertVehicleOwnership } from "../lib/vehicleOwnership";
 
 const router: IRouter = Router();
-
-// TODO Phase 2: extract to lib/vehicleOwnership.ts — same function is duplicated
-// in serviceRecords.ts and receipts.ts. See ARCHITECTURE.md R2.
-async function assertVehicleOwnership(
-  vehicleId: number,
-  tenantId: number | null | undefined,
-  userId: number,
-): Promise<boolean> {
-  const clause = tenantId
-    ? and(eq(vehiclesTable.id, vehicleId), eq(vehiclesTable.tenantId, tenantId))
-    : and(eq(vehiclesTable.id, vehicleId), eq(vehiclesTable.userId, userId));
-  const [vehicle] = await db.select({ id: vehiclesTable.id }).from(vehiclesTable).where(clause);
-  return !!vehicle;
-}
 
 router.get("/vehicles/:vehicleId/trip-logs", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = ListTripLogsParams.safeParse(req.params);

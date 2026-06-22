@@ -4,7 +4,7 @@ import app from "./app";
 import { initSocket } from "./socket";
 import { logger } from "./lib/logger";
 import { seedSuperAdmin } from "./lib/seedAdmin";
-import { getStripeSync } from "./stripeClient";
+import { getStripeSync } from "./lib/stripeClient";
 
 const rawPort = process.env["PORT"];
 
