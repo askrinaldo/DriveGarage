@@ -161,40 +161,173 @@ artifacts/vintage-garage/src/
 
 ## 5. Authentication System
 
-Two parallel auth systems currently coexist:
+### 5.1 Auth Landscape (Phase 3 Audit — June 2026)
 
-### System A — User Auth (Clerk + legacy JWT)
-Used for all private user data (vehicles, service records, stats, profile, billing, admin).
+Two parallel auth systems coexist. A third (local email/password) exists in the backend
+but is exposed to no regular user and is classified as an admin-only fallback.
+
+---
+
+#### System A — User Auth (Clerk primary + admin JWT fallback)
+
+Used for all private user data: vehicles, service records, stats, profile, billing, admin.
 
 ```
 Request
-  └─► clerkMiddleware (from @clerk/express)  → populates req.auth (Clerk session)
-  └─► parseUserAuth                          → reads x-user-token header (legacy admin JWT)
-  └─► clerkUserAuth                          → Clerk → DB lookup + JIT provisioning
-                                               → sets req.userAuth: UserTokenPayload
-                                               {userId, email, name, role, tenantId, ...}
+  └─► clerkMiddleware (@clerk/express)    → validates Clerk session cookie
+  └─► parseUserAuth (middleware/userAuth) → reads x-user-token header (admin JWT only)
+  └─► clerkUserAuth (middleware/clerkUserAuth)
+        ├─ If req.userAuth already set by parseUserAuth → skip (admin JWT takes priority)
+        ├─ Look up usersTable by replitUserId (Clerk userId)
+        ├─ JIT provision: if not found, create user row (passwordHash = null) + personal tenant
+        └─ Sets req.userAuth: { userId, email, name, role, tenantId, tenantName, tenantRole }
 
 Route guards:
-  requireUser        — any authenticated user
+  requireUser        — any authenticated user (Clerk or admin JWT)
   requireSuperAdmin  — role = super_admin only
 ```
 
-### System B — Club Auth (custom JWT)
-Used for club-scoped operations (forum, garage, events, marketplace, badges).
+**Frontend flow:**
+```
+Landing (/) → /sign-in → Clerk SignIn component → /api/auth/user (bridge) → /dashboard
+             → /sign-up → Clerk SignUp component → JIT provision on first request → /dashboard
+```
+
+**Active OAuth providers:** Google ✅ (enabled in Clerk dashboard)  
+**Microsoft login:** ⬜ Not yet enabled — see Section 5.4 below.
+
+---
+
+#### System B — Club Auth (custom JWT, stateless)
+
+Used for club-scoped operations: forum, garage, events, marketplace, badges.
 
 ```
 Request
   └─► parseAuth (middleware/auth.ts)  → reads Authorization: Bearer <club-token>
-                                        → sets req.auth: {memberName, clubId, role}
+                                        → sets req.auth: { memberName, clubId, role }
+
+Club token issued by: POST /api/auth/club-session (exchange memberName + clubId → JWT, 7d)
 
 Route guards:
   requireClubRole("member" | "admin" | "owner")
 ```
 
-> **⚠ Risk:** The two systems are entirely separate. A user can have System A identity
-> but no System B token, and vice versa. Club creation/join now requires System A to
-> set memberName from req.userAuth — but the club JWT is still issued separately.
-> **Phase 6 goal:** unify so club roles are derived from System A (Clerk userId).
+> **⚠ Risk:** Systems A and B are entirely separate. Phase 7 goal: unify club roles on
+> System A (Clerk userId) so club membership is linked to verified user identity.
+
+---
+
+#### System C — Local email/password (admin fallback only)
+
+```
+Backend routes:  POST /api/users/register  (bcryptjs, 12 rounds, creates passwordHash)
+                 POST /api/users/login     (validates passwordHash, returns 30-day JWT)
+
+Frontend hook:   useUserAuth().login()     — calls /api/users/login
+                 useUserAuth().register()  — calls /api/users/register
+
+JWT storage:     localStorage["user_session"]
+JWT transport:   x-user-token request header
+JWT priority:    takes priority over Clerk session (admin can override Clerk user)
+```
+
+**Status: Dead code path for regular users.**  
+- `login.tsx` and `register.tsx` are pure redirectors → Clerk (`/sign-in`, `/sign-up`).
+- No frontend form or UI calls `login()` or `register()` from the hook.
+- The `login()` / `register()` functions in `use-user-auth.ts` exist only to support
+  the super_admin manual-access workflow via direct API calls + localStorage.
+- `usersTable.password_hash` column: nullable — Clerk-provisioned users have `null`.
+- **Do not expose this system to end users. Do not add UI for it.**
+- **Do not delete the DB column or routes yet** — needed for admin fallback.
+- **Safe to remove:** only after super_admin workflow is migrated to Clerk admin console.
+
+---
+
+### 5.2 Data Ownership & User Isolation
+
+| Check | Status |
+|-------|--------|
+| userId trusted from request body | ✅ None found — all routes use `req.userAuth.userId` |
+| Clerk JIT provisioning on first sign-in | ✅ `clerkUserAuth.ts` — creates user + personal tenant |
+| Super_admin cannot impersonate via Clerk token | ✅ Role comes from `usersTable.role`, not Clerk claims |
+| Inactive users blocked | ✅ `requireUser` checks `isActive === true` |
+| `assertVehicleOwnership()` on all sub-resources | ✅ Shared helper in `lib/vehicleOwnership.ts` |
+| New user sees empty dashboard (no demo data) | ✅ Dashboard shows 0s, has "add first vehicle" empty state |
+
+---
+
+### 5.3 Onboarding Gaps
+
+| Gap | Severity | Notes |
+|-----|----------|-------|
+| Landing page stats (12 000+ vehicles, etc.) are hardcoded | Low | Marketing copy — not real DB counts |
+| No "welcome" modal or onboarding flow after first sign-in | Low | Empty state + "Add vehicle" button is sufficient |
+| Profile page uses Clerk name/email/avatar correctly | ✅ | `clerkUser?.fullName`, `primaryEmailAddress`, `imageUrl` |
+| Logout clears both Clerk session and admin JWT | ✅ | `useUserAuth().logout()` handles both paths |
+| Account settings via Clerk `<UserButton>` | ✅ | Clerk handles password change, OAuth linking, etc. |
+
+---
+
+### 5.4 Microsoft Login — Enable in Clerk Dashboard
+
+Microsoft OAuth is **not configured in any code file** and requires no code changes.
+To enable, a project owner must perform the following steps in Clerk:
+
+1. Go to [Clerk Dashboard](https://dashboard.clerk.com) → your DriveGarage application
+2. Navigate to **User & Authentication → Social connections**
+3. Find **Microsoft** and toggle it on
+4. Choose **"Use Clerk's credentials"** (fastest) or provide your own Azure AD credentials
+5. Save — Microsoft appears on the Clerk sign-in/sign-up widget automatically
+
+> **No backend or frontend code changes needed.** Clerk handles the OAuth flow,
+> token exchange, and email linking. The JIT provisioning in `clerkUserAuth.ts`
+> will work identically for Microsoft-authenticated users.
+
+---
+
+### 5.5 Recommended Auth Strategy
+
+| Decision | Recommendation |
+|----------|---------------|
+| Single source of truth | **Clerk** — all user auth goes through Clerk |
+| Google login | ✅ Already enabled in Clerk dashboard |
+| Microsoft login | ⬜ Enable in Clerk dashboard (no code changes needed) |
+| Email/password for users | 🚫 Keep disabled for regular users — Clerk handles email via magic link/OTP |
+| Magic link / Passkey | ⬜ Consider in a future phase — Clerk supports both, enable in dashboard |
+| Local auth (System C) | Keep as-is (admin fallback only) — plan removal after admin console migration |
+| Club auth (System B) | Keep as-is — plan unification in Phase 7 |
+
+---
+
+### 5.6 Manual Verification Checklist
+
+Run this checklist before each significant release:
+
+```
+AUTH FLOWS
+  [ ] New Google signup → lands on /dashboard → sees empty state (no demo data)
+  [ ] New Microsoft signup → same as above (after Clerk dashboard enablement)
+  [ ] Returning login (existing Clerk user) → lands on /dashboard
+  [ ] Logout → lands on / (landing page) → session fully cleared
+  [ ] Expired session → redirected to /sign-in (not a blank/broken page)
+
+USER ISOLATION
+  [ ] User A cannot see User B's vehicles (direct URL /vehicles/:id → 404)
+  [ ] User A cannot access User B's service records or receipts
+  [ ] User A cannot see User B's dashboard stats
+
+NEW USER ONBOARDING
+  [ ] Empty dashboard shows "Legg til kjøretøy" empty state (no 0-count errors)
+  [ ] "Legg til kjøretøy" button navigates correctly to /vehicles/new
+  [ ] Adding first vehicle → vehicle appears in dashboard immediately
+  [ ] Profile page shows correct name/email/avatar from Clerk
+  [ ] Account settings (change email, password, connected accounts) accessible via Clerk widget
+
+ADMIN
+  [ ] super_admin can log in via admin JWT fallback (x-user-token header)
+  [ ] super_admin sees admin panel; regular user gets 403
+```
 
 ---
 
@@ -388,7 +521,25 @@ artifacts/vintage-garage/src/
 
 ---
 
-### Phase 3 — Extract service layer
+### Phase 3 — Auth & onboarding audit ✅
+**Goal:** Audit all auth methods, lock down the login flow, document onboarding gaps.
+
+- [x] Audited all auth systems (Clerk, local email/password, club JWT)
+- [x] Confirmed local auth (System C) is dead code for regular users — no UI exposes it
+- [x] Confirmed no route trusts `userId` from request body
+- [x] Confirmed `assertVehicleOwnership()` enforced on all vehicle sub-resources
+- [x] Confirmed new user gets empty dashboard with correct empty state (no demo data)
+- [x] Confirmed profile uses Clerk name/email/avatar
+- [x] Landing page links updated: `/login` → `/sign-in`, `/register` → `/sign-up` (removes redirect hop)
+- [x] Microsoft login path documented: enable in Clerk dashboard, zero code changes needed
+- [x] Recommended auth strategy documented in Section 5.5
+- [x] Manual verification checklist written in Section 5.6
+
+**No behavior change for end users. No DB schema changes. No Clerk config changes.**
+
+---
+
+### Phase 4 — Extract service layer
 **Goal:** Routes become thin HTTP adapters. Business logic moves to `services/`.
 
 Steps:
@@ -402,7 +553,7 @@ Steps:
 
 ---
 
-### Phase 4 — Validation and error normalization
+### Phase 5 — Validation and error normalization
 **Goal:** Consistent, safe API surface.
 
 Steps:
@@ -414,7 +565,7 @@ Steps:
 
 ---
 
-### Phase 5 — Frontend feature folders
+### Phase 6 — Frontend feature folders
 **Goal:** Scale frontend without `pages/` becoming unmaintainable.
 
 Steps:
@@ -428,7 +579,7 @@ Steps:
 
 ---
 
-### Phase 6 — Clubs module redesign
+### Phase 7 — Clubs module redesign
 **Goal:** Link clubs to real user identities (Clerk userId), deprecate string-based ownership.
 
 Steps (requires schema migration — coordinate with production deploy):
@@ -448,11 +599,14 @@ Steps (requires schema migration — coordinate with production deploy):
 | Area | Reason |
 |------|--------|
 | DB schema | Any schema change needs a migration + production deploy plan |
-| Club JWT auth (`middleware/auth.ts`) | Wait for Phase 6 redesign |
+| `usersTable.password_hash` column | Admin fallback (System C) still depends on it — remove only when admin console migration is done |
+| `POST /api/users/register` + `POST /api/users/login` | Same as above — backend of System C admin fallback |
+| `useUserAuth().login()` / `.register()` in the hook | Remove after System C retirement |
+| Club JWT auth (`middleware/auth.ts`) | Wait for Phase 7 redesign |
+| Clerk dashboard configuration | Enable Microsoft in dashboard — no code changes required |
 | Generated files in `lib/api-client-react/` and `lib/api-zod/` | Always regenerate via codegen, never edit manually |
 | `components/ui/` shadcn primitives | Generated by shadcn CLI — do not modify |
 | `lib/api-spec/openapi.yaml` | Only change when adding/changing API endpoints |
-| Pre-existing TS errors in `club-event-detail.tsx`, `service-form.tsx`, `receipt-form.tsx`, `vehicle-detail.tsx`, `trip-form.tsx`, `tenant-new.tsx` | Pre-existing, out of scope |
 
 ---
 

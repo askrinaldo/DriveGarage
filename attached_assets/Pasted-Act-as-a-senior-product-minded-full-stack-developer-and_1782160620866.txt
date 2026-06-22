@@ -1,0 +1,115 @@
+Act as a senior product-minded full-stack developer and authentication engineer.
+
+Project: DriveGarage
+
+We are now doing Phase 3: authentication and onboarding audit/planning.
+
+Current status:
+
+* Clerk/Google login works.
+* User isolation has been improved.
+* Security hardening is in place.
+* Project structure Phase 1 and Phase 2 are complete.
+* Typecheck is clean.
+* DriveGarage is primarily for individual users.
+* We want signup/login to be simple, smooth and secure.
+
+Important:
+Do not remove local auth yet unless you prove it is unused and safe to remove.
+Do not change database schema unless absolutely necessary.
+Do not change Clerk behavior unless required.
+Do not add billing, clubs, privacy pages or service-layer refactor in this phase.
+First audit and make only safe changes.
+
+Tasks:
+
+1. Audit current auth methods
+   Inspect the app for:
+
+* Clerk auth
+* Google login
+* Microsoft login support/config
+* local email/password auth
+* local register/login pages
+* local users/password tables
+* session logic outside Clerk
+* old auth routes
+* frontend login/register UI
+* backend code trusting userId from frontend
+
+2. Recommend final auth strategy
+   For DriveGarage individual users, recommend:
+
+* Clerk as single source of truth
+* Google login
+* Microsoft login
+* whether email/password should be disabled or kept
+* whether magic link/passkey should be considered later
+
+3. Microsoft login plan
+   Check if Microsoft provider is already configured in frontend/Clerk code.
+   If not configured in code, document what must be enabled in Clerk dashboard.
+   Do not hardcode Microsoft credentials.
+   Add only safe UI/provider support if Clerk handles it automatically.
+
+4. Local auth cleanup plan
+   If local auth exists:
+
+* list all files/tables/routes involved
+* determine whether it is used
+* recommend disable first, delete later
+* remove UI links only if safe
+* do not delete database tables yet unless clearly unused and documented
+
+5. New user onboarding
+   Audit first-login experience:
+
+* new user should see empty dashboard, not demo data
+* empty states should guide user to add first vehicle
+* profile should use Clerk name/email/avatar when available
+* user should have clear logout/account settings
+* onboarding should not require unnecessary fields
+
+6. Manual verification checklist
+   Create a test checklist:
+
+* new Google signup
+* new Microsoft signup
+* returning login
+* logout
+* expired session
+* user A cannot see user B data
+* direct URL to another user vehicle returns 404
+* new user sees empty dashboard
+* add first vehicle works
+* dashboard updates after vehicle is added
+
+7. Safe changes allowed
+   Allowed:
+
+* remove/hide unused local login UI if proven unused
+* add missing empty-state text/buttons
+* add auth/onboarding TODO documentation
+* improve login page copy
+* add Microsoft button only if Clerk supports it without custom backend changes
+
+Not allowed:
+
+* deleting local auth database tables
+* adding password auth
+* adding billing
+* adding tracking/analytics
+* redesigning clubs
+* large frontend rewrite
+
+Deliverable:
+
+* current auth setup summary
+* local auth findings
+* Microsoft login status
+* recommended auth strategy
+* safe changes made
+* files changed
+* onboarding gaps
+* manual test checklist
+* next recommended phase

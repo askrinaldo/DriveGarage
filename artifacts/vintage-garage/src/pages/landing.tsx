@@ -130,8 +130,8 @@ export default function LandingPage() {
             <button onClick={() => scrollTo("funksjoner")} className="hover:text-white transition-colors">{t("landing.navbar.features")}</button>
             <button onClick={() => scrollTo("slik-fungerer")} className="hover:text-white transition-colors">{t("landing.navbar.howItWorks")}</button>
             <button onClick={() => scrollTo("priser")} className="hover:text-white transition-colors">{t("landing.navbar.pricing")}</button>
-            <Link href="/login" className="hover:text-white transition-colors">{t("landing.navbar.logIn")}</Link>
-            <Link href="/register">
+            <Link href="/sign-in" className="hover:text-white transition-colors">{t("landing.navbar.logIn")}</Link>
+            <Link href="/sign-up">
               <Button className="bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm rounded-full px-6 h-9 text-sm">
                 {t("landing.navbar.createAccount")}
               </Button>
@@ -149,8 +149,8 @@ export default function LandingPage() {
             <button onClick={() => scrollTo("funksjoner")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">{t("landing.navbar.features")}</button>
             <button onClick={() => scrollTo("slik-fungerer")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">{t("landing.navbar.howItWorks")}</button>
             <button onClick={() => scrollTo("priser")} className="block text-[#8899bb] hover:text-white w-full text-left py-1">{t("landing.navbar.pricing")}</button>
-            <Link href="/login" className="block text-[#8899bb] hover:text-white py-1" onClick={() => setMenuOpen(false)}>{t("landing.navbar.logIn")}</Link>
-            <Link href="/register" onClick={() => setMenuOpen(false)}>
+            <Link href="/sign-in" className="block text-[#8899bb] hover:text-white py-1" onClick={() => setMenuOpen(false)}>{t("landing.navbar.logIn")}</Link>
+            <Link href="/sign-up" onClick={() => setMenuOpen(false)}>
               <Button className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 text-white border-0 rounded-full mt-2">
                 {t("landing.navbar.createAccountFree")}
               </Button>
@@ -184,7 +184,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register">
+            <Link href="/sign-up">
               <Button className="h-14 px-8 text-lg rounded-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 border-0 shadow-[0_0_40px_rgba(99,102,241,0.3)] transition-all hover:scale-[1.03]">
                 {t("landing.hero.ctaPrimary")}
               </Button>
@@ -333,7 +333,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/register">
+                  <Link href="/sign-up">
                     <Button variant="outline" className="w-full bg-white/[0.05] border-white/[0.10] text-white hover:bg-white/[0.10] rounded-xl">
                       {t("landing.pricing.free.cta")}
                     </Button>
@@ -363,7 +363,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/register">
+                  <Link href="/sign-up">
                     <Button className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white border-0 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] h-11">
                       {t("landing.pricing.premium.cta")}
                     </Button>
@@ -389,7 +389,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/register">
+                  <Link href="/sign-up">
                     <Button variant="outline" className="w-full bg-white/[0.05] border-white/[0.10] text-white hover:bg-white/[0.10] rounded-xl">
                       {t("landing.pricing.standard.cta")}
                     </Button>
@@ -411,7 +411,7 @@ export default function LandingPage() {
             <p className="text-xl text-[#8899bb] mb-10 max-w-xl mx-auto">
               {t("landing.cta.subtitle")}
             </p>
-            <Link href="/register">
+            <Link href="/sign-up">
               <Button className="h-16 px-12 text-xl rounded-full bg-white text-[#060b18] hover:bg-gray-100 border-0 font-bold shadow-[0_0_50px_rgba(255,255,255,0.2)] transition-all hover:scale-105">
                 {t("landing.cta.button")}
               </Button>
@@ -439,7 +439,7 @@ export default function LandingPage() {
             <ul className="space-y-3 text-sm text-[#8899bb]">
               <li><button onClick={() => scrollTo("funksjoner")} className="hover:text-white transition-colors">{t("landing.footer.features")}</button></li>
               <li><button onClick={() => scrollTo("priser")} className="hover:text-white transition-colors">{t("landing.footer.pricing")}</button></li>
-              <li><Link href="/login" className="hover:text-white transition-colors">{t("landing.footer.logIn")}</Link></li>
+              <li><Link href="/sign-in" className="hover:text-white transition-colors">{t("landing.footer.logIn")}</Link></li>
             </ul>
           </div>
           <div>
