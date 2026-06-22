@@ -1,0 +1,158 @@
+Act as a senior full-stack architect, backend security engineer, and technical project lead.
+
+Project: DriveGarage
+
+Current status:
+
+* DriveGarage is built in Replit.
+* Clerk/Google login works.
+* User/tenant isolation has just been improved for vehicles, service records, receipts, trip logs and stats.
+* The app is expected to grow into a large solution, so we need better structure, security, environment handling and feature planning before adding too much more.
+* There is also a Clubs feature where users should be able to join/invite others by email invite code or by searching user ID/name.
+
+Goal:
+Review the entire project and create/implement a clean foundation for scaling DriveGarage safely.
+
+Main tasks:
+
+1. Project structure review
+
+* Inspect the current frontend/backend folder structure.
+* Identify files that are getting too large or mixed in responsibility.
+* Recommend and implement a cleaner structure if needed.
+* Separate routes, services, database access, validation, auth helpers, and shared types.
+* Avoid rewriting everything unnecessarily.
+* Keep existing working functionality intact.
+
+2. Security audit
+   Review the backend for:
+
+* missing authentication
+* missing authorization
+* IDOR risks
+* unscoped database queries
+* unsafe update/delete routes
+* overly permissive CORS
+* weak session/cookie/JWT handling
+* exposed internal errors
+* unsafe file uploads
+* missing input validation
+* missing rate limits on auth-sensitive or write-heavy endpoints
+
+Fix critical issues directly.
+
+3. Environment variables and secrets
+
+* Inspect all environment variable usage.
+* Ensure no API keys, Clerk secrets, database URLs or private credentials are hardcoded.
+* Create a clear list of required environment variables.
+* Separate dev and production configuration.
+* Add safe validation on startup so the app fails clearly if required env vars are missing.
+* Do not print secrets in logs.
+
+4. API key and integration safety
+
+* Identify all external services used or prepared for use.
+* Make sure API keys are only used server-side.
+* Frontend must only use public keys where appropriate.
+* Add comments/documentation explaining which keys are public and which are private.
+* Make sure private keys are never exposed through API responses or frontend bundles.
+
+5. Database and ownership model
+
+* Review all tables and relations.
+* Classify data as:
+
+  * private user-owned data
+  * shared club data
+  * public/discoverable data
+  * admin/system data
+* Confirm every private table has userId and/or tenantId ownership.
+* Confirm every shared club table has proper membership-based access.
+* Add indexes for userId, tenantId, clubId and foreign keys where needed.
+
+6. Clubs architecture
+   Design and implement a secure Clubs model.
+
+Clubs should support:
+
+* creating a club
+* joining a club
+* inviting a user by email
+* inviting/searching by user ID/name if allowed
+* invite codes
+* accepting/declining invites
+* club roles, for example:
+
+  * owner
+  * admin
+  * member
+
+Rules:
+
+* Only club owner/admin can invite users.
+* Users can only see private club content if they are members.
+* Invite codes should be random, hard to guess and optionally expire.
+* Email invites should not reveal private club data before acceptance.
+* Searching users should be privacy-safe and limited.
+* Prevent users from joining private clubs without a valid invite.
+* Prevent users from editing/removing club data unless they have the correct role.
+
+7. API design
+   Create or improve route conventions:
+
+* /api/vehicles
+* /api/service-records
+* /api/trip-logs
+* /api/receipts
+* /api/stats
+* /api/clubs
+* /api/invites
+* /api/profile/settings
+
+Make sure every route has:
+
+* auth middleware where required
+* server-side ownership or membership checks
+* input validation
+* consistent error responses
+* safe 404 behavior where resource existence should not be leaked
+
+8. Validation and error handling
+
+* Add schema validation where missing.
+* Ensure frontend cannot send arbitrary fields into database updates.
+* Normalize API errors.
+* Avoid leaking stack traces or database errors to the frontend in production.
+
+9. Logging and monitoring readiness
+
+* Add safe server-side logging for important events:
+
+  * failed auth
+  * forbidden access attempts
+  * invite creation/acceptance
+  * club role changes
+  * deletes
+* Do not log secrets, tokens or sensitive user data.
+* Add TODO comments for future monitoring if full monitoring is not configured yet.
+
+10. Replit/GitHub workflow
+    Review current workflow and recommend a safe process:
+
+* dev branch for Replit changes
+* pull request into main
+* main only for production-ready code
+* never push experimental Replit changes directly to main
+* document how to deploy safely
+
+11. Deliverable
+    After reviewing/implementing:
+
+* summarize what was changed
+* list files changed
+* list critical security risks found
+* list what was fixed
+* list what still needs to be done
+* provide a recommended next-step roadmap
+* do not break existing frontend/backend functionality

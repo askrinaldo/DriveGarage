@@ -15,7 +15,9 @@ import {
   ListClubMembersParams,
 } from "@workspace/api-zod";
 import { requireClubRole } from "../middleware/auth";
+import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { audit } from "../lib/audit";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -70,25 +72,30 @@ router.get("/clubs", async (req, res): Promise<void> => {
   res.json(filtered);
 });
 
-router.post("/clubs", async (req, res): Promise<void> => {
+// ─── Protected: create club — requires authenticated user ─────────────────────
+router.post("/clubs", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const parsed = CreateClubBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
     return;
   }
-  const { ownerName, ...clubData } = parsed.data;
+
+  // ownerName is always derived from the authenticated user — never trusted from the body
+  const ownerName = req.userAuth!.name || req.userAuth!.email;
+  const { ownerName: _ignored, ...clubData } = parsed.data;
+
   const [club] = await db
     .insert(clubsTable)
-    .values({ ...clubData, ownerName: ownerName! })
+    .values({ ...clubData, ownerName })
     .returning();
   await db.insert(clubMembersTable).values({
     clubId: club.id,
-    memberName: ownerName!,
+    memberName: ownerName,
     role: "owner",
   });
   await audit({
     clubId: club.id,
-    actorName: ownerName!,
+    actorName: ownerName,
     action: "club.created",
     targetType: "club",
     targetId: club.id,
@@ -190,8 +197,8 @@ router.get("/clubs/:clubId/members", async (req, res): Promise<void> => {
   res.json(members);
 });
 
-// ─── Public: join club ────────────────────────────────────────────────────────
-router.post("/clubs/:clubId/members", async (req, res): Promise<void> => {
+// ─── Protected: join club — requires authenticated user ───────────────────────
+router.post("/clubs/:clubId/members", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = JoinClubParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -202,27 +209,34 @@ router.post("/clubs/:clubId/members", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
     return;
   }
+
+  // memberName is always the authenticated user's display name — never trusted from body
+  const memberName = req.userAuth!.name || req.userAuth!.email;
+
   const existing = await db
     .select()
     .from(clubMembersTable)
     .where(eq(clubMembersTable.clubId, params.data.clubId));
   const alreadyMember = existing.find(
-    (m) => m.memberName.toLowerCase() === parsed.data.memberName.toLowerCase()
+    (m) => m.memberName.toLowerCase() === memberName.toLowerCase()
   );
   if (alreadyMember) {
     res.status(409).json({ error: "Allerede medlem av klubben" });
     return;
   }
+
   const [member] = await db
     .insert(clubMembersTable)
-    .values({ clubId: params.data.clubId, memberName: parsed.data.memberName, role: "member" })
+    .values({ clubId: params.data.clubId, memberName, role: "member" })
     .returning();
+
+  logger.info({ userId: req.userAuth!.userId, clubId: params.data.clubId }, "User joined club");
   await audit({
     clubId: params.data.clubId,
-    actorName: parsed.data.memberName,
+    actorName: memberName,
     action: "member.joined",
     targetType: "member",
-    targetName: parsed.data.memberName,
+    targetName: memberName,
   });
   res.status(201).json(member);
 });
@@ -314,6 +328,10 @@ router.delete("/clubs/:clubId/members/:memberId", async (req, res): Promise<void
     const actorRank = ROLE_ORDER[req.auth?.role ?? ""] ?? 0;
     const targetRank = ROLE_ORDER[target.role ?? "member"] ?? 0;
     if (actorRank < 3 || actorRank <= targetRank) {
+      logger.warn(
+        { actorRole: req.auth?.role, targetRole: target.role, clubId: params.data.clubId },
+        "Unauthorized club member removal attempt"
+      );
       res.status(403).json({ error: "Utilstrekkelig tilgang til å fjerne dette medlemmet." });
       return;
     }

@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -9,10 +9,39 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { validateEnv } from "./lib/envValidation";
 import { parseAuth } from "./middleware/auth";
 import { parseUserAuth } from "./middleware/userAuth";
 import { clerkUserAuth } from "./middleware/clerkUserAuth";
 import { WebhookHandlers } from "./webhookHandlers";
+import { writeRateLimit } from "./middleware/rateLimiter";
+
+// Fail fast on startup if required env vars are missing
+validateEnv();
+
+const IS_PROD = process.env.NODE_ENV === "production";
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+// In production: only allow origins listed in REPLIT_DOMAINS.
+// In development: allow all origins so the Vite dev server can connect.
+function buildCorsOrigin() {
+  if (!IS_PROD) return true;
+  const domains = process.env.REPLIT_DOMAINS;
+  if (!domains) return true; // fallback if not set
+  const allowed = domains
+    .split(",")
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .flatMap((d) => [`https://${d}`, `http://${d}`]);
+  return (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin || allowed.includes(origin)) {
+      cb(null, true);
+    } else {
+      logger.warn({ origin }, "CORS blocked request from disallowed origin");
+      cb(new Error("Not allowed by CORS"));
+    }
+  };
+}
 
 const app: Express = express();
 
@@ -59,10 +88,11 @@ app.use(
     },
   }),
 );
-app.use(cors({ credentials: true, origin: true }));
+
+app.use(cors({ credentials: true, origin: buildCorsOrigin() }));
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 // Clerk middleware — populates req.auth from session cookie/token.
 app.use(
@@ -79,6 +109,38 @@ app.use(parseAuth);
 app.use(parseUserAuth);
 app.use(clerkUserAuth);
 
+// Global write-rate-limit for all state-changing requests
+app.use((req, res, next) => {
+  if (["POST", "PATCH", "PUT", "DELETE"].includes(req.method)) {
+    writeRateLimit(req, res, next);
+    return;
+  }
+  next();
+});
+
 app.use("/api", router);
+
+// ─── Global error handler ────────────────────────────────────────────────────
+// Must be registered AFTER all routes.
+// In production: never leak stack traces or internal error messages.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  const status = (err as { status?: number; statusCode?: number })?.status
+    ?? (err as { status?: number; statusCode?: number })?.statusCode
+    ?? 500;
+
+  // Always log the full error server-side
+  logger.error({ err, method: req.method, url: req.url?.split("?")[0] }, "Unhandled error");
+
+  if (IS_PROD) {
+    // Never expose internal details in production
+    res.status(status).json({ error: status === 500 ? "Internal server error" : (err as { message?: string })?.message ?? "Error" });
+  } else {
+    res.status(status).json({
+      error: (err as { message?: string })?.message ?? "Error",
+      stack: (err as { stack?: string })?.stack,
+    });
+  }
+});
 
 export default app;
