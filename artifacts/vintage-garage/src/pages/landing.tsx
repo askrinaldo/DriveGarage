@@ -446,16 +446,23 @@ export default function LandingPage() {
             <h4 className="text-white font-semibold mb-5 text-sm">{t("landing.footer.company")}</h4>
             <ul className="space-y-3 text-sm text-[#8899bb]">
               <li><span className="cursor-default">{t("landing.footer.about")}</span></li>
-              <li><span className="cursor-default">{t("landing.footer.contact")}</span></li>
-              <li><span className="cursor-default">{t("landing.footer.privacy")}</span></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">{t("landing.footer.contact")}</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">{t("landing.footer.privacy")}</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Vilkår for bruk</Link></li>
+              <li><Link href="/cookies" className="hover:text-white transition-colors">Informasjonskapsler</Link></li>
             </ul>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8899bb]">
           <span>© {new Date().getFullYear()} DriveGarage AS. {t("landing.footer.rights")}</span>
-          <div className="flex items-center gap-1.5">
-            <Shield className="w-3 h-3 text-indigo-400" />
-            <span>{t("landing.footer.secure")}</span>
+          <div className="flex items-center gap-5">
+            <Link href="/privacy" className="hover:text-white transition-colors">Personvern</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Vilkår</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">Informasjonskapsler</Link>
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-3 h-3 text-indigo-400" />
+              <span>{t("landing.footer.secure")}</span>
+            </div>
           </div>
         </div>
       </footer>

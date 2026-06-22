@@ -49,6 +49,11 @@ import Profile from "@/pages/profile";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
 import PublicGarage from "@/pages/public-garage";
+import PrivacyPage from "@/pages/privacy";
+import TermsPage from "@/pages/terms";
+import CookiesPage from "@/pages/cookies";
+import ContactPage from "@/pages/contact";
+import { CookieNotice } from "@/components/cookie-notice";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,7 +82,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/", "/sign-in", "/sign-up"];
+const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/", "/sign-in", "/sign-up", "/privacy", "/terms", "/cookies", "/contact"];
 
 function AppRoutes() {
   const [location] = useLocation();
@@ -97,6 +102,10 @@ function AppRoutes() {
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
+        <Route path="/privacy" component={PrivacyPage} />
+        <Route path="/terms" component={TermsPage} />
+        <Route path="/cookies" component={CookiesPage} />
+        <Route path="/contact" component={ContactPage} />
         <Route path="/">
           {isLoaded && isSignedIn ? <Redirect to="/dashboard" /> : <LandingPage />}
         </Route>
@@ -200,6 +209,7 @@ function ClerkProviderWithRoutes() {
       <ClerkTokenInjector />
       <AppRoutes />
       <AiChatWidget />
+      <CookieNotice />
     </ClerkProvider>
   );
 }

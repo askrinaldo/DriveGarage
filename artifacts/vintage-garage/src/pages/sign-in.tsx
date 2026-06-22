@@ -1,4 +1,5 @@
 import { SignIn } from "@clerk/react";
+import { Link } from "wouter";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -21,13 +22,20 @@ export default function SignInPage() {
         className="absolute rounded-full blur-[80px] pointer-events-none"
         style={{ left: "80%", top: "70%", width: "400px", height: "400px", background: "rgba(6,182,212,0.09)", transform: "translate(-50%,-50%)" }}
       />
-      <div className="relative z-10 w-full flex justify-center px-4">
+      <div className="relative z-10 w-full flex flex-col items-center justify-center px-4 gap-4">
         <SignIn
           routing="path"
           path={`${basePath}/sign-in`}
           signUpUrl={`${basePath}/sign-up`}
           fallbackRedirectUrl={`${basePath}/dashboard`}
         />
+        <p className="text-xs text-[#8899bb] text-center max-w-xs leading-relaxed">
+          Ved å logge inn godtar du våre{" "}
+          <Link href="/terms" className="underline hover:text-white transition-colors">Vilkår for bruk</Link>{" "}
+          og bekrefter at du har lest vår{" "}
+          <Link href="/privacy" className="underline hover:text-white transition-colors">Personvernerklæring</Link>
+          .
+        </p>
       </div>
     </div>
   );

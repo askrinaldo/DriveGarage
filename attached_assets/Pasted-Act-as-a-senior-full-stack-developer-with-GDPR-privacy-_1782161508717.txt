@@ -1,0 +1,114 @@
+Act as a senior full-stack developer with GDPR/privacy compliance awareness for Norwegian/EU SaaS products.
+
+Project: DriveGarage
+
+We are now doing Phase 4: privacy, cookies and legal foundation.
+
+Current status:
+
+* Backend typecheck is clean.
+* Frontend typecheck is clean.
+* Clerk auth with Google works.
+* Microsoft login should be enabled in Clerk dashboard, not code.
+* DriveGarage is mainly for individual users.
+* The app stores vehicle data, service records, receipts, trip logs, profile data, club data and possibly uploaded files.
+* We need a public-launch legal/privacy foundation before adding more public features.
+
+Important:
+
+* This is not legal advice.
+* Do not claim the app is fully GDPR compliant.
+* Do not add analytics, marketing tracking, Google Analytics, Meta Pixel, Hotjar or similar.
+* Do not add billing, clubs redesign, service-layer refactor or database schema changes.
+* Focus only on privacy/legal pages, cookie notice foundation, and signup/legal visibility.
+
+Tasks:
+
+1. Audit current legal/privacy state
+   Check whether the app has:
+
+* /privacy
+* /terms
+* /cookies
+* /contact or support/privacy contact info
+* footer links to legal pages
+* signup/login links to Privacy Policy and Terms
+* cookie banner or cookie preferences
+* analytics/tracking scripts
+* localStorage/sessionStorage usage
+* third-party services that process user data
+
+2. Create required public pages if missing
+   Add draft pages:
+
+* Privacy Policy
+* Terms of Service
+* Cookie Policy
+* Contact/Support or legal contact section
+
+Mark all legal text clearly as draft and requiring owner/legal review before launch.
+
+3. Cookie/storage foundation
+   Implement a simple cookie/storage notice if appropriate:
+
+* strictly necessary cookies/storage can run without consent
+* non-essential cookies/tracking must not run before consent
+* if no analytics/tracking exists, clearly state that only necessary auth/app storage is used
+* do not block Clerk authentication cookies
+* add a preference/change-consent entry point only if consent choices are actually stored
+
+4. Signup/login legal visibility
+   Ensure sign-in/sign-up/landing/footer show:
+
+* Privacy Policy link
+* Terms of Service link
+* Cookie Policy link where appropriate
+* simple text such as:
+  “By continuing, you agree to the Terms and acknowledge the Privacy Policy.”
+
+Do not modify Clerk internals unless Clerk exposes a safe way to add legal links.
+
+5. Privacy policy draft should cover
+
+* what data is collected
+* why it is collected
+* legal basis
+* Clerk as authentication provider
+* hosting/database provider placeholders
+* vehicle/service/receipt/trip data
+* club/invite data
+* uploaded files if applicable
+* retention
+* user rights: access, correction, deletion, export, objection, withdraw consent
+* complaint right to Datatilsynet
+* contact email placeholder
+
+6. Data deletion/export readiness
+   Do not build full deletion/export now.
+   But document which user-owned data must be included:
+
+* profile
+* vehicles
+* service records
+* receipts
+* trip logs
+* club memberships/invites
+* uploaded files
+* settings/preferences
+
+7. Validation
+
+* Run frontend typecheck.
+* Run backend typecheck if touched.
+* Start/restart workflows.
+* Confirm legal pages load.
+
+Deliverable:
+
+* compliance gaps found
+* files changed
+* pages/components added
+* cookie/tracking findings
+* legal text requiring review
+* typecheck result
+* next recommended phase
