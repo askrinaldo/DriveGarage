@@ -1,0 +1,176 @@
+Act as a senior full-stack engineer, frontend product lead, and backend security engineer.
+
+Project: DriveGarage
+
+URGENT: Fix the Club experience for demo/beta. No planning-only response. Implement directly.
+
+Goal:
+Make Clubs feel like a real club/community feature, not AI-generated. Frontend UX is the highest priority, but backend permissions must remain secure.
+
+Important:
+
+* Do not rewrite the whole club system.
+* Do not start the full userId migration now.
+* Do not implement payments.
+* Do not break existing clubs.
+* Do not weaken backend authorization.
+* Implement the simplest safe version that looks and works properly for users.
+
+Core product rules:
+
+1. Club visibility/listing
+
+* “Mine klubber” must only show clubs the current user is actually a member of.
+* Private clubs must NOT appear in public discovery/search.
+* Public clubs should appear in a separate discovery area, for example:
+
+  * “Utforsk klubber”
+  * “Offentlige klubber”
+* Public clubs can be joined freely.
+* Private clubs are invite-only.
+* When creating/editing a private club, join mode should automatically be invite-only.
+* Do not show private clubs to non-members except if the user has a valid invite flow already.
+
+2. Club navigation / UX
+   Create a cleaner club landing page with clear sections:
+
+* Mine klubber
+* Utforsk offentlige klubber
+* Søk etter klubb
+* Opprett klubb
+
+The page should clearly explain:
+
+* Public clubs: visible and open to join
+* Private clubs: invite-only and hidden from discovery
+
+Add search/filter for public clubs:
+
+* search by club name
+* optionally filter by location/category if already available
+* keep it simple and polished
+
+3. Public club joining
+   For public clubs:
+
+* Non-member should see “Bli med i klubben”
+* Clicking join should add the current user as member
+* After joining, club appears under “Mine klubber”
+* Owner/admin should preferably get a notification/activity item if existing notification system exists; if not, add TODO/comment and avoid building a full notification system now
+
+4. Private clubs
+   For private clubs:
+
+* Only members/admins/owners can open and see full content
+* Non-members must not see:
+
+  * dashboard
+  * member list
+  * garage
+  * forum
+  * events
+  * internal activity
+* Private clubs must show “Privat klubb” badge for members
+* Creation/edit form:
+
+  * if “Privat klubb” is ON, force joinMode = invite_only
+  * hide or disable other join modes for private clubs
+  * add helper text: “Private klubber er kun tilgjengelige via invitasjon.”
+
+5. Roles and member management
+   As club owner:
+
+* I must be able to change roles of other members:
+
+  * member → admin
+  * admin → member
+* Owner cannot demote/remove themselves accidentally
+* Admin cannot change owner
+* Admin can remove normal members if current backend rules allow it
+* Normal members cannot remove or edit anyone
+* Non-members cannot remove or edit anyone
+
+Frontend:
+
+* Only show role controls to owner/admin where allowed
+* Only show “Fjern” when the current user has permission
+* Rename confusing “Fjern” where appropriate:
+
+  * “Fjern medlem” for admin actions
+  * “Forlat klubb” for leaving yourself
+
+Backend:
+
+* Ensure role update endpoints exist and are protected
+* Owner-only for promoting/demoting admins unless current product rules allow otherwise
+* Unauthorized API calls must return 403/404
+* UI must handle 403 gracefully with toast, not Vite overlay/crash
+
+6. Delete/remove behavior
+
+* Delete club: owner only
+* Remove member: owner/admin only, according to role rules
+* Leave club: current member only
+* Non-members must never see destructive buttons
+* If backend returns 403, show: “Du har ikke tilgang til å gjøre dette.”
+
+7. Club detail page polish
+   Make club detail look demo-ready:
+
+* show badge: Offentlig klubb / Privat klubb
+* show current user role: Eier / Administrator / Medlem
+* show clear CTA for public non-members: “Bli med i klubben”
+* show locked state for private content if somehow accessed without membership
+* hide empty/unfinished sections if they are not useful for demo
+* avoid showing too much data to non-members
+
+8. PDF/download behavior
+   If there are “download” actions in club/vehicle context:
+
+* Downloads should be PDF where user-facing.
+* Do not expose JSON downloads to normal users unless explicitly marked developer/export.
+* If a PDF is not implemented yet, hide the button or relabel it clearly as “Eksporter data” only for admin/dev.
+* For demo, avoid user-facing JSON downloads.
+
+9. Error handling
+   Fix frontend error handling:
+
+* 403 should never trigger Vite overlay during normal UI usage
+* show toast or inline locked message
+* leave page usable
+
+10. Verification
+    Test these roles/states:
+
+* owner
+* admin
+* member
+* non-member
+
+Test flows:
+
+* create public club
+* create private club
+* public club appears in discovery
+* private club does not appear in discovery
+* public club join works
+* joined club appears in Mine klubber
+* non-member cannot view private club content
+* owner can promote member to admin
+* owner can demote admin to member
+* unauthorized users do not see Fjern/Slett controls
+* direct API attempts still return 403/404
+* no JSON download is visible to normal users
+
+Deliverable:
+
+* files changed
+* backend fixes
+* frontend fixes
+* club listing/discovery behavior
+* role management behavior
+* private/public club behavior
+* PDF/download cleanup
+* typecheck/build result
+* tested scenarios
+* remaining risks

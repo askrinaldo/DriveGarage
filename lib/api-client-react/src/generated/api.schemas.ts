@@ -513,6 +513,7 @@ export interface UpdateClubMemberBody {
 
 export type ListClubsParams = {
   type?: string;
+  scope?: "discover" | "mine" | string;
 };
 
 export type ListForumPostsParams = {

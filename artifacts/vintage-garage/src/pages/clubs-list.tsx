@@ -4,17 +4,26 @@ import {
   useListClubs,
   getListClubsQueryKey,
 } from "@workspace/api-client-react";
-import { LoadingState, ErrorState } from "@/components/ui-states";
+import { useAuth } from "@clerk/react";
+import { LoadingState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, MapPin, Car, Bike, Lock } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Input } from "@/components/ui/input";
+import {
+  Plus, Users, MapPin, Car, Bike, Lock, Search, Globe, BookUser,
+} from "lucide-react";
 
 const typeColor: Record<string, string> = {
   car: "bg-blue-500/20 text-blue-300",
   motorcycle: "bg-amber-500/20 text-amber-300",
   both: "bg-emerald-500/20 text-emerald-300",
+};
+
+const typeLabel: Record<string, string> = {
+  car: "Bil",
+  motorcycle: "Motorsykkel",
+  both: "Bil og motorsykkel",
 };
 
 const TypeIcon = ({ type }: { type: string }) => {
@@ -28,148 +37,248 @@ const TypeIcon = ({ type }: { type: string }) => {
   );
 };
 
+interface ClubLike {
+  id: number;
+  name: string;
+  description?: string | null;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  location?: string | null;
+  clubType: string;
+  memberCount: number;
+  isPrivate: boolean;
+}
+
+function ClubCard({ club }: { club: ClubLike }) {
+  return (
+    <Link href={`/clubs/${club.id}`}>
+      <Card className="hover-elevate cursor-pointer transition-all bg-card border-border overflow-hidden group h-full">
+        {club.bannerUrl ? (
+          <div
+            className="h-24 w-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${club.bannerUrl})` }}
+          />
+        ) : (
+          <div className="h-24 w-full bg-gradient-to-br from-primary/30 to-primary/5 flex items-center justify-center">
+            <TypeIcon type={club.clubType} />
+          </div>
+        )}
+        <CardContent className="p-5">
+          <div className="flex items-start gap-3 mb-3">
+            {club.logoUrl ? (
+              <img
+                src={club.logoUrl}
+                alt={club.name}
+                className="w-12 h-12 rounded-md object-cover border border-border shrink-0"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center shrink-0">
+                <TypeIcon type={club.clubType} />
+              </div>
+            )}
+            <div className="min-w-0">
+              <h3 className="font-semibold text-base leading-tight truncate group-hover:text-primary transition-colors">
+                {club.name}
+              </h3>
+              <div className="flex flex-wrap gap-1 mt-1">
+                <Badge className={`text-xs ${typeColor[club.clubType] ?? ""} border-0`}>
+                  {typeLabel[club.clubType] ?? club.clubType}
+                </Badge>
+                {club.isPrivate && (
+                  <Badge className="text-xs bg-slate-500/20 text-slate-300 border-0 gap-1">
+                    <Lock className="w-2.5 h-2.5" />
+                    Privat
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {club.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+              {club.description}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              <span>
+                {club.memberCount}{" "}
+                {club.memberCount === 1 ? "Medlem" : "Medlemmer"}
+              </span>
+            </div>
+            {club.location && (
+              <div className="flex items-center gap-1 truncate">
+                <MapPin className="w-3 h-3 shrink-0" />
+                <span className="truncate">{club.location}</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+const TYPE_FILTERS = [
+  { value: "all", label: "Alle" },
+  { value: "car", label: "Bil" },
+  { value: "motorcycle", label: "Motorsykkel" },
+  { value: "both", label: "Begge" },
+];
+
 export default function ClubsList() {
-  const { t } = useTranslation();
-  const [filter, setFilter] = useState<string>("all");
+  const { isSignedIn } = useAuth();
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
 
-  const typeLabel: Record<string, string> = {
-    car: t("clubs.typeCar"),
-    motorcycle: t("clubs.typeMotorcycle"),
-    both: t("clubs.typeBoth"),
-  };
-
-  const { data: clubs, isLoading, isError, refetch } = useListClubs(
-    filter === "all" ? {} : { type: filter },
-    { query: { queryKey: getListClubsQueryKey(filter === "all" ? {} : { type: filter }) } }
+  const { data: myClubs, isLoading: myLoading } = useListClubs(
+    { scope: "mine" },
+    {
+      query: {
+        queryKey: getListClubsQueryKey({ scope: "mine" }),
+        enabled: !!isSignedIn,
+      },
+    }
   );
 
-  if (isLoading) return <LoadingState message={t("clubs.loading")} />;
-  if (isError) return <ErrorState onRetry={refetch} />;
+  const discoverParams =
+    typeFilter === "all"
+      ? { scope: "discover" }
+      : { scope: "discover", type: typeFilter };
 
-  const filters = [
-    { value: "all", label: t("clubs.filterAll") },
-    { value: "car", label: t("clubs.filterCar") },
-    { value: "motorcycle", label: t("clubs.filterMotorcycle") },
-    { value: "both", label: t("clubs.filterBoth") },
-  ];
+  const { data: publicClubs, isLoading: publicLoading, isError, refetch } = useListClubs(
+    discoverParams,
+    { query: { queryKey: getListClubsQueryKey(discoverParams) } }
+  );
+
+  const filteredPublic = (publicClubs ?? []).filter(
+    (c) =>
+      !search ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (c.location ?? "").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("clubs.title")}</h1>
-          <p className="text-muted-foreground mt-1">{t("clubs.subtitle")}</p>
+          <h1 className="text-3xl font-bold tracking-tight">Klubber</h1>
+          <p className="text-muted-foreground mt-1">
+            Finn og bli med i veteranklubber for biler og motorsykler.
+          </p>
         </div>
         <Link href="/clubs/new">
           <Button className="shrink-0">
             <Plus className="w-4 h-4 mr-2" />
-            {t("clubs.createClub")}
+            Opprett klubb
           </Button>
         </Link>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {filters.map((f) => (
-          <Button
-            key={f.value}
-            variant={filter === f.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter(f.value)}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
-
-      {!clubs || clubs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-            <Users className="w-8 h-8 text-muted-foreground" />
+      {/* Mine klubber */}
+      {isSignedIn && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <BookUser className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Mine klubber</h2>
           </div>
-          <h3 className="text-lg font-semibold mb-2">{t("clubs.noClubsTitle")}</h3>
-          <p className="text-muted-foreground mb-6 max-w-sm">{t("clubs.noClubsDesc")}</p>
-          <Link href="/clubs/new">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              {t("clubs.createClub")}
-            </Button>
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {clubs.map((club) => (
-            <Link key={club.id} href={`/clubs/${club.id}`}>
-              <Card className="hover-elevate cursor-pointer transition-all bg-card border-border overflow-hidden group h-full">
-                {club.bannerUrl ? (
-                  <div
-                    className="h-24 w-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${club.bannerUrl})` }}
-                  />
-                ) : (
-                  <div className="h-24 w-full bg-gradient-to-br from-primary/30 to-primary/5 flex items-center justify-center">
-                    <TypeIcon type={club.clubType} />
-                  </div>
-                )}
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-3 mb-3">
-                    {club.logoUrl ? (
-                      <img
-                        src={club.logoUrl}
-                        alt={club.name}
-                        className="w-12 h-12 rounded-md object-cover border border-border shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center shrink-0">
-                        <TypeIcon type={club.clubType} />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-base leading-tight truncate group-hover:text-primary transition-colors">
-                        {club.name}
-                      </h3>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        <Badge
-                          className={`text-xs ${typeColor[club.clubType] ?? ""} border-0`}
-                        >
-                          {typeLabel[club.clubType] ?? club.clubType}
-                        </Badge>
-                        {club.isPrivate && (
-                          <Badge className="text-xs bg-slate-500/20 text-slate-300 border-0 gap-1">
-                            <Lock className="w-2.5 h-2.5" />
-                            Privat
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
 
-                  {club.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {club.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      <span>
-                        {club.memberCount}{" "}
-                        {club.memberCount === 1 ? t("clubs.member") : t("clubs.members")}
-                      </span>
-                    </div>
-                    {club.location && (
-                      <div className="flex items-center gap-1 truncate">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{club.location}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+          {myLoading ? (
+            <div className="text-sm text-muted-foreground py-4 pl-1">Laster dine klubber...</div>
+          ) : !myClubs || myClubs.length === 0 ? (
+            <div className="border border-dashed border-border rounded-xl py-10 text-center">
+              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                <Users className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground text-sm font-medium">Du er ikke med i noen klubber ennå.</p>
+              <p className="text-muted-foreground text-xs mt-1">
+                Utforsk offentlige klubber nedenfor, eller opprett din egen.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {myClubs.map((club) => (
+                <ClubCard key={club.id} club={club} />
+              ))}
+            </div>
+          )}
+        </section>
       )}
+
+      {/* Divider */}
+      {isSignedIn && <div className="border-t border-border" />}
+
+      {/* Utforsk offentlige klubber */}
+      <section className="space-y-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Utforsk offentlige klubber</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1 ml-7">
+            Offentlige klubber er åpne — alle kan melde seg inn.
+            Private klubber er kun tilgjengelige via invitasjon og vises ikke her.
+          </p>
+        </div>
+
+        {/* Search + filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Søk etter klubb..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {TYPE_FILTERS.map((f) => (
+              <Button
+                key={f.value}
+                variant={typeFilter === f.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTypeFilter(f.value)}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {publicLoading ? (
+          <LoadingState message="Laster klubber..." />
+        ) : isError ? (
+          <div className="py-8 text-center">
+            <p className="text-muted-foreground text-sm mb-3">Kunne ikke laste klubber.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Prøv igjen</Button>
+          </div>
+        ) : filteredPublic.length === 0 ? (
+          <div className="py-12 text-center">
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+              <Globe className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground text-sm font-medium">
+              {search ? `Ingen klubber matcher "${search}".` : "Ingen offentlige klubber ennå."}
+            </p>
+            {search && (
+              <Button variant="ghost" size="sm" className="mt-2" onClick={() => setSearch("")}>
+                Nullstill søk
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredPublic.map((club) => (
+              <ClubCard key={club.id} club={club} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

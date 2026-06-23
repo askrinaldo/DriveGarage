@@ -216,7 +216,13 @@ export default function ClubForm() {
               <Switch
                 id="isPrivate"
                 checked={form.isPrivate}
-                onCheckedChange={(checked) => setForm((f) => ({ ...f, isPrivate: checked }))}
+                onCheckedChange={(checked) =>
+                  setForm((f) => ({
+                    ...f,
+                    isPrivate: checked,
+                    joinMode: checked ? "invite_only" : f.joinMode,
+                  }))
+                }
               />
             </div>
 
@@ -225,6 +231,7 @@ export default function ClubForm() {
               <Select
                 value={form.joinMode}
                 onValueChange={(v) => setForm((f) => ({ ...f, joinMode: v as "open" | "invite_only" }))}
+                disabled={form.isPrivate}
               >
                 <SelectTrigger id="joinMode">
                   <SelectValue />
@@ -234,6 +241,11 @@ export default function ClubForm() {
                   <SelectItem value="invite_only">Kun invitasjon — admin godkjenner nye medlemmer</SelectItem>
                 </SelectContent>
               </Select>
+              {form.isPrivate && (
+                <p className="text-xs text-muted-foreground">
+                  Private klubber krever alltid invitasjon.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
 import { db, clubsTable, clubMembersTable } from "@workspace/db";
 import {
   CreateClubBody,
@@ -46,31 +46,55 @@ async function getClubWithCount(id: number) {
 
 // ─── Public routes ────────────────────────────────────────────────────────────
 
+const CLUBS_SELECT = {
+  id: clubsTable.id,
+  name: clubsTable.name,
+  description: clubsTable.description,
+  logoUrl: clubsTable.logoUrl,
+  bannerUrl: clubsTable.bannerUrl,
+  location: clubsTable.location,
+  clubType: clubsTable.clubType,
+  ownerName: clubsTable.ownerName,
+  isPrivate: clubsTable.isPrivate,
+  joinMode: clubsTable.joinMode,
+  createdAt: clubsTable.createdAt,
+  updatedAt: clubsTable.updatedAt,
+  memberCount: sql<number>`cast(count(${clubMembersTable.id}) as int)`,
+} as const;
+
 router.get("/clubs", async (req, res): Promise<void> => {
-  const { type } = req.query;
-  const clubs = await db
-    .select({
-      id: clubsTable.id,
-      name: clubsTable.name,
-      description: clubsTable.description,
-      logoUrl: clubsTable.logoUrl,
-      bannerUrl: clubsTable.bannerUrl,
-      location: clubsTable.location,
-      clubType: clubsTable.clubType,
-      ownerName: clubsTable.ownerName,
-      isPrivate: clubsTable.isPrivate,
-      createdAt: clubsTable.createdAt,
-      updatedAt: clubsTable.updatedAt,
-      memberCount: sql<number>`cast(count(${clubMembersTable.id}) as int)`,
-    })
+  const { type, scope } = req.query;
+
+  const base = db
+    .select(CLUBS_SELECT)
     .from(clubsTable)
-    .leftJoin(clubMembersTable, eq(clubMembersTable.clubId, clubsTable.id))
-    .groupBy(clubsTable.id);
+    .leftJoin(clubMembersTable, eq(clubMembersTable.clubId, clubsTable.id));
+
+  let clubs: Awaited<ReturnType<typeof base.groupBy>>;
+
+  if (scope === "mine") {
+    // Clubs where the authenticated Clerk user is a member
+    const userName = req.userAuth?.name || req.userAuth?.email;
+    if (!userName) { res.json([]); return; }
+    const memberships = await db
+      .select({ clubId: clubMembersTable.clubId })
+      .from(clubMembersTable)
+      .where(eq(clubMembersTable.memberName, userName));
+    const clubIds = memberships.map((m) => m.clubId);
+    if (clubIds.length === 0) { res.json([]); return; }
+    clubs = await base.where(inArray(clubsTable.id, clubIds)).groupBy(clubsTable.id);
+  } else if (scope === "discover") {
+    // Only public clubs — private clubs are hidden from discovery
+    clubs = await base.where(eq(clubsTable.isPrivate, false)).groupBy(clubsTable.id);
+  } else {
+    clubs = await base.groupBy(clubsTable.id);
+  }
 
   const filtered =
     type && typeof type === "string"
       ? clubs.filter((c) => c.clubType === type || c.clubType === "both")
       : clubs;
+
   res.json(filtered);
 });
 

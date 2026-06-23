@@ -11,6 +11,7 @@ import {
   useRevokeClubInvitation,
   getGetClubQueryKey,
   getListClubInvitationsQueryKey,
+  getListClubsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoadingState, ErrorState } from "@/components/ui-states";
@@ -133,8 +134,6 @@ export default function ClubDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [joinOpen, setJoinOpen] = useState(false);
-  const [joinName, setJoinName] = useState("");
   const [editRoleMember, setEditRoleMember] = useState<{ id: number; name: string; role: string } | null>(null);
   const [newRole, setNewRole] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -143,8 +142,11 @@ export default function ClubDetail() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
 
-  const { hasRole } = useClubAuth(clubId);
+  const { hasRole, session } = useClubAuth(clubId);
   const canAdmin = hasRole("admin");
+  const isOwner = hasRole("owner");
+  const isMember = !!session;
+  const myMemberName = session?.memberName ?? null;
 
   const { data: club, isLoading, isError, refetch } = useGetClub(clubId, {
     query: { queryKey: getGetClubQueryKey(clubId) },
@@ -170,13 +172,11 @@ export default function ClubDetail() {
   }
 
   async function handleJoin() {
-    if (!joinName.trim()) return;
     try {
-      await joinMutation.mutateAsync({ clubId, data: { memberName: joinName.trim() } });
+      await joinMutation.mutateAsync({ clubId, data: { memberName: "join" } });
       toast({ title: "Du er nå medlem", description: `Velkommen til ${club?.name}!` });
-      setJoinOpen(false);
-      setJoinName("");
       invalidateClub();
+      queryClient.invalidateQueries({ queryKey: getListClubsQueryKey({ scope: "mine" }) });
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
@@ -184,9 +184,15 @@ export default function ClubDetail() {
   }
 
   async function handleLeave(memberId: number, name: string) {
-    await leaveMutation.mutateAsync({ clubId, memberId });
-    toast({ title: `${name} har forlatt klubben` });
-    invalidateClub();
+    try {
+      await leaveMutation.mutateAsync({ clubId, memberId });
+      toast({ title: `${name} har forlatt klubben` });
+      invalidateClub();
+      queryClient.invalidateQueries({ queryKey: getListClubsQueryKey({ scope: "mine" }) });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
+    }
   }
 
   async function handleRoleUpdate() {
@@ -273,30 +279,34 @@ export default function ClubDetail() {
           )}
         </div>
         <div className="flex gap-2 shrink-0">
-          <Link href={`/clubs/${clubId}/dashboard`}>
-            <Button variant="outline" size="sm">
-              <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />
-              Dashboard
-            </Button>
-          </Link>
-          <Link href={`/clubs/${clubId}/events`}>
-            <Button variant="outline" size="sm">
-              <Calendar className="w-3.5 h-3.5 mr-1.5" />
-              Arrangementer
-            </Button>
-          </Link>
-          <Link href={`/clubs/${clubId}/forum`}>
-            <Button variant="outline" size="sm">
-              <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-              Forum
-            </Button>
-          </Link>
-          <Link href={`/clubs/${clubId}/garage`}>
-            <Button variant="outline" size="sm">
-              <Warehouse className="w-3.5 h-3.5 mr-1.5" />
-              Garasje
-            </Button>
-          </Link>
+          {(!club.isPrivate || isMember) && (
+            <>
+              <Link href={`/clubs/${clubId}/dashboard`}>
+                <Button variant="outline" size="sm">
+                  <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Link href={`/clubs/${clubId}/events`}>
+                <Button variant="outline" size="sm">
+                  <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                  Arrangementer
+                </Button>
+              </Link>
+              <Link href={`/clubs/${clubId}/forum`}>
+                <Button variant="outline" size="sm">
+                  <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                  Forum
+                </Button>
+              </Link>
+              <Link href={`/clubs/${clubId}/garage`}>
+                <Button variant="outline" size="sm">
+                  <Warehouse className="w-3.5 h-3.5 mr-1.5" />
+                  Garasje
+                </Button>
+              </Link>
+            </>
+          )}
           {canAdmin && (
             <Link href={`/clubs/${clubId}/edit`}>
               <Button variant="outline" size="sm">
@@ -305,7 +315,7 @@ export default function ClubDetail() {
               </Button>
             </Link>
           )}
-          {canAdmin && (
+          {isOwner && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
@@ -428,12 +438,33 @@ export default function ClubDetail() {
                 Revisjonslogg
               </Button>
             </Link>
-            {!club.isPrivate ? (
-              <Button className="w-full" onClick={() => setJoinOpen(true)}>
-                <UserPlus className="w-4 h-4 mr-2" />
-                Bli med i klubben
-              </Button>
-            ) : (
+            {!isMember && !club.isPrivate && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="w-full" disabled={joinMutation.isPending}>
+                    {joinMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <UserPlus className="w-4 h-4 mr-2" />
+                    )}
+                    Bli med i klubben
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Bli med i {club.name}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Du blir registrert som medlem. Du kan forlate klubben igjen når som helst.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleJoin}>Bli med</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {!isMember && club.isPrivate && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center py-1">
                 <Lock className="w-3.5 h-3.5 shrink-0" />
                 <span>Privat — krever invitasjon</span>
@@ -493,30 +524,19 @@ export default function ClubDetail() {
                           </div>
                         </div>
                       </div>
-                      {member.role !== "owner" && canAdmin && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-xs h-7"
-                            onClick={() => {
-                              setEditRoleMember({ id: member.id, name: member.memberName, role: member.role });
-                              setNewRole(member.role);
-                            }}
-                          >
-                            Endre rolle
-                          </Button>
+                      <div className="flex gap-2">
+                        {myMemberName && member.memberName === myMemberName && member.role !== "owner" && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="ghost" className="text-xs h-7 text-destructive hover:text-destructive">
-                                Fjern
+                              <Button size="sm" variant="ghost" className="text-xs h-7 text-muted-foreground">
+                                Forlat
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Fjerne {member.memberName}?</AlertDialogTitle>
+                                <AlertDialogTitle>Forlat {club.name}?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Dette vil fjerne {member.memberName} fra klubben.
+                                  Du vil miste tilgang og må inviteres igjen for å bli med på nytt.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -525,13 +545,52 @@ export default function ClubDetail() {
                                   onClick={() => handleLeave(member.id, member.memberName)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Fjern
+                                  Forlat klubb
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        </div>
-                      )}
+                        )}
+                        {member.role !== "owner" && canAdmin && member.memberName !== myMemberName && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs h-7"
+                              onClick={() => {
+                                setEditRoleMember({ id: member.id, name: member.memberName, role: member.role });
+                                setNewRole(member.role);
+                              }}
+                            >
+                              Endre rolle
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="ghost" className="text-xs h-7 text-destructive hover:text-destructive">
+                                  Fjern
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Fjern {member.memberName}?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Dette vil fjerne {member.memberName} fra klubben.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleLeave(member.id, member.memberName)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Fjern
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -667,37 +726,6 @@ export default function ClubDetail() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Join dialog */}
-      <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Bli medlem av {club.name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="joinName">Ditt navn</Label>
-              <Input
-                id="joinName"
-                value={joinName}
-                onChange={(e) => setJoinName(e.target.value)}
-                placeholder="Ola Nordmann"
-                onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-                autoFocus
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Avbryt</Button>
-            </DialogClose>
-            <Button onClick={handleJoin} disabled={joinMutation.isPending || !joinName.trim()}>
-              {joinMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Bli med
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Edit role dialog */}
       <Dialog open={!!editRoleMember} onOpenChange={(o) => !o && setEditRoleMember(null)}>
