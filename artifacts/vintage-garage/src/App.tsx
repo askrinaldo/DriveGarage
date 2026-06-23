@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import { ClerkProvider, useAuth, useSession } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
+import { nbNO } from "@clerk/localizations";
 import { useEffect } from "react";
 import { setClerkTokenGetter } from "@workspace/api-client-react";
 
@@ -180,6 +181,7 @@ function ClerkProviderWithRoutes() {
     <ClerkProvider
       publishableKey={clerkPubKey}
       proxyUrl={clerkProxyUrl}
+      localization={nbNO}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       afterSignOutUrl={`${basePath}/`}
@@ -188,11 +190,13 @@ function ClerkProviderWithRoutes() {
       appearance={{
         baseTheme: dark,
         cssLayerName: "clerk",
-        options: {
+        layout: {
           logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
-          logoLinkUrl: `${basePath}/`,
+          logoLinkUrl: `${window.location.origin}${basePath}/`,
           socialButtonsPlacement: "bottom",
-          socialButtonsVariant: "iconButton",
+          socialButtonsVariant: "blockButton",
+          privacyPageUrl: `${window.location.origin}${basePath}/privacy`,
+          termsPageUrl: `${window.location.origin}${basePath}/terms`,
         },
         variables: {
           colorPrimary: "#6366f1",
@@ -201,7 +205,7 @@ function ClerkProviderWithRoutes() {
           colorInputForeground: "#f8fafc",
           colorForeground: "#f8fafc",
           colorNeutral: "#94a3b8",
-          fontFamily: "Outfit, sans-serif",
+          fontFamily: "Inter, sans-serif",
           borderRadius: "0.75rem",
         },
         elements: {

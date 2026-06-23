@@ -1,0 +1,100 @@
+Act as a senior product-minded frontend engineer.
+
+Project: DriveGarage
+
+We are doing Phase 7.5 only: auth screen branding and login UX cleanup.
+
+Current status:
+
+* Clerk auth works.
+* Google login works.
+* Microsoft login should be enabled in Clerk Dashboard, not hardcoded.
+* Product name is DriveGarage.
+* Old branding still appears on sign-in screen:
+
+  * “Vintage Vehicle Log”
+  * old icon
+  * English Clerk text
+  * Development mode banner
+* Legal links are already added below sign-in/sign-up.
+* Payment exemption Phase 7 is complete.
+
+Important:
+
+* Do not change backend auth logic.
+* Do not remove local super_admin fallback.
+* Do not implement Microsoft in code unless Clerk requires safe appearance configuration only.
+* Do not implement Vipps.
+* Do not change database schema.
+* Only fix branding, copy and auth-page UX.
+
+Tasks:
+
+1. Audit auth pages and Clerk configuration
+   Inspect:
+
+* sign-in page
+* sign-up page
+* Clerk provider/config
+* app metadata/title
+* favicon/logo usage
+* any “Vintage Vehicle Log” text
+* any old search-icon branding
+* any development-mode text caused by app code vs Clerk dev keys
+
+2. Rename visible branding to DriveGarage
+   Replace old public-facing branding:
+
+* Vintage Vehicle Log → DriveGarage
+* old logo/icon where safe
+* page title/meta if present
+* sign-in/sign-up headings if controlled by app
+
+3. Clerk appearance/copy
+   If Clerk allows safe appearance/localization:
+
+* set app name/display text to DriveGarage
+* prefer Norwegian copy where possible
+* keep Google login visible
+* leave Microsoft provider to Clerk Dashboard activation
+* do not fake Microsoft button if provider is not active
+
+4. Development mode banner
+   Determine whether “Development mode” comes from:
+
+* Clerk development keys
+* app code
+* Replit/dev environment
+
+If it comes from Clerk dev keys:
+
+* document that it disappears when production Clerk keys are used
+* do not attempt to hide it with CSS
+
+If it comes from app code:
+
+* remove or conditionally show only in development.
+
+5. Legal links
+   Ensure legal text remains visible under sign-in/sign-up:
+
+* Terms
+* Privacy Policy
+* Cookie Policy if appropriate
+
+6. Validation
+
+* Run frontend typecheck.
+* Load /sign-in and /sign-up.
+* Confirm branding says DriveGarage.
+* Confirm Google still works.
+* Confirm no broken nested links.
+
+Deliverable:
+
+* files changed
+* old branding found/removed
+* Clerk development-mode finding
+* Microsoft login note
+* typecheck result
+* remaining launch tasks
