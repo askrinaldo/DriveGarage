@@ -13,9 +13,8 @@ const ENV_SPEC: EnvSpec[] = [
   { key: "CLERK_SECRET_KEY",      required: true,  redact: true,  description: "Clerk secret key" },
   { key: "SESSION_SECRET",        required: true,  redact: true,  description: "JWT signing secret" },
   { key: "PORT",                  required: false, redact: false, description: "HTTP port (default 8080)" },
-  { key: "STRIPE_SECRET_KEY",     required: false, redact: true,  description: "Stripe secret key (required when billing enabled)" },
-  { key: "STRIPE_WEBHOOK_SECRET", required: false, redact: true,  description: "Stripe webhook signing secret" },
   { key: "REPLIT_DOMAINS",        required: false, redact: false, description: "Comma-separated allowed CORS origins" },
+  // Vipps integration — not yet active. Keys will be added here when Vipps is integrated.
 ];
 
 export function validateEnv(): void {

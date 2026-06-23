@@ -37,7 +37,7 @@ import financeInsightRouter from "./financeInsight";
 import adminRouter from "./admin";
 import supportRouter from "./support";
 import projectsRouter from "./projects";
-// import billingRouter from "./billing"; // temporarily disabled — re-enable with Stripe
+import billingRouter from "./billing"; // Vipps placeholder — routes return pending_integration
 
 const router: IRouter = Router();
 
@@ -76,6 +76,6 @@ router.use(financeInsightRouter);
 router.use(adminRouter);
 router.use(supportRouter);
 router.use(projectsRouter);
-// router.use(billingRouter); // temporarily disabled
+router.use(billingRouter); // Vipps placeholder active
 
 export default router;

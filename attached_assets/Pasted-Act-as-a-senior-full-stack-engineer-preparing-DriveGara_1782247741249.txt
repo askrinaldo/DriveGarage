@@ -1,0 +1,94 @@
+Act as a senior full-stack engineer preparing DriveGarage for a Vipps demo.
+
+Project: DriveGarage
+
+Goal:
+Remove Stripe from the application so the site can be published/demoed without Stripe dependency.
+
+Context:
+
+* We will NOT use Stripe.
+* Vipps is the future payment provider.
+* Vipps integration is NOT implemented yet.
+* We need the app ready to show in a Vipps meeting tomorrow.
+* Billing should clearly say Vipps is coming soon / not active yet.
+* Do not implement Vipps API now.
+
+Important:
+
+* Remove or disable Stripe runtime dependencies.
+* Do not break the app.
+* Do not delete unrelated billing/plans/trial UI.
+* Do not add fake payment success.
+* Do not modify auth.
+* Do not modify database unless absolutely required.
+* Preserve pricing/demo pages.
+
+Tasks:
+
+1. Audit Stripe usage
+   Search entire repo for:
+
+* stripe
+* Stripe
+* STRIPE
+* checkout
+* webhook
+* subscription
+* billing provider references
+
+2. Remove Stripe from runtime
+   Disable/remove:
+
+* Stripe SDK usage
+* Stripe client imports
+* Stripe webhook routes
+* Stripe checkout/session routes
+* Stripe billing API calls
+* STRIPE_SECRET_KEY startup requirement if still required
+* any frontend code that attempts real Stripe payment
+
+3. Keep billing demo-safe
+   Billing and pricing pages should show:
+
+* Vipps is planned
+* payment is not active yet
+* 7-day trial is planned
+* no money will be charged
+* no fake “Pay now” flow
+
+4. API behavior
+   Replace any active Stripe billing endpoints with safe placeholder responses such as:
+   {
+   "provider": "vipps",
+   "status": "pending_integration",
+   "message": "Vipps-betaling er ikke aktivert ennå"
+   }
+
+5. Documentation
+   Update:
+
+* ARCHITECTURE.md
+* VIPPS_MEETING.md if relevant
+* legal/payment wording if Stripe still appears as active provider
+
+6. Validation
+
+* Run backend typecheck/build
+* Run frontend typecheck/build
+* Start/restart workflows
+* Verify app starts without STRIPE_SECRET_KEY
+* Verify /billing loads
+* Verify /pricing loads
+* Verify no Stripe route is publicly active
+* Verify search results show no active Stripe runtime usage
+
+7. Deliverable
+   Return:
+
+* files changed
+* Stripe references removed/disabled
+* remaining Stripe references, if any, and why
+* billing/pricing behavior after change
+* build/typecheck result
+* demo readiness status for Vipps meeting
