@@ -1,0 +1,130 @@
+Act as a senior backend security architect and SaaS product lead.
+
+Project: DriveGarage
+
+We are now doing Phase 6: superadmin, roles and payment exemption design.
+
+Current status:
+
+* Clerk is the primary auth system.
+* Google login works.
+* Microsoft login should be enabled in Clerk Dashboard.
+* Local auth exists only as legacy/super_admin fallback.
+* Vipps is planned, not implemented.
+* Pricing/trial is planned:
+
+  * 7-day free trial
+  * recurring Vipps payment after explicit user approval
+* Billing/payment exemption must be possible for internal/admin/test/partner accounts.
+* We need a safe superadmin model before implementing billing enforcement.
+
+Important:
+
+* Do not implement broad admin access yet.
+* Do not let superadmin automatically see all private user data.
+* Do not hardcode admin access only by email in application code.
+* Do not implement Vipps API.
+* Do not delete Stripe code.
+* Do not redesign Clubs.
+* Do not change existing user isolation.
+* Focus on secure model, minimal schema/API plan, and only safe documentation or placeholder UI if needed.
+
+Tasks:
+
+1. Audit existing admin/auth code
+   Check for:
+
+* super_admin fallback
+* x-user-token behavior
+* local users/password_hash
+* admin routes
+* tenant admin concepts
+* current role fields
+* billing tier/status fields
+* existing audit logs
+* any place where admin can access user data
+
+2. Define role model
+   Propose a clear role model:
+
+* user
+* support_admin
+* billing_admin
+* super_admin
+
+For each role define:
+
+* what they can do
+* what they cannot do
+* whether they can view private user data
+* what actions require audit logging
+
+3. Define payment exemption model
+   Plan how to represent users who should not pay:
+
+* exempt_internal
+* exempt_partner
+* exempt_test
+* exempt_manual
+* optional expiresAt
+* reason required
+* createdBy required
+* createdAt required
+* audit log required
+
+Avoid hardcoding permanent exemptions by email in code.
+A temporary env whitelist may be proposed only for bootstrap, not as final design.
+
+4. Superadmin privacy boundaries
+   Define strict rules:
+
+* Superadmin can manage billing status and exemptions.
+* Superadmin should see account metadata by default, not full private garage data.
+* Viewing a user’s private vehicles/receipts/trips requires an explicit support-access action with reason.
+* Every support-access action must be audit logged.
+* Receipts/uploads should be especially restricted.
+* No silent browsing of private user data.
+
+5. Minimal data model proposal
+   Propose tables/fields, but do not implement unless explicitly safe:
+
+* user_roles
+* user_billing_overrides
+* admin_audit_log
+* support_access_sessions
+
+Include fields and relationships.
+
+6. Admin UI proposal
+   Plan future admin UI pages:
+
+* /admin/users
+* /admin/users/:id
+* /admin/billing
+* /admin/audit-log
+* /admin/support-access
+
+Describe what should be visible on each page.
+
+7. Bootstrap strategy
+   Plan how first superadmin should be created:
+
+* safest approach for dev/staging
+* safest approach for production
+* avoid open registration becoming admin
+* avoid hardcoded emails in source code
+* use env variable only for one-time bootstrap if needed
+* convert bootstrap admin into DB role record
+
+8. Deliverable
+   Return:
+
+* current admin/auth findings
+* recommended role model
+* payment exemption model
+* privacy boundaries
+* proposed schema/API plan
+* admin UI plan
+* bootstrap strategy
+* files changed, if any
+* what should not be implemented yet
