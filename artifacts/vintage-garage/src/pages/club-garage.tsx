@@ -11,6 +11,7 @@ import {
   getListVehiclesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useClubAuth } from "@/hooks/use-club-auth";
 import { LoadingState, ErrorState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,6 +60,7 @@ import {
   ChevronRight,
   Trash2,
   Clock,
+  Lock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -122,9 +124,14 @@ export default function ClubGarage() {
     pageSize: PAGE_SIZE,
   };
 
-  const { data: club } = useGetClub(clubId, {
+  const { session, hasRole } = useClubAuth(clubId);
+  const canManage = hasRole("member");
+
+  const { data: club, isLoading: clubLoading } = useGetClub(clubId, {
     query: { queryKey: getGetClubQueryKey(clubId) },
   });
+
+  const isPrivateGate = !clubLoading && (club?.isPrivate ?? false) && !session;
 
   const {
     data: garageData,
@@ -132,7 +139,10 @@ export default function ClubGarage() {
     isError,
     refetch,
   } = useListClubGarage(clubId, garageParams, {
-    query: { queryKey: getListClubGarageQueryKey(clubId, garageParams) },
+    query: {
+      queryKey: getListClubGarageQueryKey(clubId, garageParams),
+      enabled: !isPrivateGate,
+    },
   });
 
   const { data: allVehicles } = useListVehicles({
@@ -192,6 +202,26 @@ export default function ClubGarage() {
     return [...new Set((garageData?.vehicles ?? []).map((v) => v.make))].sort();
   }, [garageData]);
 
+  if (isPrivateGate) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+          <Lock className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold mb-1">Privat garasje</h2>
+          <p className="text-muted-foreground text-sm max-w-xs">
+            Kun klubbmedlemmer kan se garasjen. Logg inn i forumet eller bli med i klubben for å få tilgang.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate(`/clubs/${clubId}`)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Tilbake til klubben
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -207,10 +237,12 @@ export default function ClubGarage() {
             {total} kjøretøy delt av klubbens medlemmer
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Legg til kjøretøy
-        </Button>
+        {canManage && (
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Legg til kjøretøy
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -292,12 +324,12 @@ export default function ClubGarage() {
           </p>
           {hasFilters ? (
             <Button variant="outline" onClick={resetFilters}>Nullstill filter</Button>
-          ) : (
+          ) : canManage ? (
             <Button onClick={() => setAddOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Legg til det første kjøretøyet
             </Button>
-          )}
+          ) : null}
         </div>
       ) : (
         <>
@@ -333,6 +365,7 @@ export default function ClubGarage() {
                       </Badge>
                     </div>
                   )}
+                  {canManage && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-destructive/80 hover:bg-destructive rounded text-white">
@@ -357,6 +390,7 @@ export default function ClubGarage() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                  )}
                 </div>
 
                 <CardContent className="p-4 space-y-3">

@@ -50,8 +50,10 @@ import {
   ArrowLeft, Edit, Trash2, Users, MapPin, Car, Bike,
   Crown, Shield, UserCheck, User, UserPlus, Loader2,
   Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse, MessageSquare, ClipboardList, LayoutDashboard, Calendar, ShoppingBag,
+  Lock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useClubAuth } from "@/hooks/use-club-auth";
 
 interface Params { id: string }
 
@@ -140,6 +142,9 @@ export default function ClubDetail() {
   const [inviteCreatedBy, setInviteCreatedBy] = useState("");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
+
+  const { hasRole } = useClubAuth(clubId);
+  const canAdmin = hasRole("admin");
 
   const { data: club, isLoading, isError, refetch } = useGetClub(clubId, {
     query: { queryKey: getGetClubQueryKey(clubId) },
@@ -258,7 +263,15 @@ export default function ClubDetail() {
         <Button variant="ghost" size="icon" onClick={() => navigate("/clubs")}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight flex-1 truncate">{club.name}</h1>
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight truncate">{club.name}</h1>
+          {club.isPrivate && (
+            <Badge className="bg-slate-500/20 text-slate-300 border-0 shrink-0 gap-1 text-xs">
+              <Lock className="w-3 h-3" />
+              Privat
+            </Badge>
+          )}
+        </div>
         <div className="flex gap-2 shrink-0">
           <Link href={`/clubs/${clubId}/dashboard`}>
             <Button variant="outline" size="sm">
@@ -284,37 +297,41 @@ export default function ClubDetail() {
               Garasje
             </Button>
           </Link>
-          <Link href={`/clubs/${clubId}/edit`}>
-            <Button variant="outline" size="sm">
-              <Edit className="w-3.5 h-3.5 mr-1.5" />
-              Rediger
-            </Button>
-          </Link>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                Slett
+          {canAdmin && (
+            <Link href={`/clubs/${clubId}/edit`}>
+              <Button variant="outline" size="sm">
+                <Edit className="w-3.5 h-3.5 mr-1.5" />
+                Rediger
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Slett klubb?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Dette vil permanent slette <strong>{club.name}</strong> og alle medlemmer. Handlingen kan ikke angres.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Slett klubb
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </Link>
+          )}
+          {canAdmin && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  Slett
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Slett klubb?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Dette vil permanent slette <strong>{club.name}</strong> og alle medlemmer. Handlingen kan ikke angres.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Slett klubb
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
@@ -353,6 +370,12 @@ export default function ClubDetail() {
                   <Badge className={`${typeColor[club.clubType] ?? ""} border-0 text-sm`}>
                     {typeLabel[club.clubType] ?? club.clubType}
                   </Badge>
+                  {club.isPrivate && (
+                    <Badge className="bg-slate-500/20 text-slate-300 border-0 text-sm gap-1">
+                      <Lock className="w-3 h-3" />
+                      Privat
+                    </Badge>
+                  )}
                   {club.location && (
                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
                       <MapPin className="w-3.5 h-3.5" />
@@ -405,14 +428,23 @@ export default function ClubDetail() {
                 Revisjonslogg
               </Button>
             </Link>
-            <Button className="w-full" onClick={() => setJoinOpen(true)}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Bli medlem
-            </Button>
-            <Button variant="outline" className="w-full" onClick={() => setInviteOpen(true)}>
-              <Link2 className="w-4 h-4 mr-2" />
-              Inviter noen
-            </Button>
+            {!club.isPrivate ? (
+              <Button className="w-full" onClick={() => setJoinOpen(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Bli med i klubben
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center py-1">
+                <Lock className="w-3.5 h-3.5 shrink-0" />
+                <span>Privat — krever invitasjon</span>
+              </div>
+            )}
+            {canAdmin && (
+              <Button variant="outline" className="w-full" onClick={() => setInviteOpen(true)}>
+                <Link2 className="w-4 h-4 mr-2" />
+                Inviter noen
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -461,7 +493,7 @@ export default function ClubDetail() {
                           </div>
                         </div>
                       </div>
-                      {member.role !== "owner" && (
+                      {member.role !== "owner" && canAdmin && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"

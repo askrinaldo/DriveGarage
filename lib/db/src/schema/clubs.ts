@@ -12,6 +12,7 @@ export const clubsTable = pgTable("clubs", {
   clubType: text("club_type").notNull().default("both"),
   ownerName: text("owner_name").notNull(),
   isPrivate: boolean("is_private").notNull().default(false),
+  joinMode: text("join_mode").notNull().default("open"),
   isSuspended: boolean("is_suspended").notNull().default(false),
   suspendedReason: text("suspended_reason"),
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),

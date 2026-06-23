@@ -6,6 +6,7 @@ import {
   clubEventRsvpsTable,
   clubMembersTable,
   forumNotificationsTable,
+  clubsTable,
 } from "@workspace/db";
 import { parseAuth, requireClubRole } from "../middleware/auth";
 import { audit } from "../lib/audit";
@@ -13,8 +14,19 @@ import { audit } from "../lib/audit";
 const router: IRouter = Router();
 
 // ─── List events ─────────────────────────────────────────────────────────────
-router.get("/clubs/:clubId/events", async (req, res): Promise<void> => {
+router.get("/clubs/:clubId/events", parseAuth, async (req, res): Promise<void> => {
   const clubId = parseInt(String(req.params.clubId), 10);
+
+  const [club] = await db
+    .select({ isPrivate: clubsTable.isPrivate })
+    .from(clubsTable)
+    .where(eq(clubsTable.id, clubId));
+  if (!club) { res.status(404).json({ error: "Klubb ikke funnet" }); return; }
+  if (club.isPrivate) {
+    const isMember = req.auth && req.auth.clubId === clubId;
+    if (!isMember) { res.status(403).json({ error: "Kun klubbmedlemmer kan se arrangementer." }); return; }
+  }
+
   const { upcoming } = req.query as Record<string, string>;
 
   let query = db
@@ -65,9 +77,19 @@ router.get("/clubs/:clubId/events", async (req, res): Promise<void> => {
 });
 
 // ─── Get single event ────────────────────────────────────────────────────────
-router.get("/clubs/:clubId/events/:eventId", async (req, res): Promise<void> => {
+router.get("/clubs/:clubId/events/:eventId", parseAuth, async (req, res): Promise<void> => {
   const clubId = parseInt(String(req.params.clubId), 10);
   const eventId = parseInt(String(req.params.eventId), 10);
+
+  const [clubCheck] = await db
+    .select({ isPrivate: clubsTable.isPrivate })
+    .from(clubsTable)
+    .where(eq(clubsTable.id, clubId));
+  if (!clubCheck) { res.status(404).json({ error: "Klubb ikke funnet" }); return; }
+  if (clubCheck.isPrivate) {
+    const isMember = req.auth && req.auth.clubId === clubId;
+    if (!isMember) { res.status(403).json({ error: "Kun klubbmedlemmer kan se arrangementer." }); return; }
+  }
 
   const [event] = await db
     .select()

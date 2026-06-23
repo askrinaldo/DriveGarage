@@ -167,7 +167,10 @@ export default function ClubForum() {
     isError,
     refetch,
   } = useListForumPosts(clubId, forumParams, {
-    query: { queryKey: getListForumPostsQueryKey(clubId, forumParams) },
+    query: {
+      queryKey: getListForumPostsQueryKey(clubId, forumParams),
+      enabled: isAuthenticated,
+    },
   });
 
   const { data: notifications } = useListForumNotifications(

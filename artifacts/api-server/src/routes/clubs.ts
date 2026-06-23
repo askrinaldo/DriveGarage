@@ -274,6 +274,19 @@ router.post("/clubs/:clubId/members", parseUserAuth, requireUser, async (req, re
     return;
   }
 
+  const [clubInfo] = await db
+    .select({ joinMode: clubsTable.joinMode })
+    .from(clubsTable)
+    .where(eq(clubsTable.id, params.data.clubId));
+  if (!clubInfo) {
+    res.status(404).json({ error: "Klubb ikke funnet" });
+    return;
+  }
+  if (clubInfo.joinMode === "invite_only") {
+    res.status(403).json({ error: "Denne klubben krever invitasjon for å bli med." });
+    return;
+  }
+
   const [member] = await db
     .insert(clubMembersTable)
     .values({ clubId: params.data.clubId, memberName, role: "member" })

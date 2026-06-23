@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { LoadingState, ErrorState } from "@/components/ui-states";
 import {
   ArrowLeft, Calendar, MapPin, Users, Clock, Plus,
-  ChevronLeft, ChevronRight, List, CalendarDays,
+  ChevronLeft, ChevronRight, List, CalendarDays, Lock,
 } from "lucide-react";
+import { useClubAuth } from "@/hooks/use-club-auth";
+import { useGetClub, getGetClubQueryKey } from "@workspace/api-client-react";
 
 interface Params { id: string }
 
@@ -176,9 +178,13 @@ export default function ClubEvents() {
   const clubId = parseInt(params.id, 10);
   const [, navigate] = useLocation();
 
+  const { session, getToken } = useClubAuth(clubId);
+  const { data: club } = useGetClub(clubId, { query: { queryKey: getGetClubQueryKey(clubId) } });
+
   const [events, setEvents] = useState<ClubEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [view, setView] = useState<"list" | "calendar">("list");
   const [filter, setFilter] = useState<"all" | "upcoming" | "past">("upcoming");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -186,12 +192,18 @@ export default function ClubEvents() {
   const load = useCallback(() => {
     setLoading(true);
     setError(false);
-    fetch(`/api/clubs/${clubId}/events`)
+    setLocked(false);
+    const token = getToken();
+    fetch(`/api/clubs/${clubId}/events`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then((r) => {
+        if (r.status === 403) { setLocked(true); setLoading(false); return null; }
         if (!r.ok) throw new Error();
         return r.json() as Promise<ClubEvent[]>;
       })
       .then((d) => {
+        if (d == null) return;
         setEvents(d);
         setLoading(false);
       })
@@ -199,9 +211,9 @@ export default function ClubEvents() {
         setError(true);
         setLoading(false);
       });
-  }, [clubId]);
+  }, [clubId, getToken]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, session]);
 
   const now = new Date();
   const filtered = events.filter((e) => {
@@ -212,6 +224,23 @@ export default function ClubEvents() {
 
   if (loading) return <LoadingState message="Laster arrangementer..." />;
   if (error) return <ErrorState onRetry={load} />;
+  if (locked) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+        <Lock className="w-8 h-8 text-muted-foreground" />
+      </div>
+      <div>
+        <h2 className="text-xl font-bold mb-1">Private arrangementer</h2>
+        <p className="text-muted-foreground text-sm max-w-xs">
+          Kun klubbmedlemmer kan se arrangementer. Logg inn via klubbforumet for å få tilgang.
+        </p>
+      </div>
+      <Button variant="outline" onClick={() => navigate(`/clubs/${clubId}`)}>
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Tilbake til klubben
+      </Button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">

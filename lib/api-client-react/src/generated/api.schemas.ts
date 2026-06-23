@@ -439,6 +439,8 @@ export interface Club {
   clubType: string;
   ownerName: string;
   memberCount: number;
+  isPrivate: boolean;
+  joinMode: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -466,6 +468,8 @@ export interface ClubWithMembers {
   clubType: string;
   ownerName: string;
   memberCount: number;
+  isPrivate: boolean;
+  joinMode: string;
   createdAt: string;
   updatedAt: string;
   members: ClubMember[];

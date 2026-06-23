@@ -9,15 +9,15 @@ import {
   clubMembersTable,
 } from "@workspace/db";
 import { emitToClub } from "../socket";
-import { requireClubRole } from "../middleware/auth";
+import { parseAuth, requireClubRole } from "../middleware/auth";
 import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
 
 const ROLE_ORDER: Record<string, number> = { owner: 4, admin: 3, moderator: 2, member: 1 };
 
-// ─── List posts (public) ──────────────────────────────────────────────────────
-router.get("/clubs/:clubId/forum/posts", async (req, res): Promise<void> => {
+// ─── List posts (members only) ────────────────────────────────────────────────
+router.get("/clubs/:clubId/forum/posts", requireClubRole("member"), async (req, res): Promise<void> => {
   const clubId = parseInt(String(req.params.clubId), 10);
   const { category, postType, page = "1", pageSize = "20", memberName } = req.query as Record<string, string>;
 
@@ -52,8 +52,8 @@ router.get("/clubs/:clubId/forum/posts", async (req, res): Promise<void> => {
   res.json({ posts, total, page: pg, pageSize: ps, totalPages: Math.ceil(total / ps) });
 });
 
-// ─── Get single post (public) ─────────────────────────────────────────────────
-router.get("/clubs/:clubId/forum/posts/:postId", async (req, res): Promise<void> => {
+// ─── Get single post (members only) ──────────────────────────────────────────
+router.get("/clubs/:clubId/forum/posts/:postId", requireClubRole("member"), async (req, res): Promise<void> => {
   const postId = parseInt(String(req.params.postId), 10);
   const { memberName } = req.query as Record<string, string>;
 

@@ -526,6 +526,8 @@ export const CreateClubBody = zod.object({
   location: zod.string().nullish(),
   clubType: zod.string(),
   ownerName: zod.string(),
+  isPrivate: zod.boolean().optional(),
+  joinMode: zod.string().optional(),
 });
 
 /**
@@ -572,6 +574,8 @@ export const UpdateClubBody = zod.object({
   bannerUrl: zod.string().nullish(),
   location: zod.string().nullish(),
   clubType: zod.string().optional(),
+  isPrivate: zod.boolean().optional(),
+  joinMode: zod.string().optional(),
 });
 
 export const UpdateClubResponse = zod.object({

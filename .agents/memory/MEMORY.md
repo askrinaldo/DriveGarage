@@ -6,3 +6,5 @@
 - [i18n setup](i18n-setup.md) — react-i18next with no/sv/da/en; no `as const` on master translation; getCurrentLocale() for date formatting.
 - [Clerk Bearer Token Fix](clerk-bearer-token-fix.md) — In Replit dev-proxy, Clerk cookie auth always fails (dev-browser-missing); fix is Bearer token via setClerkTokenGetter + useSession().getToken().
 - [Post-merge DB push](post-merge-db-push.md) — Use `push-force` (not `push`) in post-merge.sh; drizzle-kit push is interactive (inquirer), stdin is closed during post-merge so it hangs.
+- [API client schema duplication](api-client-schema-duplication.md) — lib/api-client-react has its own inlined Club/ClubWithMembers in src/generated/api.schemas.ts separate from lib/api-zod. Both must be updated when schema fields change.
+- [Express 5 params cast](express5-params-cast.md) — req.params.clubId can be string | string[] in strict TypeScript with Express 5 types; always cast with String() before parseInt.

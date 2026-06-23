@@ -1,0 +1,299 @@
+DriveGarage Phase 9 – Club System Overhaul
+
+Act as a senior SaaS architect, backend security engineer, and community platform designer.
+
+Project: DriveGarage
+
+Goal:
+Transform the current Club feature into a secure, scalable club/community system suitable for automotive clubs, enthusiast groups, and local organizations.
+
+Current issues:
+
+Non-members can still access too much information.
+Unauthorized users can see actions they should never see.
+Club permissions are inconsistent.
+Club privacy is unclear.
+Club pages feel unfinished.
+Club ownership/admin/member roles need stronger enforcement.
+Clubs should function more like Facebook Groups for car enthusiasts.
+
+Important:
+
+Backend authorization is the source of truth.
+Frontend must only display actions the user can perform.
+No breaking changes to existing clubs unless required for security.
+Deliver a complete audit and implementation plan before making destructive schema changes.
+1. Club Visibility Model
+
+Add support for:
+
+Public Club
+
+Visible in club discovery.
+
+Non-members may see:
+
+Club name
+Description
+Banner/logo
+Location
+Member count
+Vehicle count
+Upcoming public events
+
+Non-members may NOT see:
+
+Member list
+Garage details
+Forum posts
+Internal events
+Files
+Documents
+
+Show:
+
+"Bli med i klubben"
+
+instead of member content.
+
+Private Club
+
+Visible only if:
+
+Member
+Invited
+Owner/Admin
+
+Non-members may only see:
+
+Club name
+Short description
+Privacy badge
+
+Everything else hidden.
+
+2. Club Roles
+
+Support:
+
+Owner
+
+Can:
+
+Edit club
+Delete club
+Promote/demote admins
+Remove members
+Change privacy
+Manage invitations
+Manage events
+Admin
+
+Can:
+
+Approve requests
+Invite users
+Remove members
+Manage events
+Moderate forum
+
+Cannot:
+
+Delete club
+Remove owner
+Transfer ownership
+Member
+
+Can:
+
+View member content
+Participate in forum
+Upload vehicles to club garage
+Join events
+
+Cannot:
+
+Remove users
+Edit club settings
+Delete club
+Non-member
+
+Can only access what visibility rules allow.
+
+3. Club Dashboard Security
+
+Audit every route.
+
+Verify:
+
+Club details
+Club members
+Club garage
+Club events
+Club forum
+Club invitations
+Club settings
+Club analytics
+
+For each endpoint:
+
+Owner
+Admin
+Member
+Non-member
+
+Return:
+
+401
+403
+404
+
+where appropriate.
+
+4. Remove Dangerous UI Actions
+
+Find all buttons:
+
+Fjern
+Slett
+Delete
+Remove
+
+Hide them unless user has permission.
+
+If backend returns 403:
+
+Show toast:
+
+"Du har ikke tilgang til denne handlingen."
+
+Never:
+
+Crash UI
+Show error overlay
+Leave page broken
+5. Club Garage
+
+Club vehicles should behave differently than personal vehicles.
+
+Support:
+
+Club Garage Entry
+
+Contains:
+
+Vehicle reference
+Owner
+Visibility
+Description
+Images
+
+Rules:
+
+Vehicle owner controls own vehicle
+Club admin moderates content
+Other members cannot edit someone else's vehicle
+6. Club Forum
+
+Treat as community discussion.
+
+Add permissions for:
+
+Create post
+Edit own post
+Delete own post
+Admin moderation
+
+Prevent:
+
+Identity spoofing
+memberName-based trust
+
+Audit all forum tables.
+
+Recommend migration to userId-based ownership everywhere.
+
+7. Club Events
+
+Support:
+
+Public event
+Members-only event
+
+Non-members should not see members-only details.
+
+Members can RSVP.
+
+Admins manage events.
+
+8. Club Join Flow
+
+Support:
+
+Public Club
+
+Join instantly.
+
+Private Club
+
+Request membership.
+
+Admin approves.
+
+Invite Only
+
+Requires invitation.
+
+9. Future Monetization Compatibility
+
+Design so clubs can later support:
+
+Premium clubs
+Sponsored clubs
+Event ticketing
+Vipps payments
+Club subscriptions
+
+Do NOT implement payments now.
+
+Only prepare architecture.
+
+10. Deliverable
+
+Return:
+
+Security Audit
+routes reviewed
+vulnerabilities found
+vulnerabilities fixed
+Permission Matrix
+
+Owner
+Admin
+Member
+Non-member
+
+for every feature.
+
+UI Changes
+
+buttons hidden
+pages restricted
+privacy indicators
+
+Database Changes
+
+new fields
+new indexes
+new tables
+
+Test Results
+
+Owner test
+Admin test
+Member test
+Non-member test
+
+Remaining Risks
+
+before production launch.

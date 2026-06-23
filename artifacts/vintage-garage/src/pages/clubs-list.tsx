@@ -8,7 +8,7 @@ import { LoadingState, ErrorState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, MapPin, Car, Bike } from "lucide-react";
+import { Plus, Users, MapPin, Car, Bike, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const typeColor: Record<string, string> = {
@@ -127,11 +127,19 @@ export default function ClubsList() {
                       <h3 className="font-semibold text-base leading-tight truncate group-hover:text-primary transition-colors">
                         {club.name}
                       </h3>
-                      <Badge
-                        className={`text-xs mt-1 ${typeColor[club.clubType] ?? ""} border-0`}
-                      >
-                        {typeLabel[club.clubType] ?? club.clubType}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <Badge
+                          className={`text-xs ${typeColor[club.clubType] ?? ""} border-0`}
+                        >
+                          {typeLabel[club.clubType] ?? club.clubType}
+                        </Badge>
+                        {club.isPrivate && (
+                          <Badge className="text-xs bg-slate-500/20 text-slate-300 border-0 gap-1">
+                            <Lock className="w-2.5 h-2.5" />
+                            Privat
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
 

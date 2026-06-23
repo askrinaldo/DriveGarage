@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "@/components/ui-states";
 
@@ -48,6 +49,8 @@ export default function ClubForm() {
     location: "",
     clubType: "both" as "car" | "motorcycle" | "both",
     ownerName: "",
+    isPrivate: false,
+    joinMode: "open" as "open" | "invite_only",
   });
 
   useEffect(() => {
@@ -60,6 +63,8 @@ export default function ClubForm() {
         location: existingClub.location ?? "",
         clubType: existingClub.clubType as "car" | "motorcycle" | "both",
         ownerName: existingClub.ownerName,
+        isPrivate: (existingClub as { isPrivate?: boolean }).isPrivate ?? false,
+        joinMode: ((existingClub as { joinMode?: string }).joinMode ?? "open") as "open" | "invite_only",
       });
     }
   }, [existingClub]);
@@ -90,6 +95,8 @@ export default function ClubForm() {
       bannerUrl: form.bannerUrl.trim() || null,
       location: form.location.trim() || null,
       clubType: form.clubType,
+      isPrivate: form.isPrivate,
+      joinMode: form.joinMode,
       ...(isEdit ? {} : { ownerName: form.ownerName.trim() }),
     };
 
@@ -187,6 +194,46 @@ export default function ClubForm() {
                   placeholder="Oslo, Norge"
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Personvern og tilgang
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="isPrivate" className="text-sm font-medium">Privat klubb</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Garasje, arrangementer og forum er skjult for ikke-medlemmer
+                </p>
+              </div>
+              <Switch
+                id="isPrivate"
+                checked={form.isPrivate}
+                onCheckedChange={(checked) => setForm((f) => ({ ...f, isPrivate: checked }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="joinMode">Innmeldingsmodus</Label>
+              <Select
+                value={form.joinMode}
+                onValueChange={(v) => setForm((f) => ({ ...f, joinMode: v as "open" | "invite_only" }))}
+              >
+                <SelectTrigger id="joinMode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Åpen — hvem som helst kan melde seg inn</SelectItem>
+                  <SelectItem value="invite_only">Kun invitasjon — admin godkjenner nye medlemmer</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

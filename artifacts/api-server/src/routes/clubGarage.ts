@@ -5,13 +5,25 @@ import {
   clubGarageEntriesTable,
   vehiclesTable,
   serviceRecordsTable,
+  clubsTable,
 } from "@workspace/db";
-import { requireClubRole } from "../middleware/auth";
+import { parseAuth, requireClubRole } from "../middleware/auth";
 
 const router: IRouter = Router();
 
-router.get("/clubs/:clubId/garage", async (req, res): Promise<void> => {
-  const clubId = parseInt(req.params.clubId, 10);
+router.get("/clubs/:clubId/garage", parseAuth, async (req, res): Promise<void> => {
+  const clubId = parseInt(String(req.params.clubId), 10);
+
+  const [club] = await db
+    .select({ isPrivate: clubsTable.isPrivate })
+    .from(clubsTable)
+    .where(eq(clubsTable.id, clubId));
+  if (!club) { res.status(404).json({ error: "Klubb ikke funnet" }); return; }
+  if (club.isPrivate) {
+    const isMember = req.auth && req.auth.clubId === clubId;
+    if (!isMember) { res.status(403).json({ error: "Kun klubbmedlemmer kan se garasjen." }); return; }
+  }
+
   const {
     type,
     make,

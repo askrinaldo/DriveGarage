@@ -21,6 +21,8 @@ export interface ClubWithMembers {
   clubType: string;
   ownerName: string;
   memberCount: number;
+  isPrivate: boolean;
+  joinMode: string;
   createdAt: Date;
   updatedAt: Date;
   members: ClubMember[];

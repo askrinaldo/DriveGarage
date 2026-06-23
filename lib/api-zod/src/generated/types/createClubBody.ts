@@ -18,4 +18,6 @@ export interface CreateClubBody {
   location?: string | null;
   clubType: string;
   ownerName: string;
+  isPrivate?: boolean;
+  joinMode?: string;
 }

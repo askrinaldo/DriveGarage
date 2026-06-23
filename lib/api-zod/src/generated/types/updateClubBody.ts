@@ -17,4 +17,6 @@ export interface UpdateClubBody {
   /** @nullable */
   location?: string | null;
   clubType?: string;
+  isPrivate?: boolean;
+  joinMode?: string;
 }

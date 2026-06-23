@@ -21,6 +21,8 @@ export interface Club {
   clubType: string;
   ownerName: string;
   memberCount: number;
+  isPrivate: boolean;
+  joinMode: string;
   createdAt: Date;
   updatedAt: Date;
 }
