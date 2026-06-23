@@ -5,3 +5,4 @@
 - [Multi-tenant architecture](multi-tenant-architecture.md) — Tenant tables, JWT tenant fields, per-tenant vehicle filtering, SQL backfill approach.
 - [i18n setup](i18n-setup.md) — react-i18next with no/sv/da/en; no `as const` on master translation; getCurrentLocale() for date formatting.
 - [Clerk Bearer Token Fix](clerk-bearer-token-fix.md) — In Replit dev-proxy, Clerk cookie auth always fails (dev-browser-missing); fix is Bearer token via setClerkTokenGetter + useSession().getToken().
+- [Post-merge DB push](post-merge-db-push.md) — Use `push-force` (not `push`) in post-merge.sh; drizzle-kit push is interactive (inquirer), stdin is closed during post-merge so it hangs.
