@@ -68,19 +68,39 @@ export async function clerkUserAuth(
           .where(eq(usersTable.id, existing.id));
         user = { ...existing, replitUserId: clerkUserId };
       } else {
-        const [created] = await db
-          .insert(usersTable)
-          .values({
-            name: fullName,
-            email,
-            passwordHash: null,
-            replitUserId: clerkUserId,
-            role: "user",
-            isActive: true,
-            subscriptionTier: "free",
-          })
-          .returning();
-        user = created!;
+        try {
+          const [created] = await db
+            .insert(usersTable)
+            .values({
+              name: fullName,
+              email,
+              passwordHash: null,
+              replitUserId: clerkUserId,
+              role: "user",
+              isActive: true,
+              subscriptionTier: "free",
+            })
+            .returning();
+          user = created!;
+        } catch (insertErr: unknown) {
+          // Concurrent JIT race: another parallel request already inserted this user.
+          // Recover by re-selecting the row that won the race.
+          const pgCode = (insertErr as { cause?: { code?: string } })?.cause?.code
+            ?? (insertErr as { code?: string })?.code;
+          if (pgCode === "23505") {
+            const [raceWinner] = await db
+              .select()
+              .from(usersTable)
+              .where(eq(usersTable.email, email));
+            if (raceWinner) {
+              user = raceWinner;
+            } else {
+              throw insertErr;
+            }
+          } else {
+            throw insertErr;
+          }
+        }
       }
     }
 
