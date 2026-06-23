@@ -1,0 +1,157 @@
+Act as a senior QA lead, application security engineer, and production readiness auditor.
+
+Project: DriveGarage
+
+Phase 8 — Full QA and Security Readiness Audit
+
+Important:
+
+* Do not add new features.
+* Do not redesign UI.
+* Do not modify business logic unless a defect is found.
+* Focus on verification, testing, security, stability, and production readiness.
+
+Goal:
+
+Perform a complete audit of the application as if we are preparing for public beta.
+
+Audit Areas:
+
+1. Authentication
+
+   * Sign up
+   * Sign in
+   * Sign out
+   * Google login
+   * Apple login
+   * Email verification
+   * Password reset
+   * Session persistence
+   * Unauthorized access attempts
+
+2. User Isolation
+
+   * Verify users cannot access other users' vehicles
+   * Verify users cannot access other users' service records
+   * Verify users cannot access other users' receipts
+   * Verify users cannot access other users' trip logs
+   * Verify direct URL manipulation cannot bypass ownership checks
+
+3. Vehicle Management
+
+   * Create vehicle
+   * Edit vehicle
+   * Delete vehicle
+   * Upload image
+   * Empty states
+   * Validation
+
+4. Service Records
+
+   * Create
+   * Edit
+   * Delete
+   * Validation
+   * Ownership checks
+
+5. Receipts
+
+   * Upload
+   * View
+   * Delete
+   * Ownership checks
+   * File validation
+
+6. Trip Logs
+
+   * Create
+   * Edit
+   * Delete
+   * Ownership checks
+   * Data validation
+
+7. Clubs
+
+   * Create club
+   * Join club
+   * Leave club
+   * Invitation flow
+   * Authorization review
+   * Abuse review
+
+8. Admin
+
+   * Verify super_admin restrictions
+   * Verify admin audit logging
+   * Verify payment exemption functionality
+   * Verify no user can self-escalate privileges
+
+9. Frontend QA
+
+   * Broken links
+   * Console errors
+   * Duplicate routes
+   * React warnings
+   * Loading states
+   * Empty states
+   * Mobile responsiveness
+   * Accessibility issues
+
+10. API Security
+
+* Missing auth middleware
+* Missing ownership checks
+* Missing validation
+* Excessive error disclosure
+* Rate limiting coverage
+* Input validation coverage
+
+11. Production Readiness
+
+* Environment variables
+* Logging
+* Error handling
+* CORS
+* Security headers
+* Database indexes
+* Deployment blockers
+
+12. Billing Readiness
+
+* Verify no Stripe dependency is still active
+* Verify Vipps placeholders are correct
+* Identify what remains before Vipps integration
+
+Deliverable:
+
+Return:
+
+A. Executive summary
+
+B. Critical issues
+
+* Must fix before beta
+
+C. High-priority issues
+
+* Should fix before beta
+
+D. Medium-priority issues
+
+* Can be fixed after beta
+
+E. Low-priority issues
+
+F. Security findings
+
+G. Production readiness score (0-100)
+
+H. Beta readiness recommendation:
+
+* NOT READY
+* READY WITH FIXES
+* READY FOR BETA
+
+Do not start implementation.
+
+Only audit, verify, classify findings, and produce a prioritized report.
