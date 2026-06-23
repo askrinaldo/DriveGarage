@@ -101,7 +101,7 @@ router.post(
   "/clubs/:clubId/garage",
   requireClubRole("member"),
   async (req, res): Promise<void> => {
-    const clubId = parseInt(req.params.clubId, 10);
+    const clubId = parseInt(String(req.params.clubId), 10);
     const actor = req.auth!;
     const { vehicleId } = req.body as { vehicleId: number };
 
@@ -169,8 +169,8 @@ router.delete(
   "/clubs/:clubId/garage/:entryId",
   requireClubRole("member"),
   async (req, res): Promise<void> => {
-    const entryId = parseInt(req.params.entryId, 10);
-    const clubId = parseInt(req.params.clubId, 10);
+    const entryId = parseInt(String(req.params.entryId), 10);
+    const clubId = parseInt(String(req.params.clubId), 10);
     const actor = req.auth!;
 
     const [entry] = await db

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Car, Wrench, Banknote, Route, ArrowRight, Users,
   Shield, Flame, ChevronRight, MapPin, Zap, TrendingUp,
-  Clock, Plus, Activity
+  Clock, Plus, Activity, CreditCard, Smartphone, CheckCircle,
 } from "lucide-react";
 import {
   useGetDashboardStats,
@@ -56,6 +56,7 @@ function StatCard({
   sub,
   gradient,
   delay = 0,
+  href,
 }: {
   icon: React.ElementType;
   label: string;
@@ -63,6 +64,7 @@ function StatCard({
   sub?: string;
   gradient: string;
   delay?: number;
+  href?: string;
 }) {
   const locale = getCurrentLocale();
   const ref = useRef<HTMLDivElement>(null);
@@ -83,26 +85,33 @@ function StatCard({
     ? `${counted.toLocaleString(locale)} km`
     : counted;
 
-  return (
+  const card = (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-border/50 bg-card p-5 group hover:border-border transition-colors"
+      className={`relative overflow-hidden rounded-2xl border border-border/50 bg-card p-5 group transition-all duration-200 ${href ? "hover:border-border hover:shadow-md hover:-translate-y-0.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" : "hover:border-border"}`}
+      tabIndex={href ? 0 : undefined}
+      role={href ? "link" : undefined}
     >
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${gradient} opacity-[0.04]`} />
       <div className="flex items-start justify-between mb-4">
         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
           <Icon className="w-5 h-5 text-foreground" />
         </div>
-        <TrendingUp className="w-4 h-4 text-muted-foreground/50" />
+        {href ? <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors" /> : <TrendingUp className="w-4 h-4 text-muted-foreground/50" />}
       </div>
       <div className="text-2xl font-bold text-foreground tabular-nums">{displayValue}</div>
       <div className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wider">{label}</div>
       {sub && <div className="text-[11px] text-muted-foreground/60 mt-0.5">{sub}</div>}
     </motion.div>
   );
+
+  if (href) {
+    return <Link href={href}>{card}</Link>;
+  }
+  return card;
 }
 
 function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: string; model: string; year: number; type: string; color?: string | null; mileage?: number | null; imageUrl?: string | null }; delay?: number }) {
@@ -218,12 +227,47 @@ export default function Dashboard() {
         </Link>
       </motion.div>
 
+      {/* Trial/Billing banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.02, duration: 0.45 }}
+        className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-4 flex flex-col sm:flex-row sm:items-center gap-4"
+      >
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-900/30">
+            <CheckCircle className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-emerald-300">7 dagers gratis prøveperiode</p>
+            <p className="text-xs text-emerald-400/70 mt-0.5">Betaling er ikke aktivert ennå</p>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <Smartphone className="w-3 h-3 text-emerald-400/60" />
+              <span className="text-[11px] text-emerald-400/60">Vipps-betaling kommer snart</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href="/pricing">
+            <button className="text-xs font-semibold text-emerald-300 border border-emerald-500/30 rounded-lg px-3 py-1.5 hover:bg-emerald-500/15 transition-colors">
+              Se priser
+            </button>
+          </Link>
+          <Link href="/billing">
+            <button className="text-xs font-semibold text-white bg-emerald-600/70 hover:bg-emerald-500/80 rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5" />
+              Administrer abonnement
+            </button>
+          </Link>
+        </div>
+      </motion.div>
+
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Car}     label={t("dashboard.vehicles")}      value={stats?.totalVehicles ?? 0}             sub={`${stats?.vehiclesWithFinnUrl ?? 0} ${t("dashboard.onFinnNo")}`} gradient="from-indigo-500 to-cyan-500"   delay={0.05} />
-        <StatCard icon={Wrench}  label={t("dashboard.serviceRecords")} value={stats?.totalServiceRecords ?? 0}       sub={t("dashboard.allVehicles")}                                        gradient="from-amber-500 to-orange-400" delay={0.1} />
-        <StatCard icon={Banknote} label={t("dashboard.totalSpent")}   value={`kr ${stats?.totalSpent ?? 0}`}        sub={t("dashboard.lifetimeMaintenance")}                                gradient="from-emerald-500 to-teal-400" delay={0.15} />
-        <StatCard icon={Route}   label={t("dashboard.totalDriven")}   value={`${stats?.totalTripKm ?? 0} km`}       sub={t("dashboard.loggedTrips")}                                        gradient="from-violet-500 to-purple-400" delay={0.2} />
+        <StatCard icon={Car}     label={t("dashboard.vehicles")}       value={stats?.totalVehicles ?? 0}       sub={`${stats?.vehiclesWithFinnUrl ?? 0} ${t("dashboard.onFinnNo")}`} gradient="from-indigo-500 to-cyan-500"    delay={0.05}  href="/vehicles" />
+        <StatCard icon={Wrench}  label={t("dashboard.serviceRecords")} value={stats?.totalServiceRecords ?? 0} sub={t("dashboard.allVehicles")}                                        gradient="from-amber-500 to-orange-400"  delay={0.1}   href="/vehicles" />
+        <StatCard icon={Banknote} label={t("dashboard.totalSpent")}    value={`kr ${stats?.totalSpent ?? 0}`} sub={t("dashboard.lifetimeMaintenance")}                                gradient="from-emerald-500 to-teal-400"  delay={0.15}  href="/billing" />
+        <StatCard icon={Route}   label={t("dashboard.totalDriven")}    value={`${stats?.totalTripKm ?? 0} km`} sub={t("dashboard.loggedTrips")}                                       gradient="from-violet-500 to-purple-400" delay={0.2}   href="/vehicles" />
       </div>
 
       {/* Main Grid */}

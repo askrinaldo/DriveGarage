@@ -1,0 +1,114 @@
+Act as a senior full-stack engineer and product QA lead.
+
+Project: DriveGarage
+
+Phase 9 — Demo-critical functionality and trial visibility
+
+Goal:
+Fix the most important functionality gaps before the Vipps demo/beta.
+
+Important:
+
+* Do not implement real Vipps payments.
+* Do not reintroduce Stripe.
+* Do not redesign the whole UI.
+* Preserve existing auth, security and user isolation.
+* Backend authorization must be source of truth.
+
+Tasks:
+
+1. Make trial/billing visible in logged-in app
+   Add a clear dashboard banner/card:
+
+* “7 dagers gratis prøveperiode”
+* “Vipps-betaling kommer snart”
+* “Betaling er ikke aktivert ennå”
+
+Buttons:
+
+* “Se priser” → /pricing
+* “Administrer abonnement” → /billing
+
+Also add “Abonnement” or “Betaling” navigation in sidebar/user menu.
+
+2. Dashboard stat cards clickable
+   Make overview cards clickable:
+
+* Kjøretøy → /vehicles
+* Serviceposter → service/history route
+* Totalt brukt → service/history or reports route
+* Totalt kjørt → trip logs route
+
+Add clear hover states and keyboard accessibility.
+
+3. Vehicle PDF export
+   Implement/fix PDF report download for a vehicle.
+
+PDF should include:
+
+* vehicle details
+* service records
+* receipts summary if available
+* trip logs summary if available
+* total cost
+* total distance
+* generated date
+
+Security:
+
+* user can only export own vehicle
+* backend ownership check required
+* another user’s vehicle PDF must return 404/403
+
+4. Share/send vehicle data
+   Add a safe demo-ready way to share vehicle data with a new customer.
+
+Minimum version:
+
+* allow exporting/downloading vehicle report
+* optionally email report if existing mailer is already safe
+
+Do NOT implement automatic ownership transfer yet.
+
+5. Club privacy/security
+   Non-members must not be able to open private clubs and see full details.
+
+Public discovery can show limited info only.
+Private/member-only data requires membership:
+
+* member list
+* dashboard stats
+* garage details
+* events
+* forum
+* invitations
+
+Enforce backend membership checks.
+
+6. Billing/pricing demo state
+   Confirm:
+
+* /billing shows trial status, Vipps planned, no payment active
+* /pricing shows 7-day trial, Standard kr 49/mnd, Premium kr 99/mnd
+* no storage limits
+* no Stripe text
+* no checkout/payment API calls
+
+7. Validation
+
+* Run frontend typecheck/build
+* Run backend typecheck/build
+* Test PDF export
+* Test vehicle ownership protection
+* Test club member vs non-member access
+* Test dashboard card navigation
+* Test /billing and /pricing
+
+Deliverable:
+
+* files changed
+* functionality implemented
+* security checks added
+* what was only planned
+* typecheck/build result
+* remaining demo risks

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
+import { useUserAuth } from "@/hooks/use-user-auth";
 
 interface ServiceRecord {
   id: number;
@@ -10,6 +11,21 @@ interface ServiceRecord {
   cost: string | null;
   category: string;
   performedBy: string | null;
+}
+
+interface Receipt {
+  id: number;
+  title: string;
+  amount: string | null;
+  receiptDate: string | null;
+  vendor: string | null;
+}
+
+interface TripLog {
+  id: number;
+  date: string;
+  distanceKm: string | null;
+  description: string | null;
 }
 
 interface Vehicle {
@@ -26,6 +42,7 @@ interface Vehicle {
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
+  "oil-change": "Oljeskift",
   oil_change: "Oljeskift",
   brakes: "Bremser",
   tires: "Dekk",
@@ -38,24 +55,53 @@ const CATEGORY_LABEL: Record<string, string> = {
 export default function VehiclePrint() {
   const params = useParams<{ id: string }>();
   const vehicleId = parseInt(params.id, 10);
+  const { getAuthHeaders, isAuthenticated, isAuthLoading } = useUserAuth();
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [records, setRecords] = useState<ServiceRecord[]>([]);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [trips, setTrips] = useState<TripLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      fetch(`/api/vehicles/${vehicleId}`).then((r) => r.json() as Promise<Vehicle>),
-      fetch(`/api/vehicles/${vehicleId}/service-records`).then((r) => r.json() as Promise<ServiceRecord[]>),
-    ])
-      .then(([v, sr]) => {
+    if (isAuthLoading) return;
+    if (!isAuthenticated) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    void (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const [v, sr, rc, tl] = await Promise.all([
+          fetch(`/api/vehicles/${vehicleId}`, { headers }).then((r) => {
+            if (!r.ok) throw new Error(`${r.status}`);
+            return r.json() as Promise<Vehicle>;
+          }),
+          fetch(`/api/vehicles/${vehicleId}/service-records`, { headers }).then((r) => {
+            if (!r.ok) throw new Error(`${r.status}`);
+            return r.json() as Promise<ServiceRecord[]>;
+          }),
+          fetch(`/api/vehicles/${vehicleId}/receipts`, { headers }).then((r) =>
+            r.ok ? (r.json() as Promise<Receipt[]>) : []
+          ),
+          fetch(`/api/vehicles/${vehicleId}/trip-logs`, { headers }).then((r) =>
+            r.ok ? (r.json() as Promise<TripLog[]>) : []
+          ),
+        ]);
         setVehicle(v);
         setRecords(sr.sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime()));
+        setReceipts(rc);
+        setTrips(tl);
+      } catch {
+        setError(true);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => { setError(true); setLoading(false); });
-  }, [vehicleId]);
+      }
+    })();
+  }, [vehicleId, isAuthLoading, isAuthenticated, getAuthHeaders]);
 
   useEffect(() => {
     if (!loading && !error && vehicle) {
@@ -63,7 +109,7 @@ export default function VehiclePrint() {
     }
   }, [loading, error, vehicle]);
 
-  if (loading) {
+  if (isAuthLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Forbereder servicebok...</p>
@@ -71,10 +117,18 @@ export default function VehiclePrint() {
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-destructive">Du må være innlogget for å laste ned servicebok.</p>
+      </div>
+    );
+  }
+
   if (error || !vehicle) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-destructive">Kunne ikke laste kjøretøy.</p>
+        <p className="text-destructive">Kunne ikke laste kjøretøy. Sjekk at du har tilgang.</p>
       </div>
     );
   }
@@ -82,6 +136,14 @@ export default function VehiclePrint() {
   const totalCost = records
     .filter((r) => r.cost)
     .reduce((sum, r) => sum + parseFloat(r.cost!), 0);
+
+  const totalReceiptAmount = receipts
+    .filter((r) => r.amount)
+    .reduce((sum, r) => sum + parseFloat(r.amount!), 0);
+
+  const totalTripKm = trips
+    .filter((t) => t.distanceKm)
+    .reduce((sum, t) => sum + parseFloat(t.distanceKm!), 0);
 
   return (
     <>
@@ -155,7 +217,7 @@ export default function VehiclePrint() {
         {/* Summary */}
         <div className="mb-8">
           <h2 className="text-lg font-bold border-b border-gray-300 pb-1 mb-4 font-sans">Sammendrag</h2>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-4 gap-3 text-center">
             <div className="p-3 bg-amber-50 rounded border border-amber-200">
               <div className="text-2xl font-bold text-amber-700">{records.length}</div>
               <div className="text-xs text-gray-600 font-sans mt-1">Serviceoppføringer</div>
@@ -164,21 +226,25 @@ export default function VehiclePrint() {
               <div className="text-2xl font-bold text-blue-700">
                 {totalCost > 0 ? `${Math.round(totalCost).toLocaleString("nb-NO")}` : "—"}
               </div>
-              <div className="text-xs text-gray-600 font-sans mt-1">Total kostnad (NOK)</div>
+              <div className="text-xs text-gray-600 font-sans mt-1">Service (NOK)</div>
+            </div>
+            <div className="p-3 bg-purple-50 rounded border border-purple-200">
+              <div className="text-2xl font-bold text-purple-700">
+                {totalReceiptAmount > 0 ? `${Math.round(totalReceiptAmount).toLocaleString("nb-NO")}` : "—"}
+              </div>
+              <div className="text-xs text-gray-600 font-sans mt-1">Kvitteringer (NOK)</div>
             </div>
             <div className="p-3 bg-green-50 rounded border border-green-200">
               <div className="text-2xl font-bold text-green-700">
-                {records.length > 0
-                  ? new Date(records[records.length - 1]!.serviceDate).getFullYear()
-                  : "—"}
+                {totalTripKm > 0 ? `${Math.round(totalTripKm).toLocaleString("nb-NO")} km` : "—"}
               </div>
-              <div className="text-xs text-gray-600 font-sans mt-1">Første service</div>
+              <div className="text-xs text-gray-600 font-sans mt-1">Loggede turer</div>
             </div>
           </div>
         </div>
 
         {/* Service history */}
-        <div>
+        <div className="mb-8">
           <h2 className="text-lg font-bold border-b border-gray-300 pb-1 mb-4 font-sans">Servicehistorikk</h2>
           {records.length === 0 ? (
             <p className="text-gray-500 italic text-sm">Ingen serviceoppføringer registrert.</p>
@@ -219,6 +285,62 @@ export default function VehiclePrint() {
             </div>
           )}
         </div>
+
+        {/* Receipts summary */}
+        {receipts.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold border-b border-gray-300 pb-1 mb-4 font-sans">Kvitteringer ({receipts.length})</h2>
+            <div className="space-y-2">
+              {receipts.map((r) => (
+                <div key={r.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 text-sm">
+                  <div>
+                    <span className="font-medium">{r.title}</span>
+                    {r.vendor && <span className="text-gray-500 text-xs ml-2">· {r.vendor}</span>}
+                    {r.receiptDate && (
+                      <span className="text-gray-400 text-xs ml-2">
+                        {new Date(r.receiptDate).toLocaleDateString("nb-NO")}
+                      </span>
+                    )}
+                  </div>
+                  {r.amount && (
+                    <span className="font-semibold text-purple-700">{parseFloat(r.amount).toLocaleString("nb-NO")} kr</span>
+                  )}
+                </div>
+              ))}
+              <div className="flex justify-between font-bold text-sm pt-1">
+                <span>Totalt kvitteringer</span>
+                <span className="text-purple-700">{Math.round(totalReceiptAmount).toLocaleString("nb-NO")} kr</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Trip logs summary */}
+        {trips.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold border-b border-gray-300 pb-1 mb-4 font-sans">Turer ({trips.length})</h2>
+            <div className="space-y-2">
+              {trips.slice(0, 10).map((t) => (
+                <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-gray-100 text-sm">
+                  <div>
+                    <span className="text-gray-500 text-xs">{new Date(t.date).toLocaleDateString("nb-NO")}</span>
+                    {t.description && <span className="ml-2 text-gray-700">{t.description}</span>}
+                  </div>
+                  {t.distanceKm && (
+                    <span className="font-semibold text-green-700">{parseFloat(t.distanceKm).toLocaleString("nb-NO")} km</span>
+                  )}
+                </div>
+              ))}
+              {trips.length > 10 && (
+                <p className="text-xs text-gray-400 italic">… og {trips.length - 10} flere turer</p>
+              )}
+              <div className="flex justify-between font-bold text-sm pt-1">
+                <span>Totalt kjørt</span>
+                <span className="text-green-700">{Math.round(totalTripKm).toLocaleString("nb-NO")} km</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-12 pt-4 border-t border-gray-200 text-center text-xs text-gray-400 font-sans">

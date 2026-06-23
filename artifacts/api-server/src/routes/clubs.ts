@@ -14,7 +14,7 @@ import {
   LeaveClubParams,
   ListClubMembersParams,
 } from "@workspace/api-zod";
-import { requireClubRole } from "../middleware/auth";
+import { parseAuth, requireClubRole } from "../middleware/auth";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { audit } from "../lib/audit";
 import { logger } from "../lib/logger";
@@ -32,6 +32,7 @@ async function getClubWithCount(id: number) {
       location: clubsTable.location,
       clubType: clubsTable.clubType,
       ownerName: clubsTable.ownerName,
+      isPrivate: clubsTable.isPrivate,
       createdAt: clubsTable.createdAt,
       updatedAt: clubsTable.updatedAt,
       memberCount: sql<number>`cast(count(${clubMembersTable.id}) as int)`,
@@ -57,6 +58,7 @@ router.get("/clubs", async (req, res): Promise<void> => {
       location: clubsTable.location,
       clubType: clubsTable.clubType,
       ownerName: clubsTable.ownerName,
+      isPrivate: clubsTable.isPrivate,
       createdAt: clubsTable.createdAt,
       updatedAt: clubsTable.updatedAt,
       memberCount: sql<number>`cast(count(${clubMembersTable.id}) as int)`,
@@ -105,7 +107,8 @@ router.post("/clubs", parseUserAuth, requireUser, async (req, res): Promise<void
   res.status(201).json(full);
 });
 
-router.get("/clubs/:id", async (req, res): Promise<void> => {
+// ─── GET /clubs/:id — public basic info; members hidden for private clubs ─────
+router.get("/clubs/:id", parseAuth, async (req, res): Promise<void> => {
   const params = GetClubParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -116,6 +119,32 @@ router.get("/clubs/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Klubb ikke funnet" });
     return;
   }
+
+  // For private clubs, only members (valid club session) see the member list
+  const isMember =
+    req.auth &&
+    req.auth.clubId === params.data.id;
+
+  if (club.isPrivate && !isMember) {
+    // Return limited public info — no member list
+    res.json({
+      id: club.id,
+      name: club.name,
+      description: club.description,
+      logoUrl: club.logoUrl,
+      bannerUrl: club.bannerUrl,
+      location: club.location,
+      clubType: club.clubType,
+      ownerName: club.ownerName,
+      isPrivate: club.isPrivate,
+      createdAt: club.createdAt,
+      updatedAt: club.updatedAt,
+      memberCount: club.memberCount,
+      members: [], // hidden
+    });
+    return;
+  }
+
   const members = await db
     .select()
     .from(clubMembersTable)
@@ -182,13 +211,33 @@ router.delete(
   }
 );
 
-// ─── Public: list members ─────────────────────────────────────────────────────
-router.get("/clubs/:clubId/members", async (req, res): Promise<void> => {
+// ─── GET /clubs/:clubId/members — private clubs require club session ──────────
+router.get("/clubs/:clubId/members", parseAuth, async (req, res): Promise<void> => {
   const params = ListClubMembersParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
+
+  // Check if club is private
+  const [club] = await db
+    .select({ isPrivate: clubsTable.isPrivate })
+    .from(clubsTable)
+    .where(eq(clubsTable.id, params.data.clubId));
+
+  if (!club) {
+    res.status(404).json({ error: "Klubb ikke funnet" });
+    return;
+  }
+
+  if (club.isPrivate) {
+    const isMember = req.auth && req.auth.clubId === params.data.clubId;
+    if (!isMember) {
+      res.status(403).json({ error: "Kun klubbmedlemmer kan se medlemslisten." });
+      return;
+    }
+  }
+
   const members = await db
     .select()
     .from(clubMembersTable)
