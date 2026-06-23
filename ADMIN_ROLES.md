@@ -2,8 +2,14 @@
 ## Sikkerhetsdesign Phase 6
 
 > **Konfidensielt internt dokument.**
-> Designspesifikasjon — ikke implementert ennå (med unntak av Bootstrap-strategi).
 > Sist oppdatert: Juni 2026.
+>
+> **Implementasjonsstatus Phase 6.5:**
+> - ✅ `admin_audit_logs`-tabell live i DB
+> - ✅ `logAdminAction`-helper (`artifacts/api-server/src/lib/adminAudit.ts`)
+> - ✅ `PATCH /admin/users/:id` logger `user.activate` / `user.deactivate`
+> - ✅ `PATCH /admin/users/:id/subscription` logger `billing.tier.change`
+> - 🔴 Øvrige endepunkter (unntak, støtte-tilgang, roller) — ikke implementert ennå
 
 ---
 
@@ -682,17 +688,56 @@ Steg 5: Frontend
 ✅ requireSuperAdmin re-sjekker DB — JWT-claim alene er ikke nok
 ✅ Admin-ruter eksponerer ikke privat garasjeinnhold i dag
 ✅ password_hash eksponeres ikke i noen admin-rute
+✅ [Phase 6.5] admin_audit_logs-tabell opprettet i DB
+✅ [Phase 6.5] PATCH /admin/users/:id logger user.activate / user.deactivate
+✅ [Phase 6.5] PATCH /admin/users/:id/subscription logger billing.tier.change
+✅ [Phase 6.5] Audit-helper redakterer tokens/secrets fra metadata
+✅ [Phase 6.5] Audit-helper logger IP-adresse og user-agent
 
-🔴 MANGLER: audit-logging på PATCH /admin/users/:id og /subscription
 🔴 MANGLER: mellomliggende roller (support_admin, billing_admin)
 🔴 MANGLER: support_access_session-protokoll for datatilgang
 🔴 MANGLER: payment_exemptions (betalingsunntak-system)
-🔴 MANGLER: admin_audit_log (admin-handlinger ikke sporbare)
 🔴 MANGLER: kvitteringsfilrestriksjoner i admin-kontekst
+🔴 MANGLER: admin audit-log eksponert i frontend (/admin/audit-log bør vise admin_audit_logs, ikke kun klub-logg)
 
 ⚠️  x-user-token legacy JWT: ingen Clerk-kobling, ingen MFA, lang levetid (30d)
      → Plan: Fjern etter Clerk-admin-konsoll er konfigurert for intern tilgang
 ```
+
+## 11. Phase 6.5 — Implementert (Juni 2026)
+
+### Filer endret
+
+| Fil | Endring |
+|-----|---------|
+| `lib/db/src/schema/adminAuditLogs.ts` | Ny — `admin_audit_logs`-skjema |
+| `lib/db/src/schema/index.ts` | La til `export * from "./adminAuditLogs"` |
+| `artifacts/api-server/src/lib/adminAudit.ts` | Ny — `logAdminAction`-helper |
+| `artifacts/api-server/src/routes/admin.ts` | Audit-logging på to PATCH-ruter |
+
+### Loggede handlinger (Phase 6.5)
+
+| Action-kode | Trigger | Felter logget |
+|-------------|---------|---------------|
+| `user.activate` | `PATCH /admin/users/:id` med `isActive: true` | before/after `isActive`, targetEmail, reason (valgfri) |
+| `user.deactivate` | `PATCH /admin/users/:id` med `isActive: false` | before/after `isActive`, targetEmail, reason (valgfri) |
+| `billing.tier.change` | `PATCH /admin/users/:id/subscription` | before/after `subscriptionTier`, targetEmail, reason (valgfri) |
+
+### Planlagte handlinger (Phase 7+)
+
+| Action-kode | Avhenger av |
+|-------------|-------------|
+| `user.role.grant` / `user.role.revoke` | Rolle-utvidelse i `users.role` |
+| `billing.exemption.grant` / `.revoke` | `payment_exemptions`-tabell |
+| `support.session.start` / `.end` | `support_access_sessions`-tabell |
+| `support.data.access` | `support_access_sessions`-middleware |
+| `support.file.access` | Kvitteringsfil-restriksjoner |
+
+### Sikkerhetspolicy for audit-helper
+
+- **Fail-open:** Feil ved skriving til `admin_audit_logs` logger en feil men blokkerer ikke den underliggende admin-handlingen
+- **Redaksjon:** Følgende nøkler redigeres alltid til `[REDACTED]` i metadata: `password`, `passwordHash`, `token`, `secret`, `stripeCustomerId`, `stripeSubscriptionId`, `vippsAgreementId`
+- **IP-logging:** Leser `x-forwarded-for`-header (proxy-aware), faller tilbake til `socket.remoteAddress`
 
 ---
 

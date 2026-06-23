@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq, desc, count, sql, gte } from "drizzle-orm";
 import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable } from "@workspace/db";
 import { parseUserAuth, requireSuperAdmin } from "../middleware/userAuth";
+import { logAdminAction } from "../lib/adminAudit";
 
 const router = Router();
 
@@ -340,7 +341,14 @@ router.get("/admin/subscriptions", parseUserAuth, requireSuperAdmin, async (req,
 // ─── Admin action on user ─────────────────────────────────────────────────
 router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
-  const { isActive } = req.body as { isActive?: boolean };
+  const { isActive, reason } = req.body as { isActive?: boolean; reason?: string };
+
+  const [before] = await db
+    .select({ id: usersTable.id, email: usersTable.email, isActive: usersTable.isActive })
+    .from(usersTable)
+    .where(eq(usersTable.id, id));
+
+  if (!before) { res.status(404).json({ error: "Bruker ikke funnet" }); return; }
 
   const [updated] = await db
     .update(usersTable)
@@ -349,13 +357,32 @@ router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, r
     .returning({ id: usersTable.id, isActive: usersTable.isActive });
 
   if (!updated) { res.status(404).json({ error: "Bruker ikke funnet" }); return; }
+
+  const action = isActive ? "user.activate" : "user.deactivate";
+  await logAdminAction({
+    req,
+    action,
+    targetType: "user",
+    targetUserId: before.id,
+    targetEmail: before.email,
+    reason: reason ?? undefined,
+    metadata: { before: { isActive: before.isActive }, after: { isActive: updated.isActive } },
+  });
+
   res.json(updated);
 });
 
 // ─── Admin action on user subscription tier ───────────────────────────────
 router.patch("/admin/users/:id/subscription", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
-  const { subscriptionTier } = req.body as { subscriptionTier: "free" | "standard" | "premium" };
+  const { subscriptionTier, reason } = req.body as { subscriptionTier: "free" | "standard" | "premium"; reason?: string };
+
+  const [before] = await db
+    .select({ id: usersTable.id, email: usersTable.email, subscriptionTier: usersTable.subscriptionTier })
+    .from(usersTable)
+    .where(eq(usersTable.id, id));
+
+  if (!before) { res.status(404).json({ error: "Bruker ikke funnet" }); return; }
 
   const [updated] = await db
     .update(usersTable)
@@ -364,6 +391,20 @@ router.patch("/admin/users/:id/subscription", parseUserAuth, requireSuperAdmin, 
     .returning({ id: usersTable.id, subscriptionTier: usersTable.subscriptionTier });
 
   if (!updated) { res.status(404).json({ error: "Bruker ikke funnet" }); return; }
+
+  await logAdminAction({
+    req,
+    action: "billing.tier.change",
+    targetType: "user",
+    targetUserId: before.id,
+    targetEmail: before.email,
+    reason: reason ?? undefined,
+    metadata: {
+      before: { subscriptionTier: before.subscriptionTier },
+      after: { subscriptionTier: updated.subscriptionTier },
+    },
+  });
+
   res.json(updated);
 });
 

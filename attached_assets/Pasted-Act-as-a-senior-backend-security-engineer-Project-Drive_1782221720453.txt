@@ -1,0 +1,101 @@
+Act as a senior backend security engineer.
+
+Project: DriveGarage
+
+We are doing Phase 6.5 only: add admin audit logging for existing risky admin actions.
+
+Current status:
+
+* ADMIN_ROLES.md exists.
+* Existing admin routes were audited.
+* No admin routes expose private garage data directly.
+* Critical finding: PATCH /admin/users/:id and /subscription changes currently lack admin audit logging.
+* auditLogsTable is club-specific and should not be reused for admin audit logs.
+* Full role redesign, payment exemptions and support access sessions are planned but not implemented yet.
+
+Goal:
+Add minimal admin audit logging for existing admin mutations without changing the admin role model broadly.
+
+Important:
+
+* Do not implement full role redesign.
+* Do not implement support access sessions.
+* Do not implement payment exemptions yet.
+* Do not implement Vipps.
+* Do not expose private user data.
+* Do not change existing user isolation.
+* Keep changes minimal and safe.
+
+Tasks:
+
+1. Inspect current schema and admin routes
+
+* Find existing admin routes and mutations.
+* Confirm which routes mutate users/subscriptions.
+* Confirm current user/admin identity available in request.
+
+2. Add admin audit log table
+   Create a dedicated admin audit log table, for example:
+   admin_audit_logs:
+
+* id
+* actorUserId
+* actorEmail
+* actorRole
+* action
+* targetType
+* targetUserId
+* targetEmail
+* reason nullable for now
+* metadata JSON nullable
+* ipAddress nullable
+* userAgent nullable
+* createdAt
+
+Use existing project schema conventions.
+
+3. Add audit helper
+   Create a helper such as:
+   lib/adminAudit.ts
+
+It should:
+
+* write audit log entries
+* never throw in a way that breaks the main admin action unless the project’s security policy prefers fail-closed
+* redact secrets/tokens from metadata
+* be reusable later for payment exemptions and support access
+
+4. Log existing admin mutations
+   Add audit logging to current risky routes:
+
+* PATCH /admin/users/:id
+* subscription/billing status changes
+* any existing route that changes role, tier, active status, or user access
+
+Log before/after values where safe.
+Do not log passwords, tokens or secrets.
+
+5. Validate
+
+* Run backend typecheck.
+* Run DB push/migration if required by project workflow.
+* Restart API workflow.
+* Confirm existing admin routes still work.
+* Confirm audit entries are created.
+
+6. Documentation
+   Update ADMIN_ROLES.md:
+
+* mark admin audit log table as implemented
+* list actions currently logged
+* list actions still planned
+
+Deliverable:
+
+* files changed
+* schema added
+* routes logged
+* audit fields
+* typecheck result
+* migration/push result
+* remaining risks

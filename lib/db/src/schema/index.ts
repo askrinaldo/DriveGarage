@@ -24,3 +24,4 @@ export * from "./vehicleOwnershipHistory";
 export * from "./chatMessages";
 export * from "./monthlyProjects";
 export * from "./tenants";
+export * from "./adminAuditLogs";
