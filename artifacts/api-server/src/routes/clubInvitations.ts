@@ -24,16 +24,20 @@ function getBaseUrl(req: { headers: { host?: string }; protocol: string }): stri
   return `${req.protocol}://${req.headers.host}`;
 }
 
-// ─── Public: list invitations ─────────────────────────────────────────────────
-router.get("/clubs/:clubId/invitations", async (req, res): Promise<void> => {
-  const clubId = parseInt(String(req.params.clubId), 10);
-  const invitations = await db
-    .select()
-    .from(clubInvitationsTable)
-    .where(eq(clubInvitationsTable.clubId, clubId))
-    .orderBy(clubInvitationsTable.createdAt);
-  res.json(invitations);
-});
+// ─── Protected: list invitations — requires admin+ ───────────────────────────
+router.get(
+  "/clubs/:clubId/invitations",
+  requireClubRole("admin"),
+  async (req, res): Promise<void> => {
+    const clubId = parseInt(String(req.params.clubId), 10);
+    const invitations = await db
+      .select()
+      .from(clubInvitationsTable)
+      .where(eq(clubInvitationsTable.clubId, clubId))
+      .orderBy(clubInvitationsTable.createdAt);
+    res.json(invitations);
+  }
+);
 
 // ─── Protected: create invitation — requires admin+ ───────────────────────────
 router.post(

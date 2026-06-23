@@ -1,12 +1,12 @@
 import { Router, type IRouter } from "express";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import {
   db,
   clubGarageEntriesTable,
   vehiclesTable,
   serviceRecordsTable,
-  clubMembersTable,
 } from "@workspace/db";
+import { requireClubRole } from "../middleware/auth";
 
 const router: IRouter = Router();
 
@@ -25,7 +25,6 @@ router.get("/clubs/:clubId/garage", async (req, res): Promise<void> => {
   const ps = Math.min(48, Math.max(1, parseInt(pageSize, 10) || 12));
   const offset = (pg - 1) * ps;
 
-  // Get all entries for this club joined with vehicles
   const entries = await db
     .select({
       entryId: clubGarageEntriesTable.id,
@@ -46,7 +45,6 @@ router.get("/clubs/:clubId/garage", async (req, res): Promise<void> => {
     .where(eq(clubGarageEntriesTable.clubId, clubId))
     .orderBy(desc(clubGarageEntriesTable.addedAt));
 
-  // Apply filters
   let filtered = entries;
   if (type) filtered = filtered.filter((e) => e.type === type);
   if (make) filtered = filtered.filter((e) => e.make.toLowerCase().includes(make.toLowerCase()));
@@ -56,7 +54,6 @@ router.get("/clubs/:clubId/garage", async (req, res): Promise<void> => {
   const total = filtered.length;
   const paginated = filtered.slice(offset, offset + ps);
 
-  // Enrich with service stats
   const vehicleIds = paginated.map((e) => e.vehicleId);
   const serviceStats: Record<number, { lastService: string | null; updateCount: number }> = {};
 
@@ -98,94 +95,117 @@ router.get("/clubs/:clubId/garage", async (req, res): Promise<void> => {
   });
 });
 
-router.post("/clubs/:clubId/garage", async (req, res): Promise<void> => {
-  const clubId = parseInt(req.params.clubId, 10);
-  const { vehicleId, memberName } = req.body as { vehicleId: number; memberName: string };
+// ─── Protected: add vehicle — requires member+ ────────────────────────────────
+// memberName is always derived from the authenticated session — never trusted from the body.
+router.post(
+  "/clubs/:clubId/garage",
+  requireClubRole("member"),
+  async (req, res): Promise<void> => {
+    const clubId = parseInt(req.params.clubId, 10);
+    const actor = req.auth!;
+    const { vehicleId } = req.body as { vehicleId: number };
 
-  if (!vehicleId || !memberName?.trim()) {
-    res.status(400).json({ error: "vehicleId og memberName er påkrevd" });
-    return;
+    if (!vehicleId) {
+      res.status(400).json({ error: "vehicleId er påkrevd" });
+      return;
+    }
+
+    const [vehicle] = await db
+      .select()
+      .from(vehiclesTable)
+      .where(eq(vehiclesTable.id, vehicleId));
+    if (!vehicle) {
+      res.status(404).json({ error: "Kjøretøy ikke funnet" });
+      return;
+    }
+
+    const [existing] = await db
+      .select()
+      .from(clubGarageEntriesTable)
+      .where(
+        and(
+          eq(clubGarageEntriesTable.clubId, clubId),
+          eq(clubGarageEntriesTable.vehicleId, vehicleId)
+        )
+      );
+    if (existing) {
+      res.status(409).json({ error: "Kjøretøyet er allerede i klubbgarasjen" });
+      return;
+    }
+
+    const [entry] = await db
+      .insert(clubGarageEntriesTable)
+      .values({ clubId, vehicleId, memberName: actor.memberName })
+      .returning();
+
+    const serviceRecords = await db
+      .select()
+      .from(serviceRecordsTable)
+      .where(eq(serviceRecordsTable.vehicleId, vehicleId))
+      .orderBy(desc(serviceRecordsTable.serviceDate));
+
+    res.status(201).json({
+      entryId: entry.id,
+      vehicleId: vehicle.id,
+      memberName: entry.memberName,
+      addedAt: entry.addedAt,
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      type: vehicle.type,
+      color: vehicle.color,
+      mileage: vehicle.mileage,
+      imageUrl: vehicle.imageUrl,
+      registrationNumber: vehicle.registrationNumber,
+      lastService: serviceRecords[0]?.serviceDate?.toISOString() ?? null,
+      updateCount: serviceRecords.length,
+    });
   }
+);
 
-  // Check membership
-  const members = await db
-    .select()
-    .from(clubMembersTable)
-    .where(eq(clubMembersTable.clubId, clubId));
-  const isMember = members.some(
-    (m) => m.memberName.toLowerCase() === memberName.trim().toLowerCase()
-  );
-  if (!isMember) {
-    res.status(403).json({ error: "Kun klubbmedlemmer kan legge til kjøretøy" });
-    return;
+// ─── Protected: remove vehicle — requires member+ ─────────────────────────────
+// Members can only remove their own entries; admins/owners can remove any entry.
+router.delete(
+  "/clubs/:clubId/garage/:entryId",
+  requireClubRole("member"),
+  async (req, res): Promise<void> => {
+    const entryId = parseInt(req.params.entryId, 10);
+    const clubId = parseInt(req.params.clubId, 10);
+    const actor = req.auth!;
+
+    const [entry] = await db
+      .select()
+      .from(clubGarageEntriesTable)
+      .where(
+        and(
+          eq(clubGarageEntriesTable.id, entryId),
+          eq(clubGarageEntriesTable.clubId, clubId)
+        )
+      );
+
+    if (!entry) {
+      res.status(404).json({ error: "Oppføring ikke funnet" });
+      return;
+    }
+
+    const isOwner = entry.memberName.toLowerCase() === actor.memberName.toLowerCase();
+    const isAdmin = actor.role === "admin" || actor.role === "owner";
+
+    if (!isOwner && !isAdmin) {
+      res.status(403).json({ error: "Kun eier eller administrator kan fjerne denne oppføringen" });
+      return;
+    }
+
+    await db
+      .delete(clubGarageEntriesTable)
+      .where(
+        and(
+          eq(clubGarageEntriesTable.id, entryId),
+          eq(clubGarageEntriesTable.clubId, clubId)
+        )
+      );
+    res.status(204).send();
   }
-
-  // Check vehicle exists
-  const [vehicle] = await db
-    .select()
-    .from(vehiclesTable)
-    .where(eq(vehiclesTable.id, vehicleId));
-  if (!vehicle) {
-    res.status(404).json({ error: "Kjøretøy ikke funnet" });
-    return;
-  }
-
-  // Check not already added
-  const [existing] = await db
-    .select()
-    .from(clubGarageEntriesTable)
-    .where(
-      and(
-        eq(clubGarageEntriesTable.clubId, clubId),
-        eq(clubGarageEntriesTable.vehicleId, vehicleId)
-      )
-    );
-  if (existing) {
-    res.status(409).json({ error: "Kjøretøyet er allerede i klubbgarasjen" });
-    return;
-  }
-
-  const [entry] = await db
-    .insert(clubGarageEntriesTable)
-    .values({ clubId, vehicleId, memberName: memberName.trim() })
-    .returning();
-
-  const serviceRecords = await db
-    .select()
-    .from(serviceRecordsTable)
-    .where(eq(serviceRecordsTable.vehicleId, vehicleId))
-    .orderBy(desc(serviceRecordsTable.serviceDate));
-
-  res.status(201).json({
-    entryId: entry.id,
-    vehicleId: vehicle.id,
-    memberName: entry.memberName,
-    addedAt: entry.addedAt,
-    make: vehicle.make,
-    model: vehicle.model,
-    year: vehicle.year,
-    type: vehicle.type,
-    color: vehicle.color,
-    mileage: vehicle.mileage,
-    imageUrl: vehicle.imageUrl,
-    registrationNumber: vehicle.registrationNumber,
-    lastService: serviceRecords[0]?.serviceDate?.toISOString() ?? null,
-    updateCount: serviceRecords.length,
-  });
-});
-
-router.delete("/clubs/:clubId/garage/:entryId", async (req, res): Promise<void> => {
-  const entryId = parseInt(req.params.entryId, 10);
-  const clubId = parseInt(req.params.clubId, 10);
-  await db
-    .delete(clubGarageEntriesTable)
-    .where(
-      and(
-        eq(clubGarageEntriesTable.id, entryId),
-        eq(clubGarageEntriesTable.clubId, clubId)
-      )
-    );
-  res.status(204).send();
-});
+);
 
 export default router;

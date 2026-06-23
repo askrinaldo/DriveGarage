@@ -1,50 +1,62 @@
 import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, vehiclesTable, serviceRecordsTable } from "@workspace/db";
+import { parseUserAuth, requireUser } from "../middleware/userAuth";
+import { assertVehicleOwnership } from "../lib/vehicleOwnership";
 
 const router: IRouter = Router();
 
-router.post("/vehicles/:vehicleId/maintenance-advice", async (req, res): Promise<void> => {
-  const vehicleId = parseInt(String(req.params.vehicleId), 10);
+router.post(
+  "/vehicles/:vehicleId/maintenance-advice",
+  parseUserAuth,
+  requireUser,
+  async (req, res): Promise<void> => {
+    const vehicleId = parseInt(String(req.params.vehicleId), 10);
+    const { tenantId, userId } = req.userAuth!;
 
-  const [vehicle] = await db
-    .select()
-    .from(vehiclesTable)
-    .where(eq(vehiclesTable.id, vehicleId));
+    const owned = await assertVehicleOwnership(vehicleId, tenantId, userId);
+    if (!owned) {
+      res.status(404).json({ error: "Kjøretøy ikke funnet" });
+      return;
+    }
 
-  if (!vehicle) {
-    res.status(404).json({ error: "Kjøretøy ikke funnet" });
-    return;
-  }
+    const [vehicle] = await db
+      .select()
+      .from(vehiclesTable)
+      .where(eq(vehiclesTable.id, vehicleId));
 
-  const serviceRecords = await db
-    .select()
-    .from(serviceRecordsTable)
-    .where(eq(serviceRecordsTable.vehicleId, vehicleId))
-    .orderBy(desc(serviceRecordsTable.serviceDate))
-    .limit(20);
+    if (!vehicle) {
+      res.status(404).json({ error: "Kjøretøy ikke funnet" });
+      return;
+    }
 
-  const apiKey = process.env["OPENAI_API_KEY"];
-  if (!apiKey) {
-    // Return rule-based advice if no API key
-    const advice = generateRuleBasedAdvice(vehicle, serviceRecords);
-    res.json({ advice, source: "rule_based" });
-    return;
-  }
+    const serviceRecords = await db
+      .select()
+      .from(serviceRecordsTable)
+      .where(eq(serviceRecordsTable.vehicleId, vehicleId))
+      .orderBy(desc(serviceRecordsTable.serviceDate))
+      .limit(20);
 
-  const systemPrompt = `Du er en ekspert mekaniker for veteranbiler og klassiske motorsykler. 
+    const apiKey = process.env["OPENAI_API_KEY"];
+    if (!apiKey) {
+      const advice = generateRuleBasedAdvice(vehicle, serviceRecords);
+      res.json({ advice, source: "rule_based" });
+      return;
+    }
+
+    const systemPrompt = `Du er en ekspert mekaniker for veteranbiler og klassiske motorsykler. 
 Gi konkrete, praktiske vedlikeholdsanbefalinger basert på kjøretøyets historikk.
 Svar alltid på norsk. Svar i markdown-format med punktlister og overskrifter.
 Hold svaret kortfattet og handlingsorientert (maks 400 ord).`;
 
-  const lastServices = serviceRecords.slice(0, 5).map((s) => ({
-    tittel: s.title,
-    dato: s.serviceDate,
-    km: s.mileageAtService,
-    kategori: s.category,
-  }));
+    const lastServices = serviceRecords.slice(0, 5).map((s) => ({
+      tittel: s.title,
+      dato: s.serviceDate,
+      km: s.mileageAtService,
+      kategori: s.category,
+    }));
 
-  const userPrompt = `Kjøretøy: ${vehicle.year ?? ""} ${vehicle.make} ${vehicle.model} (${vehicle.type === "motorcycle" ? "motorsykkel" : "bil"})
+    const userPrompt = `Kjøretøy: ${vehicle.year ?? ""} ${vehicle.make} ${vehicle.model} (${vehicle.type === "motorcycle" ? "motorsykkel" : "bil"})
 Nåværende kilometerstand: ${vehicle.mileage ?? "ukjent"} km
 Siste 5 serviceoppføringer: ${JSON.stringify(lastServices, null, 2)}
 
@@ -53,37 +65,38 @@ Gi vedlikeholdsanbefalinger for dette kjøretøyet. Fokuser på:
 2. Hva som bør planlegges
 3. Tips spesifikke for dette merket og modellen`;
 
-  try {
-    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        max_tokens: 600,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
+    try {
+      const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          max_tokens: 600,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        }),
+      });
 
-    if (!openaiRes.ok) {
-      throw new Error(`OpenAI API error: ${openaiRes.status}`);
+      if (!openaiRes.ok) {
+        throw new Error(`OpenAI API error: ${openaiRes.status}`);
+      }
+
+      const data = (await openaiRes.json()) as {
+        choices: Array<{ message: { content: string } }>;
+      };
+      const advice = data.choices[0]?.message?.content ?? "";
+      res.json({ advice, source: "ai" });
+    } catch {
+      const advice = generateRuleBasedAdvice(vehicle, serviceRecords);
+      res.json({ advice, source: "rule_based" });
     }
-
-    const data = (await openaiRes.json()) as {
-      choices: Array<{ message: { content: string } }>;
-    };
-    const advice = data.choices[0]?.message?.content ?? "";
-    res.json({ advice, source: "ai" });
-  } catch (err) {
-    const advice = generateRuleBasedAdvice(vehicle, serviceRecords);
-    res.json({ advice, source: "rule_based", error: "AI ikke tilgjengelig" });
   }
-});
+);
 
 function generateRuleBasedAdvice(
   vehicle: { make: string; model: string; year: number | null; mileage: number | null; type: string },
@@ -137,7 +150,7 @@ function generateRuleBasedAdvice(
   lines.push("");
   lines.push("### 💡 Generelle tips");
   lines.push("- Bruk anbefalt motorolje for klassiske motorer (ofte mineralbasert, ikke syntetisk).");
-  lines.push("- Lagres kjøretøyet over vinteren, bruk stabilisator i bensinтанken.");
+  lines.push("- Lagres kjøretøyet over vinteren, bruk stabilisator i bensintanken.");
   lines.push("- Sjekk gummitettinger og -slanger jevnlig — disse aldres og sprekker.");
 
   if (records.length === 0) {
@@ -145,6 +158,8 @@ function generateRuleBasedAdvice(
     lines.push("### ⚠️ Kom i gang");
     lines.push("- Start med å registrere det vedlikeholdet du allerede har utført for å holde oversikt.");
   }
+
+  void categories;
 
   return lines.join("\n");
 }

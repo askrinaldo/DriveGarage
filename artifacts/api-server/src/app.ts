@@ -19,7 +19,10 @@ import { writeRateLimit } from "./middleware/rateLimiter";
 // Fail fast on startup if required env vars are missing
 validateEnv();
 
-const IS_PROD = process.env.NODE_ENV === "production";
+// REPLIT_DEPLOYMENT is set to "1" by the Replit platform in reserved/autoscale deployments.
+// NODE_ENV=production can also be set explicitly via Replit Secrets for the deployed environment.
+const IS_PROD =
+  process.env.NODE_ENV === "production" || process.env.REPLIT_DEPLOYMENT === "1";
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 // In production: only allow origins listed in REPLIT_DOMAINS.
