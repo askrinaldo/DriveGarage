@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import {
   useGetClub,
@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useClubAuth } from "@/hooks/use-club-auth";
+import { useUserAuth } from "@/hooks/use-user-auth";
 
 interface Params { id: string }
 
@@ -142,15 +143,32 @@ export default function ClubDetail() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
 
-  const { hasRole, session } = useClubAuth(clubId);
-  const canAdmin = hasRole("admin");
-  const isOwner = hasRole("owner");
-  const isMember = !!session;
-  const myMemberName = session?.memberName ?? null;
+  const { session } = useClubAuth(clubId);
+  const { name: myUserName, email: myUserEmail } = useUserAuth();
 
   const { data: club, isLoading, isError, refetch } = useGetClub(clubId, {
     query: { queryKey: getGetClubQueryKey(clubId) },
   });
+
+  // Resolve the current user's club membership from EITHER the per-club JWT
+  // session OR the global Clerk identity matched against the club's member list.
+  // This lets a Clerk-authenticated owner/admin manage members without having to
+  // separately "log in" to the club.
+  const myMembership = useMemo(() => {
+    const members = club?.members ?? [];
+    const candidates = [session?.memberName, myUserName, myUserEmail]
+      .filter((c): c is string => !!c)
+      .map((c) => c.toLowerCase());
+    if (candidates.length === 0) return null;
+    return members.find((m) => candidates.includes(m.memberName.toLowerCase())) ?? null;
+  }, [club?.members, session?.memberName, myUserName, myUserEmail]);
+
+  const ROLE_RANK: Record<string, number> = { owner: 4, admin: 3, moderator: 2, member: 1 };
+  const myRole = myMembership?.role ?? session?.role ?? null;
+  const myMemberName = myMembership?.memberName ?? session?.memberName ?? null;
+  const isMember = !!myMembership || !!session;
+  const canAdmin = (ROLE_RANK[myRole ?? ""] ?? 0) >= ROLE_RANK.admin!;
+  const isOwner = (ROLE_RANK[myRole ?? ""] ?? 0) >= ROLE_RANK.owner!;
 
   const { data: invitations, refetch: refetchInvitations } = useListClubInvitations(clubId, {
     query: { queryKey: getListClubInvitationsQueryKey(clubId) },

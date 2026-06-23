@@ -111,6 +111,79 @@ export function requireClubRole(minRole: "member" | "moderator" | "admin" | "own
 }
 
 /**
+ * Bridges the global Clerk/user identity (req.userAuth) into the club auth
+ * context (req.auth).
+ *
+ * Club admin routes authorise via req.auth (the per-club JWT). Owners and members
+ * who are signed in through Clerk do NOT carry a club JWT, so without this bridge
+ * they cannot manage members, edit, or delete their own club. When no club JWT is
+ * present but a Clerk/user identity is, we look up that identity's membership in
+ * the club (matched by name or email) and populate req.auth with their real DB
+ * role. Never rejects — enforcement stays in requireClubRole / route handlers.
+ */
+export async function resolveClubActorFromUser(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  // A club JWT already established the actor — leave it untouched.
+  // NOTE: clerkMiddleware also populates req.auth with its own (Clerk) object,
+  // so we cannot rely on truthiness alone — only skip when req.auth carries a
+  // genuine club payload (numeric clubId + memberName).
+  const existing = req.auth as Partial<ClubTokenPayload> | undefined;
+  if (existing && typeof existing.clubId === "number" && typeof existing.memberName === "string") {
+    next();
+    return;
+  }
+  if (!req.userAuth) {
+    next();
+    return;
+  }
+
+  const match = req.path.match(/\/clubs\/(\d+)/);
+  if (!match) {
+    next();
+    return;
+  }
+  const clubId = parseInt(match[1]!, 10);
+  if (Number.isNaN(clubId)) {
+    next();
+    return;
+  }
+
+  try {
+    const candidates = [req.userAuth.name, req.userAuth.email]
+      .filter((c): c is string => !!c)
+      .map((c) => c.toLowerCase());
+    if (candidates.length === 0) {
+      next();
+      return;
+    }
+
+    const members = await db
+      .select()
+      .from(clubMembersTable)
+      .where(eq(clubMembersTable.clubId, clubId));
+
+    const member = members.find((m) =>
+      candidates.includes(m.memberName.toLowerCase())
+    );
+
+    if (member) {
+      req.auth = {
+        memberName: member.memberName,
+        clubId,
+        role: member.role ?? "member",
+      };
+    }
+  } catch (err) {
+    req.log?.error({ err }, "resolveClubActorFromUser failed");
+  }
+
+  next();
+}
+
+/**
  * Soft auth — parses token if present, never rejects.
  * Use for endpoints that work both authenticated and not.
  */

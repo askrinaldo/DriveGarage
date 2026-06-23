@@ -10,7 +10,7 @@ import {
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { validateEnv } from "./lib/envValidation";
-import { parseAuth } from "./middleware/auth";
+import { parseAuth, resolveClubActorFromUser } from "./middleware/auth";
 import { parseUserAuth } from "./middleware/userAuth";
 import { clerkUserAuth } from "./middleware/clerkUserAuth";
 import { globalRateLimit, writeRateLimit } from "./middleware/rateLimiter";
@@ -110,6 +110,10 @@ app.use(parseAuth);
 // User auth: JWT header first (admin fallback), then Clerk session
 app.use(parseUserAuth);
 app.use(clerkUserAuth);
+
+// Bridge: if there is no club JWT but the Clerk/user identity maps to a club
+// member, populate req.auth so owners/admins can manage their club via Clerk.
+app.use(resolveClubActorFromUser);
 
 // Global write-rate-limit for all state-changing requests
 app.use((req, res, next) => {
