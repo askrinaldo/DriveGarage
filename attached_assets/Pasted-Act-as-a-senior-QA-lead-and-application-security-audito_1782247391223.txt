@@ -1,0 +1,78 @@
+Act as a senior QA lead and application security auditor.
+
+Project: DriveGarage
+
+Phase 8.3 — Post-Fix Beta Readiness Re-Audit
+
+Context:
+Phase 8 found critical/high issues.
+Phase 8.1 fixed:
+
+* B-1 maintenanceAdvice auth/ownership
+* B-2 serviceReminders auth/ownership
+* B-3 production detection
+* C-4 club invitations GET protection
+* C-5 club garage impersonation
+
+Phase 8.2 fixed:
+
+* C-1 DB indexes
+* C-2 security headers
+* C-3 rate limiting
+
+Goal:
+Re-audit only the previously fixed areas and update beta readiness.
+
+Important:
+
+* Do not add new features.
+* Do not refactor.
+* Do not implement Vipps.
+* Do not modify business logic unless a regression is found.
+* Focus on verification.
+
+Tasks:
+
+1. Re-test all Phase 8.1 fixes:
+
+* maintenanceAdvice unauthenticated access returns 401
+* maintenanceAdvice cross-user access is blocked
+* serviceReminders unauthenticated access returns 401
+* serviceReminders cross-user access is blocked
+* production detection works with REPLIT_DEPLOYMENT=1
+* club invitations GET requires admin role
+* club garage POST does not trust memberName from body
+* club garage DELETE requires owner/admin
+
+2. Re-test all Phase 8.2 fixes:
+
+* DB indexes exist
+* security headers present
+* rate limits configured and active in production
+* rate limits do not disrupt development
+* protected endpoints still work for authenticated users
+
+3. Review remaining unresolved findings:
+
+* D-1 club dashboard public access
+* D-2 React duplicate key /vehicles
+* D-3 legacy /users/register and /users/login
+* D-4 forum_likes member_name identity
+* D-5 active Stripe billing code
+* any other remaining low/medium items
+
+4. Produce updated readiness report:
+
+* resolved findings
+* remaining findings
+* remaining blockers
+* beta readiness score
+* go/no-go recommendation:
+
+  * NOT READY
+  * READY WITH FIXES
+  * READY FOR CLOSED BETA
+  * READY FOR PUBLIC BETA
+
+Deliverable:
+Return a concise but complete post-fix readiness report.
