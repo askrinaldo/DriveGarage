@@ -1,0 +1,126 @@
+Act as a senior SaaS product designer and monetization engineer.
+
+Project: DriveGarage
+
+Goal:
+Prepare the billing/pricing experience for a Vipps partnership demo.
+
+Important:
+
+* Do NOT implement actual payments.
+* Do NOT reintroduce Stripe.
+* Do NOT add any external payment provider.
+* This is a demo and pre-launch experience only.
+* The goal is to clearly communicate how Vipps will fit into the product.
+
+Tasks:
+
+1. Redesign pricing page for demo mode
+
+Replace the current pricing presentation with:
+
+Trial
+
+* 7 dager gratis prøveperiode
+* Full tilgang til DriveGarage
+* Ingen binding
+* Ingen betaling før prøveperioden er over
+
+Standard
+
+* kr 49/mnd
+* Ubegrenset kjøretøy
+* Servicehistorikk
+* Dokumenter og kvitteringer
+* PDF-rapporter
+* Klubber og arrangementer
+
+Premium
+
+* kr 99/mnd
+* Alt i Standard
+* AI-assistent
+* Prioritert support
+* Tidlig tilgang til nye funksjoner
+
+Remove:
+
+* Storage limits
+* MB/GB references
+* Technical infrastructure language
+
+2. Add Vipps preview messaging
+
+Add a visible information section:
+
+"Tidlig tilgang"
+
+"DriveGarage forberedes for Vipps som betalingsløsning.
+
+Under lansering vil brukere kunne starte med 7 dagers gratis prøveperiode og deretter aktivere abonnement via Vipps."
+
+Make it look intentional and professional.
+
+3. Improve CTA buttons
+
+Trial:
+"Start gratis prøveperiode"
+
+Standard:
+"Kommer med Vipps"
+
+Premium:
+"Kommer med Vipps"
+
+Buttons must not attempt checkout.
+
+4. Demo billing state
+
+Create a demo billing state for logged-in users:
+
+Current plan:
+"Prøveperiode"
+
+Days remaining:
+7
+
+Payment provider:
+"Vipps (planlagt)"
+
+Status:
+"Betaling ikke aktivert"
+
+This should be displayed as a preview of the future billing experience.
+
+5. Future integration placeholder
+
+Add a section:
+
+"Planlagt Vipps-flyt"
+
+1. Start gratis prøveperiode
+2. Velg abonnement
+3. Aktiver betaling med Vipps
+4. Fortsett uten avbrudd
+
+No payment logic.
+
+Only UI and product communication.
+
+6. Demo readiness review
+
+Verify:
+
+* No Stripe references visible to users
+* No checkout actions exist
+* No payment errors can occur
+* Pricing page is presentation-ready for a Vipps meeting
+
+Deliver:
+
+* files changed
+* UI changes
+* removed pricing items
+* new trial messaging
+* screenshots if available
+* remaining work before real Vipps integration

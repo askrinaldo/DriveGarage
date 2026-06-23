@@ -5,20 +5,10 @@ export type SubscriptionTier = "free" | "standard" | "premium";
 export interface SubscriptionInfo {
   tier: SubscriptionTier;
   status: string | null;
-  stripeSubscription: {
-    id: string;
-    status: string;
-    current_period_end: string;
-    price_id: string;
-    unit_amount: number;
-    currency: string;
-    recurring: { interval: string } | null;
-    product_name: string;
-    product_metadata: Record<string, string>;
-  } | null;
+  provider: "vipps" | null;
 }
 
-export interface StripePrice {
+export interface VippsPrice {
   product_id: string;
   product_name: string;
   product_metadata: Record<string, string>;
@@ -32,7 +22,7 @@ export interface StripePrice {
 const STUB_SUB: SubscriptionInfo = {
   tier: "free",
   status: null,
-  stripeSubscription: null,
+  provider: null,
 };
 
 export function useSubscription() {
@@ -43,28 +33,10 @@ export function useSubscription() {
   };
 }
 
-export function useStripePrices() {
+export function useVippsPrices() {
   return {
-    data: { prices: [] as StripePrice[] },
+    data: { prices: [] as VippsPrice[], provider: "vipps", status: "pending_integration" },
     isLoading: false,
-    isError: false,
-  };
-}
-
-export function useCreateCheckout() {
-  return {
-    mutate: (_priceId?: string, _opts?: unknown) => {},
-    mutateAsync: async (_priceId?: string) => { throw new Error("Billing er midlertidig deaktivert"); },
-    isPending: false,
-    isError: false,
-  };
-}
-
-export function useCustomerPortal() {
-  return {
-    mutate: (_arg?: unknown, _opts?: unknown) => {},
-    mutateAsync: async () => { throw new Error("Billing er midlertidig deaktivert"); },
-    isPending: false,
     isError: false,
   };
 }
@@ -75,13 +47,13 @@ export function useInvalidateSubscription() {
 }
 
 export function tierLabel(tier: SubscriptionTier): string {
-  return { free: "Gratis", standard: "Standard", premium: "Premium" }[tier];
+  return { free: "Prøveperiode", standard: "Standard", premium: "Premium" }[tier];
 }
 
 export function tierColor(tier: SubscriptionTier): string {
   return {
-    free: "text-zinc-400",
-    standard: "text-amber-400",
-    premium: "text-amber-300",
+    free: "text-green-400",
+    standard: "text-indigo-400",
+    premium: "text-amber-400",
   }[tier];
 }
