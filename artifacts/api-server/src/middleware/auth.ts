@@ -64,15 +64,28 @@ export function parseAuth(req: Request, _res: Response, next: NextFunction): voi
  */
 export function requireClubRole(minRole: "member" | "moderator" | "admin" | "owner") {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    if (!req.auth) {
+    // clerkMiddleware also populates req.auth with its own object shape, so a
+    // truthy req.auth is NOT proof of a club actor. Only accept a genuine club
+    // payload (numeric clubId + string memberName).
+    const candidate = req.auth as Partial<ClubTokenPayload> | undefined;
+    if (
+      !candidate ||
+      typeof candidate.clubId !== "number" ||
+      typeof candidate.memberName !== "string"
+    ) {
       res.status(401).json({ error: "Autentisering kreves. Logg inn i klubben." });
       return;
     }
+    const actor: ClubTokenPayload = {
+      clubId: candidate.clubId,
+      memberName: candidate.memberName,
+      role: candidate.role ?? "member",
+    };
 
     const rawId = req.params.clubId ?? req.params.id;
     const clubId = parseInt(Array.isArray(rawId) ? rawId[0]! : rawId, 10);
 
-    if (req.auth.clubId !== clubId) {
+    if (actor.clubId !== clubId) {
       res.status(403).json({ error: "Token gjelder ikke for denne klubben." });
       return;
     }
@@ -84,7 +97,7 @@ export function requireClubRole(minRole: "member" | "moderator" | "admin" | "own
       .where(
         and(
           eq(clubMembersTable.clubId, clubId),
-          eq(clubMembersTable.memberName, req.auth.memberName)
+          eq(clubMembersTable.memberName, actor.memberName)
         )
       );
 
@@ -94,7 +107,7 @@ export function requireClubRole(minRole: "member" | "moderator" | "admin" | "own
     }
 
     const actualRole = member.role ?? "member";
-    req.auth = { ...req.auth, role: actualRole };
+    req.auth = { ...actor, role: actualRole };
 
     const required = ROLE_ORDER[minRole] ?? 1;
     const actual = ROLE_ORDER[actualRole] ?? 0;

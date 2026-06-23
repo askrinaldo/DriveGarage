@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, sql, inArray } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { db, clubsTable, clubMembersTable } from "@workspace/db";
 import {
   CreateClubBody,
@@ -356,7 +356,12 @@ router.patch(
     const [existing] = await db
       .select()
       .from(clubMembersTable)
-      .where(eq(clubMembersTable.id, params.data.memberId));
+      .where(
+        and(
+          eq(clubMembersTable.id, params.data.memberId),
+          eq(clubMembersTable.clubId, params.data.clubId)
+        )
+      );
     if (!existing) {
       res.status(404).json({ error: "Medlem ikke funnet" });
       return;
@@ -372,7 +377,12 @@ router.patch(
     const [updated] = await db
       .update(clubMembersTable)
       .set({ role: parsed.data.role })
-      .where(eq(clubMembersTable.id, params.data.memberId))
+      .where(
+        and(
+          eq(clubMembersTable.id, params.data.memberId),
+          eq(clubMembersTable.clubId, params.data.clubId)
+        )
+      )
       .returning();
 
     await audit({
@@ -400,7 +410,12 @@ router.delete("/clubs/:clubId/members/:memberId", async (req, res): Promise<void
   const [target] = await db
     .select()
     .from(clubMembersTable)
-    .where(eq(clubMembersTable.id, params.data.memberId));
+    .where(
+      and(
+        eq(clubMembersTable.id, params.data.memberId),
+        eq(clubMembersTable.clubId, params.data.clubId)
+      )
+    );
 
   if (!target) {
     res.status(404).json({ error: "Medlem ikke funnet" });
