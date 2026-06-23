@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, pgEnum, index } from "drizzle-orm/pg-core";
 import { clubsTable } from "./clubs";
 
 export const forumCategoryEnum = pgEnum("forum_category", [
@@ -33,6 +33,8 @@ export const forumPostsTable = pgTable("forum_posts", {
   isDeleted: integer("is_deleted").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  index("idx_forum_posts_club_id").on(t.clubId),
+]);
 
 export type ForumPost = typeof forumPostsTable.$inferSelect;

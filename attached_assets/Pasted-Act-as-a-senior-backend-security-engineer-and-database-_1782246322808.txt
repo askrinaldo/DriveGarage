@@ -1,0 +1,84 @@
+Act as a senior backend security engineer and database performance engineer.
+
+Project: DriveGarage
+
+Phase 8.2 — Beta Hardening
+
+Implement only the remaining high-priority beta blockers:
+
+C-1 Database indexes
+C-2 Security headers
+C-3 Rate limiting
+
+Do not work on medium/low findings yet.
+Do not add new features.
+Do not redesign routes.
+Do not implement Vipps.
+Do not modify business logic except where required for security middleware.
+
+Tasks:
+
+1. Add database indexes
+   Add safe indexes for high-traffic foreign keys and ownership queries:
+
+* vehicles.user_id
+* vehicles.tenant_id
+* vehicles composite ownership queries if useful
+* service_records.vehicle_id
+* receipts.vehicle_id
+* trip_logs.vehicle_id
+* service_reminders.vehicle_id
+* club_members.club_id
+* forum_posts.club_id
+* forum_comments.post_id
+* chat_messages.user_id
+* audit/admin audit indexes if missing
+
+Use the existing DB migration/schema convention.
+Avoid destructive migrations.
+
+2. Add security headers
+   Install and configure Helmet or equivalent.
+
+Ensure:
+
+* X-Content-Type-Options
+* X-Frame-Options
+* Referrer-Policy
+* basic Content-Security-Policy if safe
+* HSTS only in production/deployment where HTTPS is guaranteed
+
+Do not break Clerk, Vite, Replit dev or API calls.
+
+3. Add rate limiting
+   Add global and targeted rate limits:
+
+* global API limit
+* stricter auth/legacy login limit
+* stricter AI/maintenance-advice limit
+* invite/code endpoints limit
+* write endpoints limit
+
+Ensure rate limiting is enabled in production/deployment and not disruptive in dev.
+
+4. Validation
+
+* Run backend typecheck
+* Run frontend typecheck if touched
+* Apply DB migration/push safely
+* Restart API server
+* Verify key routes still work
+* Verify unauthenticated protected endpoints still return 401/403
+* Verify rate limiting returns 429 when exceeded
+
+5. Deliverable
+   Return:
+
+* files changed
+* indexes added
+* security headers added
+* rate limits added
+* migration result
+* typecheck result
+* runtime verification
+* updated beta readiness assessment

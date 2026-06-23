@@ -6,6 +6,7 @@ import {
   tenantsTable, tenantMembershipsTable,
 } from "@workspace/db";
 import { signUserToken, requireUser, requireSuperAdmin, parseUserAuth, resolvePersonalTenant } from "../middleware/userAuth";
+import { authRateLimit } from "../middleware/rateLimiter";
 
 const router: IRouter = Router();
 
@@ -36,7 +37,7 @@ async function getOrCreatePersonalTenant(userId: number, userName: string): Prom
 }
 
 // ─── Register ──────────────────────────────────────────────────────────────
-router.post("/users/register", async (req, res): Promise<void> => {
+router.post("/users/register", authRateLimit, async (req, res): Promise<void> => {
   const { name, email, password } = req.body as {
     name?: string;
     email?: string;
@@ -109,7 +110,7 @@ router.post("/users/register", async (req, res): Promise<void> => {
 });
 
 // ─── Login ─────────────────────────────────────────────────────────────────
-router.post("/users/login", async (req, res): Promise<void> => {
+router.post("/users/login", authRateLimit, async (req, res): Promise<void> => {
   const { email, password } = req.body as { email?: string; password?: string };
 
   if (!email?.trim() || !password) {

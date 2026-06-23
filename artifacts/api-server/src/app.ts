@@ -14,7 +14,7 @@ import { parseAuth } from "./middleware/auth";
 import { parseUserAuth } from "./middleware/userAuth";
 import { clerkUserAuth } from "./middleware/clerkUserAuth";
 import { WebhookHandlers } from "./webhookHandlers";
-import { writeRateLimit } from "./middleware/rateLimiter";
+import { globalRateLimit, writeRateLimit } from "./middleware/rateLimiter";
 
 // Fail fast on startup if required env vars are missing
 validateEnv();
@@ -93,6 +93,27 @@ app.use(
 );
 
 app.use(cors({ credentials: true, origin: buildCorsOrigin() }));
+
+// ─── Security headers ─────────────────────────────────────────────────────────
+// Inline equivalent of helmet with a safe config for a JSON API behind Clerk/Vite.
+// CSP/COEP/X-Frame-Options intentionally omitted — this server only responds with
+// JSON, not HTML, so those headers are meaningless here. HSTS only in production
+// where HTTPS is guaranteed by the Replit deployment layer.
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-DNS-Prefetch-Control", "off");
+  res.setHeader("X-Download-Options", "noopen");
+  res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  if (IS_PROD) {
+    res.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+  }
+  next();
+});
+
+// Global API rate limit — all /api/* requests (300 req/min per IP, skipped in dev)
+app.use(globalRateLimit);
+
 app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));

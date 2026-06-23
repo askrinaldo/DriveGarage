@@ -3,11 +3,13 @@ import { eq, desc } from "drizzle-orm";
 import { db, vehiclesTable, serviceRecordsTable } from "@workspace/db";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { assertVehicleOwnership } from "../lib/vehicleOwnership";
+import { aiRateLimit } from "../middleware/rateLimiter";
 
 const router: IRouter = Router();
 
 router.post(
   "/vehicles/:vehicleId/maintenance-advice",
+  aiRateLimit,
   parseUserAuth,
   requireUser,
   async (req, res): Promise<void> => {

@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, boolean, pgEnum, index } from "drizzle-orm/pg-core";
 import { vehiclesTable } from "./vehicles";
 
 export const reminderTypeEnum = pgEnum("reminder_type", [
@@ -23,6 +23,8 @@ export const serviceRemindersTable = pgTable("service_reminders", {
   notifyBefore: integer("notify_before_days").notNull().default(30),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  index("idx_service_reminders_vehicle_id").on(t.vehicleId),
+]);
 
 export type ServiceReminder = typeof serviceRemindersTable.$inferSelect;
