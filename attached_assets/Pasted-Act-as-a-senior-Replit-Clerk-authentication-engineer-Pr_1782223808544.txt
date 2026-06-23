@@ -1,0 +1,97 @@
+Act as a senior Replit + Clerk authentication engineer.
+
+Project: DriveGarage
+
+Problem:
+The app is currently connected to an unknown/old Clerk instance, likely created earlier by Replit/AI.
+I now have my own Clerk Dashboard/app, but changes there do not affect the app.
+I cannot see or remove the old secret values directly in Replit because they are masked.
+
+Goal:
+Guide me safely through replacing the current Clerk connection with my own Clerk app.
+
+Important:
+
+* Do not print full secrets.
+* Do not expose CLERK_SECRET_KEY.
+* Do not modify code unless absolutely necessary.
+* Do not delete auth logic.
+* Do not remove local super_admin fallback.
+* Focus on environment/secrets verification and safe replacement steps.
+
+Tasks:
+
+1. Inspect current Clerk env usage
+   Find all places using:
+
+* VITE_CLERK_PUBLISHABLE_KEY
+* CLERK_PUBLISHABLE_KEY
+* CLERK_SECRET_KEY
+* VITE_CLERK_PROXY_URL
+* CLERK_PROXY_URL if present
+
+2. Safely fingerprint current keys
+   Print only:
+
+* whether each key exists
+* whether publishable keys are test or live
+* first 6 characters + last 6 characters of publishable keys
+* whether frontend and backend publishable keys match
+* never print CLERK_SECRET_KEY, only exists/test/live if safely detectable
+
+3. Explain why my Clerk Dashboard changes do not show
+   Explain whether the app is likely using a different Clerk instance than the one I edited.
+
+4. Give exact Replit steps to replace secrets
+   Guide me step by step:
+
+* where in Replit to open Secrets/Environment
+* how to update existing masked values
+* which values to paste from my Clerk Dashboard
+* whether to use development or production keys right now
+* how to confirm the values were updated without revealing them
+
+Required values from my Clerk app:
+
+* VITE_CLERK_PUBLISHABLE_KEY = my Clerk publishable key
+* CLERK_PUBLISHABLE_KEY = same publishable key
+* CLERK_SECRET_KEY = my Clerk secret key
+
+Do not ask me to paste secrets into chat.
+
+5. Restart/rebuild instructions
+   Tell me exactly what to restart after replacing secrets:
+
+* frontend workflow
+* backend/API workflow
+* full Replit restart if required
+* clear browser cache/incognito if needed
+
+6. Post-change verification
+   After replacement, verify:
+
+* sign-in screen says DriveGarage
+* Microsoft button appears if enabled in my Clerk Dashboard
+* Google still works if enabled
+* Development mode remains only if using test keys
+* new user appears in my Clerk Dashboard Users list
+* backend /api/auth/user works
+* user is provisioned in DB correctly
+
+7. Safety checks
+   Check if switching Clerk instance affects existing DB users:
+
+* existing users may have old Clerk user IDs
+* replitUserId currently stores Clerk user IDs
+* users may be recreated or linked by email
+* recommend how to handle this safely in dev
+
+8. Deliverable
+   Return:
+
+* current safe key fingerprint
+* exact replacement steps
+* restart steps
+* verification checklist
+* risks when switching Clerk instances
+* do not reveal any secret values
