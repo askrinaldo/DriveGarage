@@ -1,0 +1,114 @@
+Act as a senior authentication engineer and Clerk specialist.
+
+Project: DriveGarage
+
+Before we change anything in Clerk Dashboard, I want a complete audit of the current Clerk integration.
+
+Important:
+Do NOT make any changes yet.
+Do NOT modify code.
+Do NOT modify Clerk configuration.
+Do NOT remove auth methods.
+Do NOT implement Microsoft.
+Do NOT disable password login.
+Only audit and report.
+
+Tasks:
+
+1. Audit current Clerk integration
+   Inspect the entire codebase and document:
+
+* Clerk packages installed
+* ClerkProvider configuration
+* Sign-in page configuration
+* Sign-up page configuration
+* UserButton configuration
+* Clerk middleware/auth helpers
+* Clerk environment variables used
+* User provisioning flow
+* Backend auth validation
+* Any custom Clerk appearance configuration
+* Any localization configuration
+
+2. Identify current login methods
+   Determine exactly which authentication methods are currently enabled in the application:
+
+* Google OAuth
+* Microsoft OAuth
+* Email + Password
+* Email OTP
+* Magic Link
+* Passkeys
+
+For each method:
+
+* confirmed active
+* confirmed inactive
+* unknown (dashboard-only)
+
+3. Identify dashboard-managed settings
+   List everything that comes from Clerk Dashboard rather than source code:
+
+Examples:
+
+* Application name
+* Social providers
+* Password settings
+* Email settings
+* Branding
+* Development mode banner
+* Domains
+* Session settings
+
+4. Explain the current sign-in screen
+   The UI currently shows:
+
+* "Vintage Vehicle Log"
+* Password field
+* Google button
+* Development mode banner
+
+For each element explain:
+
+* where it comes from
+* code or dashboard
+* how it would be changed
+
+5. Check for configuration mismatches
+   Look for possible problems:
+
+* frontend expecting one auth method while Clerk allows another
+* backend assumptions that may break if password auth is disabled
+* missing Microsoft support
+* incorrect branding
+* incorrect redirect URLs
+* old environment variables
+* duplicate auth systems
+
+6. Recommend target configuration
+   For a Norwegian consumer-facing app called DriveGarage:
+
+Recommend:
+
+* login methods
+* signup methods
+* whether passwords should remain
+* whether magic links should be used
+* whether passkeys should be considered later
+
+Do not implement anything.
+
+7. Deliverable
+
+Return:
+
+* current Clerk architecture
+* current auth methods
+* dashboard-controlled settings
+* code-controlled settings
+* mismatches found
+* risks found
+* recommended final configuration
+* what should be changed in Clerk Dashboard
+* what should be changed in code
+* what should not be touched
