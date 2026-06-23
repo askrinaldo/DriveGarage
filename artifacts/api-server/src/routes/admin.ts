@@ -3,6 +3,11 @@ import { eq, desc, count, sql, gte } from "drizzle-orm";
 import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable } from "@workspace/db";
 import { parseUserAuth, requireSuperAdmin } from "../middleware/userAuth";
 import { logAdminAction } from "../lib/adminAudit";
+import {
+  getActivePaymentExemptionForUser,
+  createPaymentExemption,
+  revokePaymentExemption,
+} from "../lib/paymentExemptions";
 
 const router = Router();
 
@@ -406,6 +411,74 @@ router.patch("/admin/users/:id/subscription", parseUserAuth, requireSuperAdmin, 
   });
 
   res.json(updated);
+});
+
+// ─── Payment exemptions ────────────────────────────────────────────────────
+
+router.get("/admin/users/:id/payment-exemption", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Ugyldig bruker-ID" }); return; }
+  const exemption = await getActivePaymentExemptionForUser(id);
+  res.json({ exemption });
+});
+
+router.post("/admin/users/:id/payment-exemption", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Ugyldig bruker-ID" }); return; }
+  const { type, reason, expiresAt } = req.body as {
+    type: "internal" | "partner" | "test" | "manual";
+    reason: string;
+    expiresAt?: string;
+  };
+
+  if (!type || !["internal", "partner", "test", "manual"].includes(type)) {
+    res.status(400).json({ error: "Ugyldig type. Gyldige verdier: internal, partner, test, manual" });
+    return;
+  }
+  if (!reason?.trim()) {
+    res.status(400).json({ error: "reason er obligatorisk" });
+    return;
+  }
+
+  const existing = await getActivePaymentExemptionForUser(id);
+  if (existing) {
+    res.status(409).json({ error: "Brukeren har allerede et aktivt betalingsunntak" });
+    return;
+  }
+
+  try {
+    const created = await createPaymentExemption(
+      req,
+      id,
+      type,
+      reason,
+      expiresAt ? new Date(expiresAt) : undefined,
+    );
+    res.status(201).json({ exemption: created });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Ukjent feil";
+    res.status(400).json({ error: message });
+  }
+});
+
+router.delete("/admin/users/:id/payment-exemption", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Ugyldig bruker-ID" }); return; }
+  const { reason } = req.body as { reason?: string };
+
+  if (!reason?.trim()) {
+    res.status(400).json({ error: "reason er obligatorisk ved tilbakekalling" });
+    return;
+  }
+
+  try {
+    const revoked = await revokePaymentExemption(req, id, reason);
+    res.json({ exemption: revoked });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Ukjent feil";
+    const status = message.includes("no active exemption") ? 404 : 400;
+    res.status(status).json({ error: message });
+  }
 });
 
 export default router;

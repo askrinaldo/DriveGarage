@@ -1,0 +1,117 @@
+Act as a senior backend security engineer and SaaS billing architect.
+
+Project: DriveGarage
+
+We are doing Phase 7 only: payment exemption model and minimal implementation.
+
+Current status:
+
+* Vipps is planned, not implemented.
+* Pricing/trial is planned but not enforced yet.
+* Admin audit logging exists in admin_audit_logs.
+* logAdminAction() exists and should be reused.
+* Superadmin role exists as current admin capability.
+* We need a safe way to mark internal/test/partner users as exempt from payment before billing enforcement is built.
+
+Important:
+
+* Do not implement Vipps API.
+* Do not implement full billing enforcement.
+* Do not redesign roles broadly.
+* Do not implement support access sessions.
+* Do not expose private garage data.
+* Do not hardcode permanent exemptions by email in source code.
+* Keep changes minimal and safe.
+
+Tasks:
+
+1. Add payment exemptions table
+   Create a table such as payment_exemptions:
+
+* id
+* userId FK users
+* type enum/string: internal, partner, test, manual
+* reason required
+* createdByUserId FK users
+* createdAt
+* expiresAt nullable
+* revokedAt nullable
+* revokedByUserId nullable
+* revokeReason nullable
+
+Add indexes for userId, createdByUserId, expiresAt and revokedAt.
+
+2. Add backend helper/service
+   Create helper/service for:
+
+* createPaymentExemption()
+* revokePaymentExemption()
+* getActivePaymentExemptionForUser()
+* isUserPaymentExempt()
+
+Rules:
+
+* active exemption = revokedAt is null AND (expiresAt is null OR expiresAt > now)
+* reason is required on create and revoke
+* log admin audit actions:
+
+  * billing.exemption.grant
+  * billing.exemption.revoke
+
+3. Add minimal admin routes
+   Add protected superadmin-only routes:
+
+* GET /admin/users/:id/payment-exemption
+* POST /admin/users/:id/payment-exemption
+* DELETE /admin/users/:id/payment-exemption
+
+POST body:
+
+* type
+* reason
+* expiresAt optional
+
+DELETE body:
+
+* reason required
+
+Do not allow self-service users to call these routes.
+Do not expose private garage data.
+
+4. Add minimal frontend admin UI if safe
+   If there is already an admin user detail page:
+
+* Show whether the user has active payment exemption.
+* Add a simple form/button for superadmin to grant/revoke exemption.
+* Require reason field.
+* Optional expiresAt field.
+
+If no safe admin user detail page exists, document API only and do not build UI yet.
+
+5. Bootstrap/internal accounts
+   Document how internal accounts should be exempted:
+
+* login/create user through Clerk first
+* superadmin grants exemption through admin route/UI
+* no permanent source-code email whitelist
+* optional one-time env bootstrap only for first superadmin, not payment exemptions
+
+6. Validation
+
+* Run backend typecheck.
+* Run frontend typecheck if frontend changed.
+* Create/push DB table safely.
+* Confirm audit log is created on grant/revoke.
+* Confirm expired/revoked exemptions are not considered active.
+
+Deliverable:
+
+* files changed
+* schema added
+* routes added
+* helper/service added
+* audit actions logged
+* UI changed or not changed
+* typecheck result
+* migration/push result
+* remaining risks

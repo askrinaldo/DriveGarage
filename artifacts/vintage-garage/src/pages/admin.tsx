@@ -44,6 +44,19 @@ interface DetailedUser {
   createdAt: string;
 }
 
+interface PaymentExemption {
+  id: number;
+  userId: number;
+  type: "internal" | "partner" | "test" | "manual";
+  reason: string;
+  createdByUserId: number;
+  createdAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  revokedByUserId: number | null;
+  revokeReason: string | null;
+}
+
 interface Club {
   id: number;
   name: string;
@@ -340,6 +353,25 @@ function UserDetailPanel({
 }) {
   const [changingTier, setChangingTier] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activeExemption, setActiveExemption] = useState<PaymentExemption | null>(null);
+  const [exemptionLoading, setExemptionLoading] = useState(true);
+  const [grantType, setGrantType] = useState("internal");
+  const [grantReason, setGrantReason] = useState("");
+  const [grantExpiresAt, setGrantExpiresAt] = useState("");
+  const [revokeReason, setRevokeReason] = useState("");
+  const [exemptionSaving, setExemptionSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setExemptionLoading(true);
+    getHeaders().then(h =>
+      fetch(`/api/admin/users/${user.id}/payment-exemption`, { headers: h })
+        .then(r => r.json())
+        .then((d: { exemption: PaymentExemption | null }) => { if (!cancelled) { setActiveExemption(d.exemption); setExemptionLoading(false); } })
+        .catch(() => { if (!cancelled) setExemptionLoading(false); })
+    );
+    return () => { cancelled = true; };
+  }, [user.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function toggleActive() {
     setSaving(true);
@@ -362,6 +394,34 @@ function UserDetailPanel({
     });
     setChangingTier(false);
     onUpdate();
+  }
+
+  async function grantExemption() {
+    if (!grantReason.trim()) return;
+    setExemptionSaving(true);
+    const body: Record<string, string> = { type: grantType, reason: grantReason };
+    if (grantExpiresAt) body.expiresAt = new Date(grantExpiresAt).toISOString();
+    const res = await fetch(`/api/admin/users/${user.id}/payment-exemption`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...await getHeaders() },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json() as { exemption?: PaymentExemption };
+    if (data.exemption) { setActiveExemption(data.exemption); setGrantReason(""); setGrantExpiresAt(""); }
+    setExemptionSaving(false);
+  }
+
+  async function revokeExemption() {
+    if (!revokeReason.trim()) return;
+    setExemptionSaving(true);
+    const res = await fetch(`/api/admin/users/${user.id}/payment-exemption`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", ...await getHeaders() },
+      body: JSON.stringify({ reason: revokeReason }),
+    });
+    const data = await res.json() as { exemption?: PaymentExemption };
+    if (data.exemption) { setActiveExemption(null); setRevokeReason(""); }
+    setExemptionSaving(false);
   }
 
   const initials = user.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
@@ -431,6 +491,101 @@ function UserDetailPanel({
                 <SelectItem value="premium">Premium (kr 99/mnd)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        )}
+
+        {/* Payment exemption */}
+        {user.role !== "super_admin" && (
+          <div className="space-y-3 pt-2 border-t border-white/8">
+            <p className="text-xs text-white/40 uppercase tracking-wider">Betalingsunntak</p>
+            {exemptionLoading ? (
+              <div className="flex items-center gap-2 text-white/40 text-xs">
+                <Loader2 className="w-3 h-3 animate-spin" />Laster...
+              </div>
+            ) : activeExemption ? (
+              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="text-[10px] bg-amber-500/20 text-amber-300 border-amber-500/30 uppercase">
+                    {activeExemption.type}
+                  </Badge>
+                  <span className="text-xs text-white/60 truncate">{activeExemption.reason}</span>
+                </div>
+                {activeExemption.expiresAt && (
+                  <p className="text-[10px] text-white/40">
+                    Utløper: {new Date(activeExemption.expiresAt).toLocaleDateString("nb-NO")}
+                  </p>
+                )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full h-8 text-xs text-red-300 border-red-500/20 hover:bg-red-500/10" disabled={exemptionSaving}>
+                      Trekk tilbake unntak
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-[#0d1117] border-white/10">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-white">Trekk tilbake betalingsunntak?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/50">
+                        Oppgi grunn for tilbakekalling. Handlingen logges.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <Textarea
+                      value={revokeReason}
+                      onChange={e => setRevokeReason(e.target.value)}
+                      placeholder="Grunn (obligatorisk)..."
+                      className="bg-white/5 border-white/10 text-white text-sm resize-none"
+                      rows={2}
+                    />
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Avbryt</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={revokeExemption}
+                        disabled={!revokeReason.trim() || exemptionSaving}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Trekk tilbake
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-white/3 border border-white/6 p-3 space-y-2">
+                <p className="text-[10px] text-white/40">Ingen aktivt unntak. Gi unntak:</p>
+                <Select value={grantType} onValueChange={setGrantType}>
+                  <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="internal">Intern (ansatt/admin)</SelectItem>
+                    <SelectItem value="partner">Partner</SelectItem>
+                    <SelectItem value="test">Beta-tester</SelectItem>
+                    <SelectItem value="manual">Manuell kompensasjon</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Textarea
+                  value={grantReason}
+                  onChange={e => setGrantReason(e.target.value)}
+                  placeholder="Grunn (obligatorisk)..."
+                  className="bg-white/5 border-white/10 text-white text-xs resize-none"
+                  rows={2}
+                />
+                <Input
+                  type="date"
+                  value={grantExpiresAt}
+                  onChange={e => setGrantExpiresAt(e.target.value)}
+                  className="h-8 text-xs bg-white/5 border-white/10 text-white"
+                  placeholder="Utløpsdato (valgfri)"
+                />
+                <Button
+                  size="sm"
+                  onClick={grantExemption}
+                  disabled={!grantReason.trim() || exemptionSaving}
+                  className="w-full h-8 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  {exemptionSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Gi betalingsunntak"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

@@ -4,12 +4,16 @@
 > **Konfidensielt internt dokument.**
 > Sist oppdatert: Juni 2026.
 >
-> **Implementasjonsstatus Phase 6.5:**
+> **Implementasjonsstatus Phase 6.5 + 7:**
 > - ✅ `admin_audit_logs`-tabell live i DB
 > - ✅ `logAdminAction`-helper (`artifacts/api-server/src/lib/adminAudit.ts`)
 > - ✅ `PATCH /admin/users/:id` logger `user.activate` / `user.deactivate`
 > - ✅ `PATCH /admin/users/:id/subscription` logger `billing.tier.change`
-> - 🔴 Øvrige endepunkter (unntak, støtte-tilgang, roller) — ikke implementert ennå
+> - ✅ `payment_exemptions`-tabell live i DB
+> - ✅ `createPaymentExemption / revokePaymentExemption / isUserPaymentExempt` helpers
+> - ✅ `GET/POST/DELETE /admin/users/:id/payment-exemption` — superadmin-ruter
+> - ✅ Admin-UI: gi/trekke tilbake unntak fra `UserDetailPanel`
+> - 🔴 Støtte-tilgang, mellomliggende roller — ikke implementert ennå
 
 ---
 
@@ -694,9 +698,15 @@ Steg 5: Frontend
 ✅ [Phase 6.5] Audit-helper redakterer tokens/secrets fra metadata
 ✅ [Phase 6.5] Audit-helper logger IP-adresse og user-agent
 
+✅ [Phase 7] payment_exemptions-tabell opprettet i DB
+✅ [Phase 7] GET/POST/DELETE /admin/users/:id/payment-exemption
+✅ [Phase 7] Admin-UI: gi/trekke tilbake unntak i UserDetailPanel (med reason-krav)
+✅ [Phase 7] billing.exemption.grant + billing.exemption.revoke audit-logges
+✅ [Phase 7] isUserPaymentExempt() helper klar for billing-enforcement
+
+🔴 MANGLER: billing-enforcement (feature gating basert på tier/unntak)
 🔴 MANGLER: mellomliggende roller (support_admin, billing_admin)
 🔴 MANGLER: support_access_session-protokoll for datatilgang
-🔴 MANGLER: payment_exemptions (betalingsunntak-system)
 🔴 MANGLER: kvitteringsfilrestriksjoner i admin-kontekst
 🔴 MANGLER: admin audit-log eksponert i frontend (/admin/audit-log bør vise admin_audit_logs, ikke kun klub-logg)
 
