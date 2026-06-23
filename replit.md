@@ -70,3 +70,48 @@ Express 5 REST API serving the DriveGarage frontend.
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Authentication
+
+### Provider
+
+**Replit-managed Clerk** — retained as the official authentication provider.
+Instance: `firm-baboon-70.clerk.accounts.dev` (development keys; Replit auto-swaps to live keys on publish).
+Configuration managed exclusively through the **Replit Auth pane** — never through an external Clerk Dashboard.
+
+### Enabled Login Methods
+
+| Method | Status | Notes |
+|---|---|---|
+| Email + password | ✅ Enabled | Email verification required before activation |
+| Google OAuth | ✅ Enabled | Configured via Auth pane |
+| Apple OAuth | ✅ Enabled | Configured via Auth pane |
+| Microsoft OAuth | ❌ Deferred | Not supported by Replit-managed Clerk |
+| Phone / SMS | ❌ Out of scope | Not supported by Replit-managed Clerk |
+| Passkeys | ❌ Out of scope | Not supported by Replit-managed Clerk |
+| MFA | ❌ Out of scope | Not supported by Replit-managed Clerk |
+
+### Auth Routes
+
+| Route | Component | Redirect after |
+|---|---|---|
+| `/sign-in` | `<SignIn>` (Clerk) | `/dashboard` |
+| `/sign-up` | `<SignUp>` (Clerk) | `/dashboard` |
+| `/` (landing) | Logo / landing page | — |
+| Sign-out | `afterSignOutUrl` | `/` |
+
+### User Provisioning
+
+JIT (just-in-time) provisioning is implemented in `artifacts/api-server/src/middleware/clerkUserAuth.ts`:
+1. On first authenticated request, looks up DB user by Clerk user ID.
+2. If not found, fetches Clerk profile and matches by email (links existing accounts automatically).
+3. If no match, creates a new DB user and personal tenant.
+
+### Deferred Decisions
+
+- **External Clerk migration** — evaluated and deferred. Replit-managed Clerk covers all current requirements.
+- **Microsoft OAuth** — deferred. Requires an external Clerk instance to configure. Not in scope for current phase.
+
+### Next Phase
+
+**Phase 8 — Full QA and Security Readiness Audit**
