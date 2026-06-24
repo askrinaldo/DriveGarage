@@ -279,3 +279,13 @@ html.light-mode [data-admin] .recharts-tooltip-wrapper > div {
   color: hsl(var(--foreground)) !important;
   border-color: hsl(var(--border)) !important;
 }
+
+/* Emerald / green text: designed for dark backgrounds — darken in light mode */
+html.light-mode [class*="text-emerald-3"],
+html.light-mode [class*="text-emerald-4"] {
+  color: hsl(152 56% 30%) !important;
+}
+html.light-mode [class*="text-green-4"],
+html.light-mode [class*="text-green-5"] {
+  color: hsl(142 72% 25%) !important;
+}
