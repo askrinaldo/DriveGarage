@@ -280,6 +280,14 @@ html.light-mode [data-admin] .recharts-tooltip-wrapper > div {
   border-color: hsl(var(--border)) !important;
 }
 
+/* Gradient clip text (bg-clip-text text-transparent): invisible on light bg — switch to solid */
+html.light-mode .bg-clip-text.text-transparent {
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: hsl(243 75% 40%) !important;
+  -webkit-text-fill-color: hsl(243 75% 40%) !important;
+}
+
 /* Emerald / green text: designed for dark backgrounds — darken in light mode */
 html.light-mode [class*="text-emerald-3"],
 html.light-mode [class*="text-emerald-4"] {
