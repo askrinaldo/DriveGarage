@@ -289,3 +289,25 @@ html.light-mode [class*="text-green-4"],
 html.light-mode [class*="text-green-5"] {
   color: hsl(142 72% 25%) !important;
 }
+
+/* Blue-family text: designed for dark backgrounds — darken in light mode */
+html.light-mode [class*="text-blue-3"],
+html.light-mode [class*="text-blue-4"] {
+  color: hsl(221 83% 38%) !important;
+}
+html.light-mode [class*="text-indigo-3"],
+html.light-mode [class*="text-indigo-4"] {
+  color: hsl(243 75% 40%) !important;
+}
+html.light-mode [class*="text-violet-3"],
+html.light-mode [class*="text-violet-4"] {
+  color: hsl(262 80% 40%) !important;
+}
+html.light-mode [class*="text-cyan-3"],
+html.light-mode [class*="text-cyan-4"] {
+  color: hsl(188 86% 26%) !important;
+}
+html.light-mode [class*="text-slate-3"],
+html.light-mode [class*="text-slate-4"] {
+  color: hsl(215 25% 35%) !important;
+}
