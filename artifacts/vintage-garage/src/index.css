@@ -311,3 +311,29 @@ html.light-mode [class*="text-slate-3"],
 html.light-mode [class*="text-slate-4"] {
   color: hsl(215 25% 35%) !important;
 }
+
+/* Warm-family text: designed for dark backgrounds — darken in light mode */
+html.light-mode [class*="text-amber-3"],
+html.light-mode [class*="text-amber-4"] {
+  color: hsl(32 95% 34%) !important;
+}
+html.light-mode [class*="text-yellow-3"],
+html.light-mode [class*="text-yellow-4"] {
+  color: hsl(36 90% 28%) !important;
+}
+html.light-mode [class*="text-orange-3"],
+html.light-mode [class*="text-orange-4"] {
+  color: hsl(17 90% 36%) !important;
+}
+html.light-mode [class*="text-red-3"],
+html.light-mode [class*="text-red-4"] {
+  color: hsl(0 72% 38%) !important;
+}
+html.light-mode [class*="text-rose-3"],
+html.light-mode [class*="text-rose-4"] {
+  color: hsl(347 77% 38%) !important;
+}
+html.light-mode [class*="text-purple-3"],
+html.light-mode [class*="text-purple-4"] {
+  color: hsl(271 77% 38%) !important;
+}
