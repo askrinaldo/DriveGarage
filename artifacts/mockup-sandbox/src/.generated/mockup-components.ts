@@ -4,5 +4,6 @@ export const modules: ModuleMap = {
   "./components/mockups/landing/Combined.tsx": () => import("../components/mockups/landing/Combined.tsx"),
   "./components/mockups/landing/Dramatisk.tsx": () => import("../components/mockups/landing/Dramatisk.tsx"),
   "./components/mockups/landing/Filmisk.tsx": () => import("../components/mockups/landing/Filmisk.tsx"),
+  "./components/mockups/landing/Lys.tsx": () => import("../components/mockups/landing/Lys.tsx"),
   "./components/mockups/landing/Premium.tsx": () => import("../components/mockups/landing/Premium.tsx")
 };
