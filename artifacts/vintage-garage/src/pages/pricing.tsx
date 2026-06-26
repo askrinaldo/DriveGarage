@@ -91,7 +91,7 @@ const TIERS: TierDef[] = [
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-[#0d0f1a] text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-5xl mx-auto px-4 py-12">
 
         <div className="mb-8">
@@ -108,7 +108,7 @@ export default function PricingPage() {
             <Car className="w-3.5 h-3.5" />
             DriveGarage — Vedlikeholdslogg for klassiske kjøretøy
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white mb-4">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground mb-4">
             Enkel prising.
             <br />
             <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
@@ -170,7 +170,7 @@ export default function PricingPage() {
 
                   <div className="mb-5">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-black text-white">{tier.priceLine}</span>
+                      <span className="text-3xl font-black text-foreground">{tier.priceLine}</span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{tier.subLine}</p>
                     {tier.id !== "trial" && (
@@ -213,7 +213,7 @@ export default function PricingPage() {
         </div>
 
         {/* Planlagt Vipps-flyt */}
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 mb-10">
+        <div className="rounded-2xl border border-border/60 bg-card p-6 mb-10">
           <h2 className="text-sm font-bold text-foreground uppercase tracking-widest mb-5 text-[11px] text-muted-foreground">
             Planlagt Vipps-flyt
           </h2>
@@ -230,7 +230,7 @@ export default function PricingPage() {
                 </div>
                 <p className="text-xs text-muted-foreground leading-snug">{label}</p>
                 {step !== "4" && (
-                  <ArrowRight className="w-3.5 h-3.5 text-white/10 sm:rotate-0 rotate-90 hidden sm:block absolute" />
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 sm:rotate-0 rotate-90 hidden sm:block absolute" />
                 )}
               </div>
             ))}
@@ -238,8 +238,8 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 mb-10">
-          <h2 className="text-base font-bold text-white mb-4">Ofte stilte spørsmål</h2>
+        <div className="rounded-2xl border border-border/60 bg-card p-6 mb-10">
+          <h2 className="text-base font-bold text-foreground mb-4">Ofte stilte spørsmål</h2>
           <div className="grid sm:grid-cols-2 gap-5 text-sm">
             <div>
               <p className="font-semibold text-foreground mb-1">Kan jeg kansellere når som helst?</p>
