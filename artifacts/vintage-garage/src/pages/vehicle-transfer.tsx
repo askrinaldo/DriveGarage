@@ -8,6 +8,7 @@ import { useUserAuth } from "@/hooks/use-user-auth";
 import {
   Car, Bike, CheckCircle2, XCircle, AlertCircle, ArrowRight, Loader2, Wrench, Clock,
 } from "lucide-react";
+import { CompanyInfo } from "@/components/company-info";
 
 interface TransferData {
   transfer: {
@@ -273,6 +274,7 @@ export default function VehicleTransfer() {
         <p className="text-center text-xs text-muted-foreground">
           Historikk, servicelogg og dokumenter følger med ved overføring.
         </p>
+        <CompanyInfo className="text-center text-[11px] text-muted-foreground/60 leading-relaxed" />
       </div>
     </div>
   );

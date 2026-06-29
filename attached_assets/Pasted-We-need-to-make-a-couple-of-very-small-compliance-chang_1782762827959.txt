@@ -1,0 +1,98 @@
+We need to make a couple of very small compliance changes required by Vipps.
+
+IMPORTANT
+
+This project is currently in production and already contains a planned payment architecture.
+
+DO NOT:
+- implement Vipps integration
+- implement Stripe changes
+- create subscription logic
+- modify billing flows
+- touch backend payment code
+- change database schema
+- remove legacy payment code
+- add new routes or APIs unless absolutely necessary
+
+Only make the requested compliance changes.
+
+----------------------------------
+
+1. Display company information
+
+Make our company information visible on the website (preferably in the footer on every page).
+
+Company:
+
+IT Løsninger No AS
+Org.nr. 980 891 232
+Sandnes, Norway
+
+Use the existing styling.
+
+----------------------------------
+
+2. Update Terms & Conditions
+
+Vipps requires that our Terms explain how a customer can terminate a subscription.
+
+Add a new section similar to:
+
+## Cancellation of subscription
+
+Customers may cancel their subscription at any time.
+
+Until the self-service subscription management is released, cancellation requests must be sent to our customer support using the contact information available on the website.
+
+The cancellation becomes effective at the end of the current billing period. No new billing period will begin after the subscription has been cancelled.
+
+This text should be easy to update later when self-service cancellation is released.
+
+----------------------------------
+
+3. Make the wording configurable
+
+Do NOT build any subscription cancellation functionality.
+
+Instead:
+
+Create a simple configuration value (constant or config file) such as:
+
+subscriptionCancellationMethod
+
+Possible values:
+
+- "support"
+- "self-service"
+
+The Terms page should display different wording depending on this value.
+
+For now use:
+
+subscriptionCancellationMethod = "support"
+
+This allows us to switch the wording later when the account cancellation feature is implemented.
+
+----------------------------------
+
+4. Do NOT implement any cancellation feature.
+
+If there is no "Cancel subscription" button today:
+
+DO NOT build one.
+
+Just prepare the Terms so they already support switching to self-service later.
+
+----------------------------------
+
+5. Keep the changes minimal.
+
+Only modify:
+
+- footer/company information
+- Terms & Conditions
+- one small configuration file if necessary
+
+Avoid touching anything else.
+
+When finished, list every modified file and explain how to switch from "support" to "self-service" in the future.

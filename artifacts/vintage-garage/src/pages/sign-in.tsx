@@ -1,5 +1,6 @@
 import { SignIn } from "@clerk/react";
 import { Link } from "wouter";
+import { CompanyInfo } from "@/components/company-info";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -36,6 +37,7 @@ export default function SignInPage() {
           <Link href="/privacy" className="underline hover:text-white transition-colors">Personvernerklæring</Link>
           .
         </p>
+        <CompanyInfo className="text-[11px] text-[#8899bb]/60 text-center leading-relaxed" />
       </div>
     </div>
   );

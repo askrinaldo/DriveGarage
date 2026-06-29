@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemePanel, ThemeControls } from "@/components/theme-panel";
+import { CompanyInfo } from "@/components/company-info";
 import { useTheme } from "@/contexts/theme";
 import { useTranslation } from "react-i18next";
 import { FlagSwitcher } from "@/components/language-switcher";
@@ -299,6 +300,8 @@ export function Layout({ children }: LayoutProps) {
             </Link>
           </div>
         )}
+
+        <CompanyInfo className="px-3 pt-1 text-[10px] leading-relaxed text-sidebar-foreground/35" />
       </div>
     </aside>
   );

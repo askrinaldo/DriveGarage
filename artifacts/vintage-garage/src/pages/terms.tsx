@@ -1,5 +1,6 @@
 import { LegalPageShell, LegalSection, LegalList } from "@/components/legal-page-shell";
 import { Link } from "wouter";
+import { subscriptionCancellationMethod } from "@/config/compliance";
 
 export default function TermsPage() {
   return (
@@ -86,7 +87,27 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="6. Tilgjengelighet og endringer">
+      <LegalSection title="6. Oppsigelse av abonnement">
+        <p>Du kan si opp abonnementet ditt når som helst.</p>
+        {subscriptionCancellationMethod === "self-service" ? (
+          <p>
+            Oppsigelse gjøres direkte i tjenesten via abonnementsadministrasjonen
+            under kontoinnstillingene dine.
+          </p>
+        ) : (
+          <p>
+            Inntil selvbetjent abonnementsadministrasjon er lansert, må
+            oppsigelse sendes til vår kundestøtte ved hjelp av
+            kontaktinformasjonen som er tilgjengelig på nettstedet.
+          </p>
+        )}
+        <p>
+          Oppsigelsen trer i kraft ved slutten av inneværende betalingsperiode.
+          Ingen ny betalingsperiode starter etter at abonnementet er sagt opp.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="7. Tilgjengelighet og endringer">
         <p>
           Vi tilstreber høy oppetid, men garanterer ikke uavbrutt tilgang. Planlagt vedlikehold
           varsles i god tid. Vi forbeholder oss retten til å endre, suspendere eller avvikle deler
@@ -98,7 +119,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="7. Ansvarsbegrensning">
+      <LegalSection title="8. Ansvarsbegrensning">
         <p>
           DriveGarage AS er ikke ansvarlig for tap av data, avbrutt tilgang, eller indirekte tap
           som følge av bruk av tjenesten, i den grad dette er tillatt etter norsk lov.
@@ -113,7 +134,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Gjeldende lov og verneting">
+      <LegalSection title="9. Gjeldende lov og verneting">
         <p>
           Disse vilkårene er underlagt norsk rett. Tvister som ikke løses i minnelighet, behandles
           av Oslo tingrett som verneting, med forbehold om forbrukerrettigheter til å velge
@@ -121,7 +142,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="9. Kontakt">
+      <LegalSection title="10. Kontakt">
         <p>
           Spørsmål om vilkårene kan rettes til:{" "}
           <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-white">

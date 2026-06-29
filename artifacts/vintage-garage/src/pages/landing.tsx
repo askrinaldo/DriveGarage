@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { FlagSwitcher } from "@/components/language-switcher";
+import { CompanyInfo } from "@/components/company-info";
 
 /* ── Animated counter ────────────────────────────────────────── */
 function useCountUp(target: number, duration = 1800, start = false) {
@@ -433,6 +434,7 @@ export default function LandingPage() {
             <p className="text-[#8899bb] text-sm leading-relaxed max-w-xs">
               {t("landing.footer.desc")}
             </p>
+            <CompanyInfo className="text-[#8899bb] text-xs leading-relaxed mt-5" />
           </div>
           <div>
             <h4 className="text-white font-semibold mb-5 text-sm">{t("landing.footer.product")}</h4>

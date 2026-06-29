@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { CompanyInfo } from "@/components/company-info";
 import {
   CheckCircle2, Clock, Car, ArrowLeft, Zap, Sparkles,
   Gift, ArrowRight,
@@ -274,6 +275,8 @@ export default function PricingPage() {
             Personvernerklæring
           </Link>
         </p>
+
+        <CompanyInfo className="text-center text-xs text-muted-foreground/70 mt-6 leading-relaxed" />
 
       </div>
     </div>

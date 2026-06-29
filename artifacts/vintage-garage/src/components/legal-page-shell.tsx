@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Car, ArrowLeft, AlertTriangle } from "lucide-react";
+import { CompanyInfo } from "@/components/company-info";
 
 interface LegalPageShellProps {
   title: string;
@@ -43,14 +44,17 @@ export function LegalPageShell({ title, lastUpdated, children }: LegalPageShellP
       </main>
 
       <footer className="border-t border-white/[0.07] bg-[#060b18]">
-        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4 text-xs text-[#8899bb]">
-          <span>© {new Date().getFullYear()} DriveGarage AS. Alle rettigheter forbeholdes.</span>
-          <div className="flex items-center gap-5">
-            <Link href="/privacy" className="hover:text-white transition-colors">Personvern</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Vilkår</Link>
-            <Link href="/cookies" className="hover:text-white transition-colors">Informasjonskapsler</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Kontakt</Link>
+        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-4 text-xs text-[#8899bb]">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <span>© {new Date().getFullYear()} DriveGarage AS. Alle rettigheter forbeholdes.</span>
+            <div className="flex items-center gap-5">
+              <Link href="/privacy" className="hover:text-white transition-colors">Personvern</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Vilkår</Link>
+              <Link href="/cookies" className="hover:text-white transition-colors">Informasjonskapsler</Link>
+              <Link href="/contact" className="hover:text-white transition-colors">Kontakt</Link>
+            </div>
           </div>
+          <CompanyInfo className="text-[#8899bb]/70 leading-relaxed" />
         </div>
       </footer>
     </div>
