@@ -456,7 +456,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#8899bb]">
-          <span>© {new Date().getFullYear()} DriveGarage AS. {t("landing.footer.rights")}</span>
+          <span>© {new Date().getFullYear()} IT Løsninger No AS. {t("landing.footer.rights")}</span>
           <div className="flex items-center gap-5">
             <Link href="/privacy" className="hover:text-white transition-colors">Personvern</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Vilkår</Link>

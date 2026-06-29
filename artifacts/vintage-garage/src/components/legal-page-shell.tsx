@@ -46,7 +46,7 @@ export function LegalPageShell({ title, lastUpdated, children }: LegalPageShellP
       <footer className="border-t border-white/[0.07] bg-[#060b18]">
         <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-4 text-xs text-[#8899bb]">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <span>© {new Date().getFullYear()} DriveGarage AS. Alle rettigheter forbeholdes.</span>
+            <span>© {new Date().getFullYear()} IT Løsninger No AS. Alle rettigheter forbeholdes.</span>
             <div className="flex items-center gap-5">
               <Link href="/privacy" className="hover:text-white transition-colors">Personvern</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Vilkår</Link>

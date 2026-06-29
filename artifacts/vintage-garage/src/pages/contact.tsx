@@ -49,9 +49,9 @@ export default function ContactPage() {
 
       <LegalSection title="Selskapsinformasjon">
         <div className="rounded-md border border-white/10 bg-white/[0.02] p-5 font-mono text-sm space-y-1.5">
-          <p className="font-sans font-medium text-white mb-3">DriveGarage AS</p>
-          <p className="text-[#8899bb]">Adresse: [Fylles inn ved registrering]</p>
-          <p className="text-[#8899bb]">Organisasjonsnummer: [Fylles inn]</p>
+          <p className="font-sans font-medium text-white mb-3">IT Løsninger No AS</p>
+          <p className="text-[#8899bb]">Adresse: Sandnes, Norge</p>
+          <p className="text-[#8899bb]">Organisasjonsnummer: 980 891 232</p>
           <p className="text-[#8899bb]">
             E-post: <a href="mailto:kontakt@drivegarage.no" className="text-indigo-300 hover:text-white underline">kontakt@drivegarage.no</a>
           </p>

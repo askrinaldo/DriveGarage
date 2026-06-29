@@ -23,9 +23,9 @@ export default function PrivacyPage() {
           Dataansvarlig for behandlingen av dine personopplysninger er:
         </p>
         <div className="rounded-md border border-white/10 bg-white/[0.02] p-4 text-sm font-mono space-y-1">
-          <p>DriveGarage AS</p>
-          <p>[Adresse – fylles inn ved registrering]</p>
-          <p>Organisasjonsnummer: [Fylles inn]</p>
+          <p>IT Løsninger No AS</p>
+          <p>Sandnes, Norge</p>
+          <p>Organisasjonsnummer: 980 891 232</p>
           <p>E-post: kontakt@drivegarage.no</p>
         </div>
       </LegalSection>

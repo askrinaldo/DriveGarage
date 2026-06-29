@@ -9,7 +9,7 @@ export default function TermsPage() {
       <LegalSection title="1. Om tjenesten">
         <p>
           DriveGarage er en digital vedlikeholdslogg og plattform for klassiske biler og
-          motorsykler, drevet av DriveGarage AS («vi», «oss», «tjenesten»). Ved å opprette en konto
+          motorsykler, drevet av IT Løsninger No AS («vi», «oss», «tjenesten»). Ved å opprette en konto
           og bruke tjenesten godtar du disse vilkårene.
         </p>
         <p>
@@ -121,7 +121,7 @@ export default function TermsPage() {
 
       <LegalSection title="8. Ansvarsbegrensning">
         <p>
-          DriveGarage AS er ikke ansvarlig for tap av data, avbrutt tilgang, eller indirekte tap
+          IT Løsninger No AS er ikke ansvarlig for tap av data, avbrutt tilgang, eller indirekte tap
           som følge av bruk av tjenesten, i den grad dette er tillatt etter norsk lov.
         </p>
         <p>
