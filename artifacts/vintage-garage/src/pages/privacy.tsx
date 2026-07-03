@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <p>
           Dataansvarlig for behandlingen av dine personopplysninger er:
         </p>
-        <div className="rounded-md border border-white/10 bg-white/[0.02] p-4 text-sm font-mono space-y-1">
+        <div className="rounded-md border border-border/60 bg-card p-4 text-sm font-mono space-y-1">
           <p>IT Løsninger No AS</p>
           <p>Sandnes, Norge</p>
           <p>Organisasjonsnummer: 980 891 232</p>
@@ -31,14 +31,14 @@ export default function PrivacyPage() {
       </LegalSection>
 
       <LegalSection title="3. Personopplysninger vi behandler">
-        <p><strong className="text-white">3.1 Kontoopplysninger (via Clerk)</strong></p>
+        <p><strong className="text-foreground">3.1 Kontoopplysninger (via Clerk)</strong></p>
         <p>
           Registrering og innlogging håndteres av Clerk Inc. (autentiseringstjeneste). Clerk kan
           samle inn og lagre: navn, e-postadresse, profilbilde, og tilknyttede sosiale kontoer
           (f.eks. Google-konto). Se Clerks personvernerklæring for detaljer om deres behandling.
         </p>
 
-        <p className="mt-4"><strong className="text-white">3.2 Kjøretøy- og servicedata</strong></p>
+        <p className="mt-4"><strong className="text-foreground">3.2 Kjøretøy- og servicedata</strong></p>
         <LegalList items={[
           "Kjøretøyinformasjon: merke, modell, årsmodell, registreringsnummer, farge, kilometerstand, Finn.no-lenke, bilder, notater",
           "Serviceposter: tittel, kategori, dato, kostnad, utførerinfo, kilometerstand, beskrivelse",
@@ -46,20 +46,20 @@ export default function PrivacyPage() {
           "Turlogg: avstand, rute (fra/til), dato, drivstofforbruk, værinformasjon, notater",
         ]} />
 
-        <p className="mt-4"><strong className="text-white">3.3 Klubbdata</strong></p>
+        <p className="mt-4"><strong className="text-foreground">3.3 Klubbdata</strong></p>
         <LegalList items={[
           "Klubbmedlemskap: klubbnavn, rolle, innvitasjons-token",
           "Foruminnlegg og arrangementer du deltar i",
           "Markedsplassannonser du publiserer i en klubb",
         ]} />
 
-        <p className="mt-4"><strong className="text-white">3.4 Opplastede filer</strong></p>
+        <p className="mt-4"><strong className="text-foreground">3.4 Opplastede filer</strong></p>
         <p>
           Dersom du laster opp bilder eller dokumenter (f.eks. kvitteringer), lagres disse hos vår
           fillagringstjeneste. [Leverandør spesifiseres ved lansering.]
         </p>
 
-        <p className="mt-4"><strong className="text-white">3.5 Tekniske opplysninger</strong></p>
+        <p className="mt-4"><strong className="text-foreground">3.5 Tekniske opplysninger</strong></p>
         <LegalList items={[
           "Preferanser lagret lokalt: tema (mørk/lys), språkvalg",
           "Autentiseringstoken lagret i nettleserens localStorage (club-tokens, admin-JWT)",
@@ -68,9 +68,9 @@ export default function PrivacyPage() {
           "Clerk-autentiseringskapsler (nødvendige for innlogging)",
         ]} />
 
-        <p className="mt-4"><strong className="text-white">3.6 Betalingsinformasjon</strong></p>
+        <p className="mt-4"><strong className="text-foreground">3.6 Betalingsinformasjon</strong></p>
         <p>
-          Betalingsløsning er planlagt via <strong className="text-white">Vipps</strong>, men er ikke aktivert ennå.
+          Betalingsløsning er planlagt via <strong className="text-foreground">Vipps</strong>, men er ikke aktivert ennå.
           Ingen betalingsinformasjon samles inn eller behandles på nåværende tidspunkt.
           Planlagt modell: 7 dagers gratis prøveperiode, deretter løpende betalingsavtale.
           Ingen betaling trekkes før brukeren tydelig har godkjent en betalingsavtale.
@@ -83,19 +83,19 @@ export default function PrivacyPage() {
       <LegalSection title="4. Formål og behandlingsgrunnlag">
         <div className="space-y-4">
           <div>
-            <p className="font-medium text-white mb-1">Levering av tjenesten</p>
+            <p className="font-medium text-foreground mb-1">Levering av tjenesten</p>
             <p>Vi behandler data for å gi deg tilgang til og bruk av DriveGarage. Grunnlag: oppfyllelse av avtale (GDPR art. 6 (1) b).</p>
           </div>
           <div>
-            <p className="font-medium text-white mb-1">Autentisering og sikkerhet</p>
+            <p className="font-medium text-foreground mb-1">Autentisering og sikkerhet</p>
             <p>Vi behandler tekniske opplysninger for å verifisere identitet og beskytte kontoen din. Grunnlag: oppfyllelse av avtale og berettiget interesse (GDPR art. 6 (1) b og f).</p>
           </div>
           <div>
-            <p className="font-medium text-white mb-1">Betalingshåndtering</p>
+            <p className="font-medium text-foreground mb-1">Betalingshåndtering</p>
             <p>Nødvendig for abonnementsadministrasjon. Grunnlag: oppfyllelse av avtale (GDPR art. 6 (1) b).</p>
           </div>
           <div>
-            <p className="font-medium text-white mb-1">Juridiske forpliktelser</p>
+            <p className="font-medium text-foreground mb-1">Juridiske forpliktelser</p>
             <p>Vi kan behandle opplysninger for å oppfylle regnskapsloven eller andre lovpålagte krav. Grunnlag: rettslig forpliktelse (GDPR art. 6 (1) c).</p>
           </div>
         </div>
@@ -106,23 +106,23 @@ export default function PrivacyPage() {
 
       <LegalSection title="5. Tredjeparter som behandler data på våre vegne">
         <div className="space-y-4">
-          <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
-            <p className="font-medium text-white mb-1">Clerk Inc. — Autentisering</p>
-            <p className="text-xs">Behandler navn, e-post og innloggingsdata. Clerk er sertifisert under EU-U.S. Data Privacy Framework. Se <a href="https://clerk.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">clerk.com/privacy</a>.</p>
+          <div className="rounded-md border border-border/60 bg-card p-4">
+            <p className="font-medium text-foreground mb-1">Clerk Inc. — Autentisering</p>
+            <p className="text-xs">Behandler navn, e-post og innloggingsdata. Clerk er sertifisert under EU-U.S. Data Privacy Framework. Se <a href="https://clerk.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">clerk.com/privacy</a>.</p>
           </div>
           <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-4">
             <p className="font-medium text-amber-300 mb-1">Betalingsintegrasjon — ikke aktivert ennå</p>
-            <p className="text-xs text-[#8899bb]">
+            <p className="text-xs text-muted-foreground">
               Betalingsløsning via Vipps er planlagt, men ikke implementert. Ingen betalingsdata behandles per i dag.
               Når betaling aktiveres, oppdateres denne seksjonen med gjeldende leverandør og databehandleravtale.
             </p>
           </div>
-          <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
-            <p className="font-medium text-white mb-1">Drifts-/databaseleverandør</p>
+          <div className="rounded-md border border-border/60 bg-card p-4">
+            <p className="font-medium text-foreground mb-1">Drifts-/databaseleverandør</p>
             <p className="text-xs">[Leverandørnavn og DPA-status fylles inn ved lansering. Databehandleravtale (DPA) inngås.]</p>
           </div>
-          <div className="rounded-md border border-white/10 bg-white/[0.02] p-4">
-            <p className="font-medium text-white mb-1">Fillagring</p>
+          <div className="rounded-md border border-border/60 bg-card p-4">
+            <p className="font-medium text-foreground mb-1">Fillagring</p>
             <p className="text-xs">[Leverandørnavn for opplastede filer fylles inn ved lansering.]</p>
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function PrivacyPage() {
         ]} />
         <p className="mt-3">
           For å utøve dine rettigheter, kontakt oss på{" "}
-          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-white">
+          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-foreground">
             kontakt@drivegarage.no
           </a>. Vi vil svare innen 30 dager.
         </p>
@@ -175,11 +175,11 @@ export default function PrivacyPage() {
           Dersom du mener at vår behandling av dine personopplysninger er i strid med
           personvernregelverket, har du rett til å klage til tilsynsmyndigheten:
         </p>
-        <div className="rounded-md border border-white/10 bg-white/[0.02] p-4 text-sm">
-          <p className="font-medium text-white mb-1">Datatilsynet</p>
+        <div className="rounded-md border border-border/60 bg-card p-4 text-sm">
+          <p className="font-medium text-foreground mb-1">Datatilsynet</p>
           <p>Postboks 458 Sentrum, 0105 Oslo</p>
           <p>E-post: postkasse@datatilsynet.no</p>
-          <p>Nettsted: <a href="https://www.datatilsynet.no" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">datatilsynet.no</a></p>
+          <p>Nettsted: <a href="https://www.datatilsynet.no" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">datatilsynet.no</a></p>
         </div>
       </LegalSection>
 
@@ -193,13 +193,13 @@ export default function PrivacyPage() {
       <LegalSection title="10. Kontakt">
         <p>
           Spørsmål om personvern kan sendes til:{" "}
-          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-white">
+          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-foreground">
             kontakt@drivegarage.no
           </a>
         </p>
         <p>
           Se også vår{" "}
-          <Link href="/contact" className="underline hover:text-white">kontaktside</Link>.
+          <Link href="/contact" className="underline hover:text-foreground">kontaktside</Link>.
         </p>
       </LegalSection>
 

@@ -47,7 +47,7 @@ export default function TermsPage() {
 
       <LegalSection title="4. Eierskap til data og innhold">
         <p>
-          <strong className="text-white">Du eier dine data.</strong> Kjøretøydata, serviceposter,
+          <strong className="text-foreground">Du eier dine data.</strong> Kjøretøydata, serviceposter,
           kvitteringer, turlogger og annet innhold du registrerer i DriveGarage tilhører deg.
         </p>
         <p>
@@ -67,7 +67,7 @@ export default function TermsPage() {
       <LegalSection title="5. Abonnement og betaling">
         <p>
           DriveGarage tilbyr gratisnivå og planlagte betalte abonnementer.
-          <strong className="text-white"> Betalingsmodulen er ikke aktivert ennå.</strong>{" "}
+          <strong className="text-foreground"> Betalingsmodulen er ikke aktivert ennå.</strong>{" "}
           Ingen betaling trekkes fra noen bruker på nåværende tidspunkt.
         </p>
         <p>
@@ -145,13 +145,13 @@ export default function TermsPage() {
       <LegalSection title="10. Kontakt">
         <p>
           Spørsmål om vilkårene kan rettes til:{" "}
-          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-white">
+          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-foreground">
             kontakt@drivegarage.no
           </a>
         </p>
         <p>
           Se vår{" "}
-          <Link href="/contact" className="underline hover:text-white">kontaktside</Link>{" "}
+          <Link href="/contact" className="underline hover:text-foreground">kontaktside</Link>{" "}
           for ytterligere kontaktinformasjon.
         </p>
       </LegalSection>
