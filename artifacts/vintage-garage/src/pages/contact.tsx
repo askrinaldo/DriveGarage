@@ -1,6 +1,7 @@
 import { LegalPageShell, LegalSection } from "@/components/legal-page-shell";
 import { Link } from "wouter";
 import { Mail, Clock, MessageSquare, Shield } from "lucide-react";
+import { CopyEmail } from "@/components/copy-email";
 
 export default function ContactPage() {
   return (
@@ -18,12 +19,7 @@ export default function ContactPage() {
               <Mail className="w-4 h-4 text-indigo-400" />
               <p className="font-medium text-foreground text-sm">Generell support</p>
             </div>
-            <a
-              href="mailto:drivegarage@evolvit.no"
-              className="text-sm text-indigo-300 hover:text-foreground underline transition-colors"
-            >
-              drivegarage@evolvit.no
-            </a>
+            <CopyEmail email="drivegarage@evolvit.no" />
             <p className="text-xs text-muted-foreground mt-2">
               Spørsmål om appen, konto, abonnement og generell brukerstøtte.
             </p>
@@ -34,12 +30,7 @@ export default function ContactPage() {
               <Shield className="w-4 h-4 text-indigo-400" />
               <p className="font-medium text-foreground text-sm">Personvern og juridisk</p>
             </div>
-            <a
-              href="mailto:drivegarage@evolvit.no"
-              className="text-sm text-indigo-300 hover:text-foreground underline transition-colors"
-            >
-              drivegarage@evolvit.no
-            </a>
+            <CopyEmail email="drivegarage@evolvit.no" />
             <p className="text-xs text-muted-foreground mt-2">
               Forespørsler om dine personopplysninger, innsyn, retting og sletting.
             </p>
@@ -52,8 +43,8 @@ export default function ContactPage() {
           <p className="font-sans font-medium text-foreground mb-3">IT Løsninger No AS</p>
           <p className="text-muted-foreground">Adresse: Sandnes, Norge</p>
           <p className="text-muted-foreground">Organisasjonsnummer: 980 891 232</p>
-          <p className="text-muted-foreground">
-            E-post: <a href="mailto:drivegarage@evolvit.no" className="text-indigo-300 hover:text-foreground underline">drivegarage@evolvit.no</a>
+          <p className="text-muted-foreground flex items-center gap-1.5">
+            E-post: <CopyEmail email="drivegarage@evolvit.no" />
           </p>
         </div>
         <p className="text-amber-300/80 text-xs mt-3">
