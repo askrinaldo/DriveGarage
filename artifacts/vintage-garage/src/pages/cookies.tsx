@@ -149,7 +149,7 @@ export default function CookiesPage() {
         ]} />
         <p>
           Spørsmål om lagring og personvern kan rettes til{" "}
-          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-foreground">kontakt@drivegarage.no</a>.
+          <a href="mailto:drivegarage@evolvit.no" className="underline hover:text-foreground">drivegarage@evolvit.no</a>.
         </p>
       </LegalSection>
 

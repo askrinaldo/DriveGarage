@@ -19,10 +19,10 @@ export default function ContactPage() {
               <p className="font-medium text-foreground text-sm">Generell support</p>
             </div>
             <a
-              href="mailto:kontakt@drivegarage.no"
+              href="mailto:drivegarage@evolvit.no"
               className="text-sm text-indigo-300 hover:text-foreground underline transition-colors"
             >
-              kontakt@drivegarage.no
+              drivegarage@evolvit.no
             </a>
             <p className="text-xs text-muted-foreground mt-2">
               Spørsmål om appen, konto, abonnement og generell brukerstøtte.
@@ -35,10 +35,10 @@ export default function ContactPage() {
               <p className="font-medium text-foreground text-sm">Personvern og juridisk</p>
             </div>
             <a
-              href="mailto:kontakt@drivegarage.no"
+              href="mailto:drivegarage@evolvit.no"
               className="text-sm text-indigo-300 hover:text-foreground underline transition-colors"
             >
-              kontakt@drivegarage.no
+              drivegarage@evolvit.no
             </a>
             <p className="text-xs text-muted-foreground mt-2">
               Forespørsler om dine personopplysninger, innsyn, retting og sletting.
@@ -53,7 +53,7 @@ export default function ContactPage() {
           <p className="text-muted-foreground">Adresse: Sandnes, Norge</p>
           <p className="text-muted-foreground">Organisasjonsnummer: 980 891 232</p>
           <p className="text-muted-foreground">
-            E-post: <a href="mailto:kontakt@drivegarage.no" className="text-indigo-300 hover:text-foreground underline">kontakt@drivegarage.no</a>
+            E-post: <a href="mailto:drivegarage@evolvit.no" className="text-indigo-300 hover:text-foreground underline">drivegarage@evolvit.no</a>
           </p>
         </div>
         <p className="text-amber-300/80 text-xs mt-3">

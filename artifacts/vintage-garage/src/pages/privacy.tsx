@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <p>IT Løsninger No AS</p>
           <p>Sandnes, Norge</p>
           <p>Organisasjonsnummer: 980 891 232</p>
-          <p>E-post: kontakt@drivegarage.no</p>
+          <p>E-post: drivegarage@evolvit.no</p>
         </div>
       </LegalSection>
 
@@ -161,8 +161,8 @@ export default function PrivacyPage() {
         ]} />
         <p className="mt-3">
           For å utøve dine rettigheter, kontakt oss på{" "}
-          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-foreground">
-            kontakt@drivegarage.no
+          <a href="mailto:drivegarage@evolvit.no" className="underline hover:text-foreground">
+            drivegarage@evolvit.no
           </a>. Vi vil svare innen 30 dager.
         </p>
         <p className="text-amber-300/80 text-xs mt-2">
@@ -193,8 +193,8 @@ export default function PrivacyPage() {
       <LegalSection title="10. Kontakt">
         <p>
           Spørsmål om personvern kan sendes til:{" "}
-          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-foreground">
-            kontakt@drivegarage.no
+          <a href="mailto:drivegarage@evolvit.no" className="underline hover:text-foreground">
+            drivegarage@evolvit.no
           </a>
         </p>
         <p>

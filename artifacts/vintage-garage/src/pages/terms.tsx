@@ -145,8 +145,8 @@ export default function TermsPage() {
       <LegalSection title="10. Kontakt">
         <p>
           Spørsmål om vilkårene kan rettes til:{" "}
-          <a href="mailto:kontakt@drivegarage.no" className="underline hover:text-foreground">
-            kontakt@drivegarage.no
+          <a href="mailto:drivegarage@evolvit.no" className="underline hover:text-foreground">
+            drivegarage@evolvit.no
           </a>
         </p>
         <p>
