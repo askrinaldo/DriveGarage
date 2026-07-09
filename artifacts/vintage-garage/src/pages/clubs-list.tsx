@@ -222,10 +222,13 @@ export default function ClubsList() {
 
   const filteredPublic = (publicClubs ?? []).filter(
     (c) =>
-      !search ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (c.location ?? "").toLowerCase().includes(search.toLowerCase())
+      !myClubIds.has(c.id) &&
+      (
+        !search ||
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (c.location ?? "").toLowerCase().includes(search.toLowerCase())
+      )
   );
 
   return (
@@ -359,29 +362,13 @@ export default function ClubsList() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredPublic.map((club) => {
-              const isMember = myClubIds.has(club.id);
-              return (
+            {filteredPublic.map((club) => (
                 <ClubCard
                   key={club.id}
                   club={club}
-                  membershipRole={isMember ? myRoleFor(club) : null}
+                  membershipRole={null}
                   action={
-                    isMember ? (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="w-full"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          navigate(`/clubs/${club.id}`);
-                        }}
-                      >
-                        Åpne klubb
-                        <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                      </Button>
-                    ) : club.joinMode === "invite_only" ? (
+                    club.joinMode === "invite_only" ? (
                       <Button
                         size="sm"
                         variant="outline"
@@ -416,8 +403,7 @@ export default function ClubsList() {
                     ) : null
                   }
                 />
-              );
-            })}
+            ))}
           </div>
         )}
       </section>
