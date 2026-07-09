@@ -5,5 +5,6 @@ export {
   setAuthTokenGetter,
   setExtraHeadersGetter,
   setClerkTokenGetter,
+  customFetch,
 } from "./custom-fetch";
 export type { AuthTokenGetter, ExtraHeadersGetter } from "./custom-fetch";

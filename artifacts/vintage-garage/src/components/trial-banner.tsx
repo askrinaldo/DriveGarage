@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Clock, X } from "lucide-react";
+import { Clock, X, AlertTriangle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 
@@ -18,10 +18,18 @@ export function TrialBanner() {
 
   const status = sub?.status;
 
+  const DismissBtn = ({ color = "amber" }: { color?: string }) => (
+    <button
+      onClick={() => setDismissed(true)}
+      className={`text-${color}-400/60 hover:text-${color}-400 transition-colors shrink-0`}
+      aria-label="Lukk"
+    >
+      <X className="w-4 h-4" />
+    </button>
+  );
+
   if (status === "trialing") {
-    const daysLeft = getDaysRemaining(
-      (sub as { trialEndsAt?: string }).trialEndsAt ?? null
-    );
+    const daysLeft = getDaysRemaining(sub?.trialEndsAt);
     return (
       <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
@@ -35,16 +43,10 @@ export function TrialBanner() {
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/billing">
             <button className="text-xs font-semibold text-amber-300 border border-amber-500/30 rounded-lg px-3 py-1 hover:bg-amber-500/20 transition-colors whitespace-nowrap">
-              Godkjenn Vipps
+              Se abonnement
             </button>
           </Link>
-          <button
-            onClick={() => setDismissed(true)}
-            className="text-amber-400/60 hover:text-amber-400 transition-colors"
-            aria-label="Lukk"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <DismissBtn color="amber" />
         </div>
       </div>
     );
@@ -65,25 +67,19 @@ export function TrialBanner() {
               Gjenopprett tilgang
             </button>
           </Link>
-          <button
-            onClick={() => setDismissed(true)}
-            className="text-orange-400/60 hover:text-orange-400 transition-colors"
-            aria-label="Lukk"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <DismissBtn color="orange" />
         </div>
       </div>
     );
   }
 
-  if (status === "past_due") {
+  if (status === "past_due" || status === "payment_failed") {
     return (
       <div className="bg-red-500/10 border-b border-red-500/20 px-4 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
-          <Clock className="w-4 h-4 text-red-400 shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
           <p className="text-sm text-red-300 truncate">
-            Siste betaling feilet. Vi prøver igjen automatisk — sjekk Vipps-appen din.
+            Siste betaling feilet. Sjekk Vipps-appen din — data slettes ikke automatisk.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -92,13 +88,50 @@ export function TrialBanner() {
               Se abonnement
             </button>
           </Link>
-          <button
-            onClick={() => setDismissed(true)}
-            className="text-red-400/60 hover:text-red-400 transition-colors"
-            aria-label="Lukk"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <DismissBtn color="red" />
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "expired") {
+    return (
+      <div className="bg-red-500/10 border-b border-red-500/20 px-4 py-2.5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 min-w-0">
+          <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <p className="text-sm text-red-300 truncate">
+            Abonnementet ditt har utløpt. Aktiver Vipps-betaling for å gjenopprette tilgangen.
+            Data beholdes i 90 dager.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href="/billing">
+            <button className="text-xs font-semibold text-red-300 border border-red-500/30 rounded-lg px-3 py-1 hover:bg-red-500/20 transition-colors whitespace-nowrap">
+              Aktiver abonnement
+            </button>
+          </Link>
+          <DismissBtn color="red" />
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "canceled") {
+    return (
+      <div className="bg-muted/20 border-b border-border/40 px-4 py-2.5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 min-w-0">
+          <XCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+          <p className="text-sm text-muted-foreground truncate">
+            Abonnementet er kansellert. Du beholder tilgang til slutten av perioden.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href="/billing">
+            <button className="text-xs font-semibold text-muted-foreground border border-border/60 rounded-lg px-3 py-1 hover:bg-muted/30 transition-colors whitespace-nowrap">
+              Se detaljer
+            </button>
+          </Link>
+          <DismissBtn color="muted-foreground" />
         </div>
       </div>
     );

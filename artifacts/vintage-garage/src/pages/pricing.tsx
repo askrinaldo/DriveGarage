@@ -2,98 +2,42 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CompanyInfo } from "@/components/company-info";
 import {
-  CheckCircle2, Clock, Car, ArrowLeft, Zap, Sparkles,
-  Gift, ArrowRight,
+  CheckCircle2, Clock, Car, ArrowLeft, Zap,
 } from "lucide-react";
 
-interface TierDef {
-  id: string;
-  name: string;
-  priceLine: string;
-  subLine: string;
-  icon: React.ElementType;
-  iconColor: string;
-  gradient: string;
-  border: string;
-  popular?: boolean;
-  badge?: string;
-  features: string[];
-  cta: string;
-  ctaHref?: string;
-  ctaDisabled?: boolean;
-  ctaClass: string;
-}
+const FEATURES = [
+  "7 dager gratis prøveperiode — ingen binding",
+  "Ubegrenset vedlikeholdslogg for kjøretøyene dine",
+  "Servicehistorikk med tidslinje",
+  "Dokumenter og kvitteringer per kjøretøy",
+  "PDF-rapporter",
+  "Klubber og arrangementer for veterankjøretøy",
+  "Ingen betaling trekkes før du godkjenner Vipps-avtale",
+];
 
-const TIERS: TierDef[] = [
+const FAQ = [
   {
-    id: "trial",
-    name: "Prøveperiode",
-    priceLine: "Gratis",
-    subLine: "7 dager, ingen binding",
-    icon: Gift,
-    iconColor: "text-green-400",
-    gradient: "from-green-600/15 to-emerald-700/15",
-    border: "border-green-500/25",
-    features: [
-      "7 dager gratis prøveperiode",
-      "Full tilgang til DriveGarage",
-      "Ingen binding",
-      "Ingen betaling før prøveperioden er over",
-    ],
-    cta: "Start gratis prøveperiode",
-    ctaHref: "/sign-up",
-    ctaClass:
-      "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white border-0 shadow-lg shadow-green-900/30",
+    q: "Kreves det betaling for prøveperioden?",
+    a: "Nei. Prøveperioden er helt gratis i 7 dager. Du godkjenner en Vipps-betalingsavtale kun hvis du ønsker å fortsette.",
   },
   {
-    id: "standard",
-    name: "Standard",
-    priceLine: "kr 49",
-    subLine: "per måned",
-    icon: Zap,
-    iconColor: "text-indigo-400",
-    gradient: "from-indigo-600/20 to-cyan-600/20",
-    border: "border-indigo-500/40",
-    popular: true,
-    badge: "Mest populær",
-    features: [
-      "Ubegrenset kjøretøy",
-      "Servicehistorikk",
-      "Dokumenter og kvitteringer",
-      "PDF-rapporter",
-      "Klubber og arrangementer",
-    ],
-    cta: "Kommer med Vipps",
-    ctaDisabled: true,
-    ctaClass:
-      "bg-gradient-to-r from-indigo-600/60 to-cyan-600/60 text-white/70 border-0 cursor-not-allowed",
+    q: "Kan jeg kansellere når som helst?",
+    a: "Ja. Du kan avslutte abonnementet ditt når som helst. Du beholder tilgangen til slutten av betalingsperioden. Data slettes ikke automatisk ved kansellering.",
   },
   {
-    id: "premium",
-    name: "Premium",
-    priceLine: "kr 99",
-    subLine: "per måned",
-    icon: Sparkles,
-    iconColor: "text-amber-400",
-    gradient: "from-amber-600/20 to-orange-600/20",
-    border: "border-amber-500/20",
-    features: [
-      "Alt i Standard",
-      "AI-assistent",
-      "Prioritert support",
-      "Tidlig tilgang til nye funksjoner",
-    ],
-    cta: "Kommer med Vipps",
-    ctaDisabled: true,
-    ctaClass:
-      "bg-gradient-to-r from-amber-600/60 to-orange-600/60 text-white/70 border-0 cursor-not-allowed",
+    q: "Hvordan betaler jeg?",
+    a: "DriveGarage bruker Vipps Recurring for betaling. Du godkjenner en løpende avtale i Vipps-appen — ingen kortinformasjon lagres hos oss.",
+  },
+  {
+    q: "Hva skjer med dataene mine hvis jeg avslutter?",
+    a: "Dataene dine beholdes i minst 90 dager etter at abonnementet utløper. Du kan reaktivere og gjenopprette tilgangen i denne perioden. Kontossletting er en separat handling som krever eksplisitt bekreftelse.",
   },
 ];
 
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="max-w-3xl mx-auto px-4 py-12">
 
         <div className="mb-8">
           <Link href="/">
@@ -104,6 +48,7 @@ export default function PricingPage() {
           </Link>
         </div>
 
+        {/* Hero */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
             <Car className="w-3.5 h-3.5" />
@@ -117,122 +62,98 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Start gratis og oppgrader når du er klar. Ingen bindingstid, ingen skjulte avgifter.
+            Én plan. Ingen skjulte avgifter. Betaling via Vipps kommer snart.
           </p>
         </div>
 
-        {/* Tidlig tilgang — Vipps info */}
-        <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-600/10 to-cyan-600/10 px-6 py-5 mb-10 max-w-2xl mx-auto">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <Clock className="w-3 h-3 text-indigo-400" />
+        {/* Single plan card */}
+        <div className="relative rounded-2xl border border-indigo-500/40 overflow-hidden shadow-2xl shadow-indigo-900/30 mb-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-cyan-600/20 opacity-60" />
+
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-0.5 z-10">
+            <div className="px-5 py-0.5 rounded-b-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
+              Én enkel plan
             </div>
-            <p className="text-sm font-bold text-indigo-300 uppercase tracking-widest text-[11px]">Tidlig tilgang</p>
           </div>
-          <p className="text-sm text-foreground/80 leading-relaxed">
-            DriveGarage forberedes for <strong className="text-indigo-300">Vipps</strong> som betalingsløsning.
-          </p>
-          <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-            Under lansering vil brukere kunne starte med 7 dagers gratis prøveperiode og deretter aktivere abonnement via Vipps.
-          </p>
-        </div>
 
-        {/* Pricing cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {TIERS.map((tier) => {
-            const Icon = tier.icon;
-            return (
-              <div
-                key={tier.id}
-                className={`relative rounded-2xl border overflow-hidden transition-all duration-300
-                  ${tier.popular
-                    ? "border-indigo-500/40 shadow-2xl shadow-indigo-900/30"
-                    : tier.border
-                  }
-                `}
-              >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${tier.gradient} opacity-60`}
-                />
-
-                {tier.badge && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-0.5 z-10">
-                    <div className="px-4 py-0.5 rounded-b-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
-                      {tier.badge}
-                    </div>
-                  </div>
-                )}
-
-                <div className="relative z-10 p-6">
-                  <div className="flex items-center gap-2.5 mb-5">
-                    <Icon className={`w-5 h-5 ${tier.iconColor}`} />
-                    <span className={`text-lg font-bold ${tier.iconColor}`}>{tier.name}</span>
-                  </div>
-
-                  <div className="mb-5">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-black text-foreground">{tier.priceLine}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-0.5">{tier.subLine}</p>
-                    {tier.id !== "trial" && (
-                      <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-green-400/80 bg-green-500/10 border border-green-500/20 rounded-full px-2.5 py-0.5">
-                        <Clock className="w-3 h-3" />
-                        Inkluderer 7 dagers gratis prøveperiode
-                      </div>
-                    )}
-                  </div>
-
-                  <ul className="space-y-2 mb-6">
-                    {tier.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-foreground/65">
-                        <CheckCircle2
-                          className={`w-4 h-4 ${tier.iconColor} mt-0.5 shrink-0 opacity-80`}
-                        />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {tier.ctaHref ? (
-                    <Link href={tier.ctaHref}>
-                      <Button className={`w-full h-10 font-semibold rounded-xl ${tier.ctaClass}`}>
-                        {tier.cta}
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Button
-                      disabled={tier.ctaDisabled}
-                      className={`w-full h-10 font-semibold rounded-xl ${tier.ctaClass}`}
-                    >
-                      {tier.cta}
-                    </Button>
-                  )}
+          <div className="relative z-10 p-8 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-foreground">DriveGarage</p>
+                  <p className="text-sm text-muted-foreground">Full tilgang til alle funksjoner</p>
                 </div>
               </div>
-            );
-          })}
+              <div className="text-right shrink-0">
+                <div className="flex items-baseline gap-1 justify-end">
+                  <span className="text-4xl font-black text-foreground">100</span>
+                  <span className="text-lg font-semibold text-foreground">kr</span>
+                  <span className="text-muted-foreground text-sm">/mnd</span>
+                </div>
+                <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-2.5 py-0.5">
+                  <Clock className="w-3 h-3" />
+                  7 dager gratis prøveperiode inkludert
+                </div>
+              </div>
+            </div>
+
+            <ul className="space-y-3 mb-8">
+              {FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2.5 text-sm text-foreground/80">
+                  <CheckCircle2 className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0 opacity-80" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/sign-up" className="flex-1">
+                <Button className="w-full h-11 font-semibold bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white border-0 shadow-lg shadow-indigo-900/30">
+                  Start gratis prøveperiode
+                </Button>
+              </Link>
+              <Link href="/sign-in" className="flex-1">
+                <Button variant="outline" className="w-full h-11 font-semibold">
+                  Jeg har allerede konto
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
 
-        {/* Planlagt Vipps-flyt */}
+        {/* Vipps info box */}
+        <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-600/8 to-cyan-600/8 px-6 py-5 mb-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4 text-indigo-400" />
+            <p className="text-sm font-bold text-indigo-300">Betaling via Vipps — kommer snart</p>
+          </div>
+          <p className="text-sm text-foreground/75 leading-relaxed">
+            DriveGarage forberedes for <strong className="text-indigo-300">Vipps Recurring</strong> som betalingsløsning.
+            Ingen betaling trekkes nå og ingen betalingsinformasjon lagres.
+            Betalingsavtale godkjennes via Vipps-appen når tjenesten lanseres.
+          </p>
+        </div>
+
+        {/* Planlagt flyt */}
         <div className="rounded-2xl border border-border/60 bg-card p-6 mb-10">
-          <h2 className="text-sm font-bold text-foreground uppercase tracking-widest mb-5 text-[11px] text-muted-foreground">
-            Planlagt Vipps-flyt
+          <h2 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-5">
+            Slik fungerer det
           </h2>
-          <div className="grid sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { step: "1", label: "Start gratis prøveperiode" },
-              { step: "2", label: "Velg abonnement" },
-              { step: "3", label: "Aktiver betaling med Vipps" },
-              { step: "4", label: "Fortsett uten avbrudd" },
+              { step: "2", label: "Utforsk alle funksjoner i 7 dager" },
+              { step: "3", label: "Godkjenn Vipps-betalingsavtale" },
+              { step: "4", label: "Fortsett uten avbrudd for 100 kr/mnd" },
             ].map(({ step, label }) => (
               <div key={step} className="flex flex-col items-center text-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-sm font-black">
                   {step}
                 </div>
                 <p className="text-xs text-muted-foreground leading-snug">{label}</p>
-                {step !== "4" && (
-                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 sm:rotate-0 rotate-90 hidden sm:block absolute" />
-                )}
               </div>
             ))}
           </div>
@@ -240,24 +161,14 @@ export default function PricingPage() {
 
         {/* FAQ */}
         <div className="rounded-2xl border border-border/60 bg-card p-6 mb-10">
-          <h2 className="text-base font-bold text-foreground mb-4">Ofte stilte spørsmål</h2>
-          <div className="grid sm:grid-cols-2 gap-5 text-sm">
-            <div>
-              <p className="font-semibold text-foreground mb-1">Kan jeg kansellere når som helst?</p>
-              <p className="text-muted-foreground">Ja. Du kan avslutte abonnementet ditt når som helst. Du beholder tilgangen til slutten av betalingsperioden.</p>
-            </div>
-            <div>
-              <p className="font-semibold text-foreground mb-1">Kreves det betaling for prøveperioden?</p>
-              <p className="text-muted-foreground">Nei. Prøveperioden er helt gratis i 7 dager. Du godkjenner en Vipps-betalingsavtale kun om du ønsker å fortsette.</p>
-            </div>
-            <div>
-              <p className="font-semibold text-foreground mb-1">Hvordan betaler jeg?</p>
-              <p className="text-muted-foreground">DriveGarage bruker Vipps Recurring for betaling. Du godkjenner en løpende avtale i Vipps-appen — ingen kortinformasjon lagres hos oss.</p>
-            </div>
-            <div>
-              <p className="font-semibold text-foreground mb-1">Hva skjer med dataene mine hvis jeg nedgraderer?</p>
-              <p className="text-muted-foreground">Dataene dine er alltid dine. Alle data beholdes — men du mister tilgang til premiumfunksjoner.</p>
-            </div>
+          <h2 className="text-base font-bold text-foreground mb-5">Ofte stilte spørsmål</h2>
+          <div className="grid sm:grid-cols-2 gap-6 text-sm">
+            {FAQ.map(({ q, a }) => (
+              <div key={q}>
+                <p className="font-semibold text-foreground mb-1">{q}</p>
+                <p className="text-muted-foreground leading-relaxed">{a}</p>
+              </div>
+            ))}
           </div>
         </div>
 

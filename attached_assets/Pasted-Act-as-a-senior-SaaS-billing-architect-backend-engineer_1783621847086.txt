@@ -1,0 +1,199 @@
+Act as a senior SaaS billing architect, backend engineer, and product security lead.
+
+Project: DriveGarage
+
+Goal:
+Prepare DriveGarage for Vipps subscription billing and access control.
+
+Important:
+
+* Do not implement real Vipps API unless credentials/docs are available.
+* Do not reintroduce Stripe.
+* Do not delete user data when payment fails.
+* Do not lock users out of billing/account/legal pages.
+* Preserve admin/payment exemption functionality.
+
+Business model:
+
+* 7-day free trial
+* then 100 NOK/month
+* no permanent free plan
+* one simple paid plan
+* payment provider: Vipps
+* payment is not active yet
+
+Internal fair-use limits:
+
+* max 10 vehicles
+* max 200 receipts/documents
+* max 50 AI requests/month
+* max 25 PDF exports/month
+* max 10 club memberships
+* max 2 owned clubs
+
+Do not market these as storage limits.
+Do not show GB/MB.
+Do not say unlimited.
+
+Subscription states:
+
+* trialing
+* pending_vipps_agreement
+* active
+* past_due
+* payment_failed
+* canceled
+* expired
+* exempt_internal
+* deletion_requested
+* deleted
+
+Access rules:
+
+* trialing: full access
+* active: full access
+* exempt_internal: full access
+* pending_vipps_agreement: app access with billing reminder
+* past_due/payment_failed: limited access with payment recovery message
+* canceled: access until paid/trial period ends
+* expired: locked app, but billing/account/export/legal still accessible
+* deletion_requested: locked except account/support
+* deleted: no login/data access
+
+Data retention rules:
+
+* Failed payment or canceled subscription must NOT delete data immediately.
+* Keep data for at least 90 days after expiration.
+* User can reactivate and recover access during retention period.
+* Account deletion is different from subscription cancellation.
+* Account deletion should require explicit confirmation.
+* Account deletion should delete/anonymize personal garage data after a grace period, for example 7–30 days.
+* Keep only legally required minimal audit/billing records.
+
+Tasks:
+
+1. Audit current billing/subscription code
+   Find:
+
+* subscription fields
+* payment exemption logic
+* billing page
+* pricing page
+* trial banner
+* Stripe leftovers
+* Vipps placeholders
+
+2. Update pricing UI
+   Pricing should show:
+
+* 7 dager gratis prøveperiode
+* deretter 100 kr/mnd
+* Betaling via Vipps kommer
+* Ingen betaling trekkes før brukeren godkjenner Vipps-avtale
+
+Remove:
+
+* Standard/Premium confusion
+* storage limits
+* unlimited wording
+* Stripe references
+
+3. Update billing page
+   Billing page should show:
+
+* current status
+* trial days remaining
+* planned Vipps flow
+* future cancel subscription section
+* clear explanation that cancellation stops future access but does not instantly delete data
+* account deletion is separate
+
+4. Subscription model plan/implementation
+   If safe, add or prepare fields:
+
+* subscriptionStatus
+* subscriptionPlan = monthly_100
+* trialStartedAt
+* trialEndsAt
+* currentPeriodEndsAt
+* vippsAgreementId nullable
+* canceledAt nullable
+* expiresAt nullable
+* deletionRequestedAt nullable
+
+If schema changes are risky, document exact migration plan instead.
+
+5. Central access helper
+   Create or plan:
+
+* getSubscriptionStatus(user)
+* canAccessApp(user)
+* canUseFeature(user, feature)
+* isWithinFairUseLimit(user, feature)
+
+Do not apply hard gates everywhere yet unless safe.
+At minimum, document where gates must be applied.
+
+6. Fair-use limits
+   Add internal constants/TODO enforcement for:
+
+* vehicles
+* receipts/documents
+* AI requests
+* PDF exports
+* club memberships
+* owned clubs
+
+The UI should use friendly wording, not technical limits.
+
+7. Cancellation flow
+   Plan UI and backend:
+
+* user can cancel subscription
+* cancellation should not delete data
+* access continues until period end if already paid
+* after period ends, status becomes expired
+* billing/account/export remains accessible
+
+8. Account deletion flow
+   Plan separate flow:
+
+* user requests account deletion
+* explicit confirmation required
+* explain what is deleted
+* optional grace period
+* delete/anonymize vehicles, service records, receipts, trip logs, club memberships, settings
+* retain only legally required records
+
+9. Vipps integration checklist
+   Document:
+
+* create Vipps agreement
+* redirect/approval flow
+* webhook/callback handling
+* update subscription status
+* handle payment failed
+* handle canceled agreement
+* handle reactivation
+* handle refunds/support
+
+10. Validation
+
+* Run frontend typecheck/build
+* Run backend typecheck/build
+* Verify /pricing
+* Verify /billing
+* Verify no Stripe visible/runtime references
+* Verify existing app access is not broken
+
+Deliverable:
+
+* files changed
+* billing/pricing changes
+* subscription states implemented or planned
+* access gating plan
+* fair-use limit handling
+* cancellation/deletion policy
+* Vipps integration checklist
+* typecheck/build result
+* remaining risks before real Vipps launch

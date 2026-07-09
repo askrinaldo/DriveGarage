@@ -69,6 +69,8 @@ export async function clerkUserAuth(
         user = { ...existing, replitUserId: clerkUserId };
       } else {
         try {
+          const now = new Date();
+          const trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
           const [created] = await db
             .insert(usersTable)
             .values({
@@ -79,6 +81,10 @@ export async function clerkUserAuth(
               role: "user",
               isActive: true,
               subscriptionTier: "free",
+              subscriptionPlan: "monthly_100",
+              subscriptionStatus: "trialing",
+              trialStartedAt: now,
+              trialEndsAt,
             })
             .returning();
           user = created!;
