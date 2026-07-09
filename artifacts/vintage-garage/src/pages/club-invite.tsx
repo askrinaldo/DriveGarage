@@ -60,7 +60,7 @@ export default function ClubInvite() {
       await acceptMutation.mutateAsync({ code, data: { memberName: memberName.trim() } });
       setDone("accepted");
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const msg = (err as { data?: { error?: string } })?.data?.error;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
     }
   }

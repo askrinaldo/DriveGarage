@@ -171,7 +171,7 @@ export default function ClubGarage() {
       setAddVehicleId(null);
       invalidate();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const msg = (err as { data?: { error?: string } })?.data?.error;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
     }
   }

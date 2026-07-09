@@ -51,7 +51,7 @@ import {
   ArrowLeft, Edit, Trash2, Users, MapPin, Car, Bike,
   Crown, Shield, UserCheck, User, UserPlus, Loader2,
   Mail, Link2, Copy, Check, Clock, XCircle, RotateCcw, Warehouse, MessageSquare, ClipboardList, LayoutDashboard, Calendar, ShoppingBag,
-  Lock,
+  Lock, Globe,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useClubAuth } from "@/hooks/use-club-auth";
@@ -144,7 +144,7 @@ export default function ClubDetail() {
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
 
   const { session } = useClubAuth(clubId);
-  const { name: myUserName, email: myUserEmail } = useUserAuth();
+  const { name: myUserName, email: myUserEmail, isAuthLoading } = useUserAuth();
 
   const { data: club, isLoading, isError, refetch } = useGetClub(clubId, {
     query: { queryKey: getGetClubQueryKey(clubId) },
@@ -171,7 +171,7 @@ export default function ClubDetail() {
   const isOwner = (ROLE_RANK[myRole ?? ""] ?? 0) >= ROLE_RANK.owner!;
 
   const { data: invitations, refetch: refetchInvitations } = useListClubInvitations(clubId, {
-    query: { queryKey: getListClubInvitationsQueryKey(clubId) },
+    query: { queryKey: getListClubInvitationsQueryKey(clubId), enabled: canAdmin },
   });
 
   const deleteMutation = useDeleteClub();
@@ -196,7 +196,7 @@ export default function ClubDetail() {
       invalidateClub();
       queryClient.invalidateQueries({ queryKey: getListClubsQueryKey({ scope: "mine" }) });
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const msg = (err as { data?: { error?: string } })?.data?.error;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
     }
   }
@@ -208,7 +208,7 @@ export default function ClubDetail() {
       invalidateClub();
       queryClient.invalidateQueries({ queryKey: getListClubsQueryKey({ scope: "mine" }) });
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const msg = (err as { data?: { error?: string } })?.data?.error;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
     }
   }
@@ -246,7 +246,7 @@ export default function ClubDetail() {
         toast({ title: "Invitasjon sendt", description: `E-post sendt til ${inviteEmail}` });
       }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const msg = (err as { data?: { error?: string } })?.data?.error;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
     }
   }
@@ -267,8 +267,56 @@ export default function ClubDetail() {
     }
   }
 
-  if (isLoading) return <LoadingState message="Laster klubb..." />;
+  if (isLoading || (isAuthLoading && !isMember)) return <LoadingState message="Laster klubb..." />;
   if (isError || !club) return <ErrorState onRetry={refetch} />;
+
+  // ── Private club, non-member: clean locked state ──────────────────────────
+  if (club.isPrivate && !isMember) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/clubs")}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight truncate">{club.name}</h1>
+          <Badge className="bg-slate-500/20 text-slate-300 border-0 shrink-0 gap-1 text-xs">
+            <Lock className="w-3 h-3" />
+            Privat
+          </Badge>
+        </div>
+
+        <Card className="max-w-lg mx-auto">
+          <CardContent className="pt-10 pb-10 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+              <Lock className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-lg font-semibold">Dette er en privat klubb</h2>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Du må inviteres for å få tilgang. Har du fått en invitasjonslenke,
+                bruker du den for å bli medlem.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
+              <Users className="w-3.5 h-3.5" />
+              <span>{club.memberCount} {club.memberCount === 1 ? "medlem" : "medlemmer"}</span>
+              {club.location && (
+                <>
+                  <span>·</span>
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>{club.location}</span>
+                </>
+              )}
+            </div>
+            <Button variant="outline" onClick={() => navigate("/clubs")} className="mt-2">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Tilbake til klubber
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const sortedMembers = [...(club.members ?? [])].sort(
     (a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9)
@@ -289,10 +337,21 @@ export default function ClubDetail() {
         </Button>
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight truncate">{club.name}</h1>
-          {club.isPrivate && (
+          {club.isPrivate ? (
             <Badge className="bg-slate-500/20 text-slate-300 border-0 shrink-0 gap-1 text-xs">
               <Lock className="w-3 h-3" />
               Privat
+            </Badge>
+          ) : (
+            <Badge className="bg-sky-500/15 text-sky-300 border-0 shrink-0 gap-1 text-xs">
+              <Globe className="w-3 h-3" />
+              Offentlig
+            </Badge>
+          )}
+          {myRole && (
+            <Badge className={`shrink-0 gap-1 text-xs border ${roleBadgeClass[myRole] ?? ""}`}>
+              <RoleIcon role={myRole} />
+              {roleLabel[myRole] ?? myRole}
             </Badge>
           )}
         </div>
@@ -444,18 +503,22 @@ export default function ClubDetail() {
                 Se klubbens garasje
               </Button>
             </Link>
-            <Link href={`/clubs/${clubId}/marketplace`} className="block">
-              <Button variant="secondary" className="w-full">
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                Markedsplass for deler
-              </Button>
-            </Link>
-            <Link href={`/clubs/${clubId}/audit-log`} className="block">
-              <Button variant="ghost" className="w-full text-muted-foreground">
-                <ClipboardList className="w-4 h-4 mr-2" />
-                Revisjonslogg
-              </Button>
-            </Link>
+            {isMember && (
+              <Link href={`/clubs/${clubId}/marketplace`} className="block">
+                <Button variant="secondary" className="w-full">
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  Markedsplass for deler
+                </Button>
+              </Link>
+            )}
+            {canAdmin && (
+              <Link href={`/clubs/${clubId}/audit-log`} className="block">
+                <Button variant="ghost" className="w-full text-muted-foreground">
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  Revisjonslogg
+                </Button>
+              </Link>
+            )}
             {!isMember && !club.isPrivate && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -498,20 +561,22 @@ export default function ClubDetail() {
         </Card>
       </div>
 
-      {/* Tabs: Medlemmer / Invitasjoner */}
+      {/* Tabs: Medlemmer / Invitasjoner (invitasjoner kun for admin+) */}
       <Tabs defaultValue="members">
         <TabsList className="mb-4">
           <TabsTrigger value="members">
             Medlemmer <span className="ml-1.5 text-xs opacity-60">{sortedMembers.length}</span>
           </TabsTrigger>
-          <TabsTrigger value="invitations">
-            Invitasjoner
-            {activeInvitations.length > 0 && (
-              <span className="ml-1.5 text-xs bg-amber-500/20 text-amber-300 rounded px-1">
-                {activeInvitations.length}
-              </span>
-            )}
-          </TabsTrigger>
+          {canAdmin && (
+            <TabsTrigger value="invitations">
+              Invitasjoner
+              {activeInvitations.length > 0 && (
+                <span className="ml-1.5 text-xs bg-amber-500/20 text-amber-300 rounded px-1">
+                  {activeInvitations.length}
+                </span>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Members tab */}
@@ -617,7 +682,8 @@ export default function ClubDetail() {
           </Card>
         </TabsContent>
 
-        {/* Invitations tab */}
+        {/* Invitations tab (admin+) */}
+        {canAdmin && (
         <TabsContent value="invitations" className="space-y-4">
           <Card>
             <CardHeader className="py-4 flex flex-row items-center justify-between">
@@ -743,6 +809,7 @@ export default function ClubDetail() {
             </Card>
           )}
         </TabsContent>
+        )}
       </Tabs>
 
       {/* Edit role dialog */}

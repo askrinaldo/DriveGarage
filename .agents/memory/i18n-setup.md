@@ -13,10 +13,6 @@ description: How multi-language support is structured in the vintage-garage fron
 - `no.ts` exports the master object and derives `type Translations` from it (no `as const` — required so other languages can use different string values without literal-type conflicts)
 - `sv.ts`, `da.ts`, `en.ts` import and implement `Translations`
 
-**Key structure:** `nav.*`, `auth.*`, `tenant.*`, `vehicle.*`, `theme.*`, `lang.*`, `dashboard.*`, `categories["oil-change"|...]`, `landing.*` (navbar, hero, trust, stats, features.f1–f9, howItWorks.step1–4, testimonials, pricing.{free,premium,standard}, cta, footer)
-
 **Why no `as const`:** Using `as const` makes every string a narrow literal type. Other language files can't satisfy that type with different strings. Without `as const`, `typeof no` produces `string` types throughout, so all translations can implement the same interface.
-
-**LanguageSwitcher component:** `src/components/language-switcher.tsx` — renders a Popover with a 2×2 grid of flag+label buttons. Placed in the sidebar nav section (above the footer area in layout.tsx).
 
 **Date/number locale:** `getCurrentLocale()` from `src/i18n/index.ts` maps lang code → BCP-47 locale string (`no→no-NO`, `sv→sv-SE`, `da→da-DK`, `en→en-GB`). Used in `dashboard.tsx` and `VehicleCard`.

@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   useListClubs,
+  useJoinClub,
   getListClubsQueryKey,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
+import { useUserAuth } from "@/hooks/use-user-auth";
+import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Plus, Users, MapPin, Car, Bike, Lock, Search, Globe, BookUser,
+  Crown, UserPlus, Loader2, ArrowRight,
 } from "lucide-react";
 
 const typeColor: Record<string, string> = {
@@ -47,12 +52,22 @@ interface ClubLike {
   clubType: string;
   memberCount: number;
   isPrivate: boolean;
+  ownerName?: string;
+  joinMode?: string;
 }
 
-function ClubCard({ club }: { club: ClubLike }) {
+interface ClubCardProps {
+  club: ClubLike;
+  /** "owner" | "member" | null — shown as a role badge on the card */
+  membershipRole?: "owner" | "member" | null;
+  /** Footer action rendered at the bottom of the card */
+  action?: React.ReactNode;
+}
+
+function ClubCard({ club, membershipRole, action }: ClubCardProps) {
   return (
     <Link href={`/clubs/${club.id}`}>
-      <Card className="hover-elevate cursor-pointer transition-all bg-card border-border overflow-hidden group h-full">
+      <Card className="hover-elevate cursor-pointer transition-all bg-card border-border overflow-hidden group h-full flex flex-col">
         {club.bannerUrl ? (
           <div
             className="h-24 w-full bg-cover bg-center"
@@ -63,7 +78,7 @@ function ClubCard({ club }: { club: ClubLike }) {
             <TypeIcon type={club.clubType} />
           </div>
         )}
-        <CardContent className="p-5">
+        <CardContent className="p-5 flex-1 flex flex-col">
           <div className="flex items-start gap-3 mb-3">
             {club.logoUrl ? (
               <img
@@ -84,10 +99,27 @@ function ClubCard({ club }: { club: ClubLike }) {
                 <Badge className={`text-xs ${typeColor[club.clubType] ?? ""} border-0`}>
                   {typeLabel[club.clubType] ?? club.clubType}
                 </Badge>
-                {club.isPrivate && (
+                {club.isPrivate ? (
                   <Badge className="text-xs bg-slate-500/20 text-slate-300 border-0 gap-1">
                     <Lock className="w-2.5 h-2.5" />
                     Privat
+                  </Badge>
+                ) : (
+                  <Badge className="text-xs bg-sky-500/15 text-sky-300 border-0 gap-1">
+                    <Globe className="w-2.5 h-2.5" />
+                    Offentlig
+                  </Badge>
+                )}
+                {membershipRole === "owner" && (
+                  <Badge className="text-xs bg-yellow-500/15 text-yellow-300 border-0 gap-1">
+                    <Crown className="w-2.5 h-2.5" />
+                    Eier
+                  </Badge>
+                )}
+                {membershipRole === "member" && (
+                  <Badge className="text-xs bg-emerald-500/15 text-emerald-300 border-0 gap-1">
+                    <Users className="w-2.5 h-2.5" />
+                    Medlem
                   </Badge>
                 )}
               </div>
@@ -100,7 +132,7 @@ function ClubCard({ club }: { club: ClubLike }) {
             </p>
           )}
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto">
             <div className="flex items-center gap-1">
               <Users className="w-3 h-3" />
               <span>
@@ -115,6 +147,8 @@ function ClubCard({ club }: { club: ClubLike }) {
               </div>
             )}
           </div>
+
+          {action && <div className="mt-4">{action}</div>}
         </CardContent>
       </Card>
     </Link>
@@ -130,8 +164,13 @@ const TYPE_FILTERS = [
 
 export default function ClubsList() {
   const { isSignedIn } = useAuth();
+  const { name: myName, email: myEmail } = useUserAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [joiningId, setJoiningId] = useState<number | null>(null);
 
   const { data: myClubs, isLoading: myLoading } = useListClubs(
     { scope: "mine" },
@@ -152,6 +191,34 @@ export default function ClubsList() {
     discoverParams,
     { query: { queryKey: getListClubsQueryKey(discoverParams) } }
   );
+
+  const joinMutation = useJoinClub();
+
+  const myClubIds = new Set((myClubs ?? []).map((c) => c.id));
+
+  function myRoleFor(club: ClubLike): "owner" | "member" {
+    const candidates = [myName, myEmail]
+      .filter((c): c is string => !!c)
+      .map((c) => c.toLowerCase());
+    return club.ownerName && candidates.includes(club.ownerName.toLowerCase())
+      ? "owner"
+      : "member";
+  }
+
+  async function handleJoin(club: ClubLike) {
+    setJoiningId(club.id);
+    try {
+      await joinMutation.mutateAsync({ clubId: club.id, data: { memberName: "join" } });
+      toast({ title: "Du er nå medlem", description: `Velkommen til ${club.name}!` });
+      queryClient.invalidateQueries({ queryKey: getListClubsQueryKey({ scope: "mine" }) });
+      navigate(`/clubs/${club.id}`);
+    } catch (err: unknown) {
+      const msg = (err as { data?: { error?: string } })?.data?.error;
+      toast({ title: msg ?? "Kunne ikke bli med i klubben", variant: "destructive" });
+    } finally {
+      setJoiningId(null);
+    }
+  }
 
   const filteredPublic = (publicClubs ?? []).filter(
     (c) =>
@@ -202,7 +269,26 @@ export default function ClubsList() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {myClubs.map((club) => (
-                <ClubCard key={club.id} club={club} />
+                <ClubCard
+                  key={club.id}
+                  club={club}
+                  membershipRole={myRoleFor(club)}
+                  action={
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/clubs/${club.id}`);
+                      }}
+                    >
+                      Åpne klubb
+                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                    </Button>
+                  }
+                />
               ))}
             </div>
           )}
@@ -230,7 +316,7 @@ export default function ClubsList() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Søk etter klubb..."
+              placeholder="Søk etter navn eller sted..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -273,9 +359,65 @@ export default function ClubsList() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredPublic.map((club) => (
-              <ClubCard key={club.id} club={club} />
-            ))}
+            {filteredPublic.map((club) => {
+              const isMember = myClubIds.has(club.id);
+              return (
+                <ClubCard
+                  key={club.id}
+                  club={club}
+                  membershipRole={isMember ? myRoleFor(club) : null}
+                  action={
+                    isMember ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigate(`/clubs/${club.id}`);
+                        }}
+                      >
+                        Åpne klubb
+                        <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                      </Button>
+                    ) : club.joinMode === "invite_only" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full text-muted-foreground"
+                        disabled
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Lock className="w-3.5 h-3.5 mr-1.5" />
+                        Krever invitasjon
+                      </Button>
+                    ) : isSignedIn ? (
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        disabled={joiningId === club.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          void handleJoin(club);
+                        }}
+                      >
+                        {joiningId === club.id ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        Bli med
+                      </Button>
+                    ) : null
+                  }
+                />
+              );
+            })}
           </div>
         )}
       </section>

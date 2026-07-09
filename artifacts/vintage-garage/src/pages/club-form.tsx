@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -19,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, Globe, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "@/components/ui-states";
 
@@ -206,47 +205,79 @@ export default function ClubForm() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <Label htmlFor="isPrivate" className="text-sm font-medium">Privat klubb</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Garasje, arrangementer og forum er skjult for ikke-medlemmer
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, isPrivate: false }))}
+                className={`relative text-left rounded-lg border p-4 transition-colors ${
+                  !form.isPrivate
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-muted-foreground/40"
+                }`}
+              >
+                {!form.isPrivate && (
+                  <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
+                  </span>
+                )}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Globe className="w-4 h-4 text-sky-400" />
+                  <span className="font-medium text-sm">Offentlig</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Klubben vises i «Utforsk»-listen, og hvem som helst kan melde seg inn.
                 </p>
-              </div>
-              <Switch
-                id="isPrivate"
-                checked={form.isPrivate}
-                onCheckedChange={(checked) =>
-                  setForm((f) => ({
-                    ...f,
-                    isPrivate: checked,
-                    joinMode: checked ? "invite_only" : f.joinMode,
-                  }))
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((f) => ({ ...f, isPrivate: true, joinMode: "invite_only" }))
                 }
-              />
+                className={`relative text-left rounded-lg border p-4 transition-colors ${
+                  form.isPrivate
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-muted-foreground/40"
+                }`}
+              >
+                {form.isPrivate && (
+                  <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
+                  </span>
+                )}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  <span className="font-medium text-sm">Privat</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Skjult fra «Utforsk». Nye medlemmer kan kun bli med via invitasjon.
+                </p>
+              </button>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="joinMode">Innmeldingsmodus</Label>
-              <Select
-                value={form.joinMode}
-                onValueChange={(v) => setForm((f) => ({ ...f, joinMode: v as "open" | "invite_only" }))}
-                disabled={form.isPrivate}
-              >
-                <SelectTrigger id="joinMode">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open">Åpen — hvem som helst kan melde seg inn</SelectItem>
-                  <SelectItem value="invite_only">Kun invitasjon — admin godkjenner nye medlemmer</SelectItem>
-                </SelectContent>
-              </Select>
-              {form.isPrivate && (
-                <p className="text-xs text-muted-foreground">
-                  Private klubber krever alltid invitasjon.
-                </p>
-              )}
-            </div>
+            {!form.isPrivate && (
+              <div className="space-y-1.5">
+                <Label htmlFor="joinMode">Innmeldingsmodus</Label>
+                <Select
+                  value={form.joinMode}
+                  onValueChange={(v) => setForm((f) => ({ ...f, joinMode: v as "open" | "invite_only" }))}
+                >
+                  <SelectTrigger id="joinMode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Åpen — hvem som helst kan melde seg inn</SelectItem>
+                    <SelectItem value="invite_only">Kun invitasjon — admin godkjenner nye medlemmer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {form.isPrivate && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Lock className="w-3 h-3 shrink-0" />
+                Private klubber krever alltid invitasjon — innmeldingsmodus settes automatisk.
+              </p>
+            )}
           </CardContent>
         </Card>
 

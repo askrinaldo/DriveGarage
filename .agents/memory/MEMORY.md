@@ -1,6 +1,6 @@
 - [API route path prefix](api-route-prefix.md) — Routes inside the router MUST omit /api prefix; app.ts mounts router at /api already.
-- [User auth pattern](user-auth-pattern.md) — Clerk is primary auth (session cookie via clerkUserAuth middleware → req.userAuth). Admin JWT fallback via x-user-token header + parseUserAuth. Both run globally in app.ts.
-- [Clerk auth wiring](clerk-auth-wiring.md) — Clerk replaces Replit Auth; clerkUserAuth bridges Clerk session → req.userAuth with JIT DB provisioning. publishableKeyFromHost does NOT exist in @clerk/shared@2.22.1 — pass process.env.CLERK_PUBLISHABLE_KEY directly to clerkMiddleware.
+- [User auth pattern](user-auth-pattern.md) — Clerk primary (session → req.userAuth), admin JWT fallback via x-user-token; both run globally in app.ts.
+- [Clerk auth wiring](clerk-auth-wiring.md) — clerkUserAuth bridges Clerk session → req.userAuth with JIT provisioning; pass CLERK_PUBLISHABLE_KEY env directly to clerkMiddleware.
 - [Stripe connector credentials](stripe-connector-credentials.md) — Replit Stripe connector settings key is `secret` (not `secret_key`). runMigrations must run once before syncBackfill works.
 - [Multi-tenant architecture](multi-tenant-architecture.md) — Tenant tables, JWT tenant fields, per-tenant vehicle filtering, SQL backfill approach.
 - [i18n setup](i18n-setup.md) — react-i18next with no/sv/da/en; no `as const` on master translation; getCurrentLocale() for date formatting.
@@ -9,3 +9,4 @@
 - [Post-merge DB push](post-merge-db-push.md) — Use `push-force` (not `push`) in post-merge.sh; drizzle-kit push is interactive (inquirer), stdin is closed during post-merge so it hangs.
 - [API client schema duplication](api-client-schema-duplication.md) — lib/api-client-react has its own inlined Club/ClubWithMembers in src/generated/api.schemas.ts separate from lib/api-zod. Both must be updated when schema fields change.
 - [Express 5 params cast](express5-params-cast.md) — req.params.clubId can be string | string[] in strict TypeScript with Express 5 types; always cast with String() before parseInt.
+- [ApiError body access](api-error-body.md) — Generated client throws ApiError with parsed body on `err.data` (NOT `err.response.data`); wrong path silently hides backend error messages in toasts.

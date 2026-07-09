@@ -1,0 +1,104 @@
+Act as a senior frontend product designer and full-stack engineer.
+
+Project: DriveGarage
+
+Goal:
+Improve the Clubs page and club experience so it looks polished, understandable and demo-ready.
+
+Important:
+
+* Focus mainly on frontend UX.
+* Preserve existing backend security.
+* Do not rewrite the whole club system.
+* Do not implement Vipps here.
+* Do not add unrelated features.
+
+Tasks:
+
+1. Improve Clubs landing page
+   Create a polished club overview with clear sections:
+
+* Mine klubber
+* Utforsk offentlige klubber
+* Private klubber / Invitasjoner if available
+* Opprett klubb
+
+2. Public vs private clarity
+   Make it very clear:
+
+* Offentlig klubb = visible in discovery, anyone can join
+* Privat klubb = invite-only, hidden from discovery
+
+Add badges:
+
+* Offentlig
+* Privat
+* Medlem
+* Eier
+* Admin
+
+3. Public club discovery
+   Improve public club cards:
+
+* club name
+* description
+* location
+* member count
+* privacy badge
+* “Bli med” button if not member
+* “Åpne klubb” if member
+
+Add simple search by club name/location.
+
+4. Mine klubber
+   Only show clubs the current user is a member of.
+   Do not show random/public clubs here.
+
+5. Private clubs
+   Private clubs should not appear in public discovery.
+   If accessed directly by non-member, show a clean locked state:
+   “Dette er en privat klubb. Du må inviteres for å få tilgang.”
+
+6. Create/edit club UX
+   Improve form:
+
+* toggle: Offentlig / Privat
+* if Private is selected, force invite-only
+* helper text explaining the difference
+* make it feel intentional, not technical
+
+7. Club detail polish
+   Improve layout:
+
+* hero/header with club name, location, privacy badge
+* role badge for current user
+* clear actions based on role
+* hide unavailable/unfinished sections if they look bad for demo
+
+8. Role actions
+   Frontend must only show:
+
+* owner: manage roles, delete club
+* admin: invite/remove normal members
+* member: leave club
+* non-member: join public club or locked private message
+
+Handle 403 gracefully with toast/inline message.
+
+9. Validation
+
+* Run frontend typecheck/build
+* Run backend typecheck/build if backend touched
+* Test owner/admin/member/non-member states
+* Test public/private discovery
+* Test join public club
+* Test private club locked state
+
+Deliverable:
+
+* files changed
+* UI improvements
+* public/private behavior
+* role-based buttons
+* test results
+* remaining risks
