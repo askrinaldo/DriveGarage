@@ -11,7 +11,7 @@ import {
 } from "@workspace/api-zod";
 import { sql, count } from "drizzle-orm";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
-import { getUserTier } from "../lib/subscriptionTier";
+import { FAIR_USE_LIMITS } from "../lib/subscription";
 
 const router: IRouter = Router();
 
@@ -38,22 +38,21 @@ router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<v
   }
 
   const { userId, tenantId } = req.userAuth!;
-  const tier = await getUserTier(userId);
 
-  if (tier === "free") {
-    const [{ value: vehicleCount }] = await db
-      .select({ value: count() })
-      .from(vehiclesTable)
-      .where(ownershipClause(tenantId, userId));
+  const [{ vehicleCount }] = await db
+    .select({ vehicleCount: count() })
+    .from(vehiclesTable)
+    .where(ownershipClause(tenantId, userId));
 
-    if (vehicleCount >= 1) {
-      res.status(403).json({
-        error: "Gratis-planen er begrenset til 1 kjøretøy. Oppgrader til Standard for ubegrenset antall.",
-        code: "SUBSCRIPTION_LIMIT",
-        upgradeUrl: "/billing",
-      });
-      return;
-    }
+  if (vehicleCount >= FAIR_USE_LIMITS.vehicles) {
+    res.status(403).json({
+      error:   `Du har nådd maks ${FAIR_USE_LIMITS.vehicles} kjøretøy. Slett et kjøretøy for å legge til et nytt.`,
+      code:    "FAIR_USE_LIMIT",
+      feature: "vehicles",
+      limit:   FAIR_USE_LIMITS.vehicles,
+      upgradeUrl: "/billing",
+    });
+    return;
   }
 
   const [vehicle] = await db

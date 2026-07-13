@@ -11,3 +11,4 @@
 - [Express 5 params cast](express5-params-cast.md) — req.params.clubId can be string | string[] in strict TypeScript with Express 5 types; always cast with String() before parseInt.
 - [ApiError body access](api-error-body.md) — Generated client throws ApiError with parsed body on `err.data` (NOT `err.response.data`); wrong path silently hides backend error messages in toasts.
 - [Vipps Recurring spec audit](vipps-recurring-spec-audit.md) — Confirmed correct fields + all discrepancies fixed (charge currency, type, retryDays, plugin headers, MSN on auth, CANCELLED spelling).
+- [Vipps billing infra complete](vipps-billing-infra.md) — canAccessFeature, requirePaidAccess middleware, account deletion routes, FAIR_USE_LIMITS vehicle check, admin Stripe SQL removed, billing.tsx deletion UI live.

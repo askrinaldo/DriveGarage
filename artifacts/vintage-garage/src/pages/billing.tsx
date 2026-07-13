@@ -266,7 +266,84 @@ const PLAN_FEATURES = [
 
 // ── Account deletion section ──────────────────────────────────────────────────
 
+const DELETION_CONFIRM_PHRASE = "slett kontoen min";
+
 function AccountDeletionSection() {
+  const { data: sub }                  = useSubscription();
+  const invalidate                     = useInvalidateSubscription();
+  const [showConfirm, setShowConfirm]  = useState(false);
+  const [confirmInput, setConfirmInput] = useState("");
+  const [loading, setLoading]          = useState(false);
+  const [error, setError]              = useState<string | null>(null);
+  const [scheduled, setScheduled]      = useState<{ deletionRequestedAt: string; scheduledDeleteAt: string } | null>(null);
+
+  const isDeletionRequested = sub?.status === "deletion_requested";
+
+  async function handleRequestDeletion() {
+    if (confirmInput.trim().toLowerCase() !== DELETION_CONFIRM_PHRASE) {
+      setError(`Skriv inn "${DELETION_CONFIRM_PHRASE}" nøyaktig for å bekrefte.`);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await customFetch<{ deletionRequestedAt: string; scheduledDeleteAt: string }>(
+        "/api/account/request-deletion",
+        { method: "POST", body: JSON.stringify({ confirmPhrase: confirmInput.trim().toLowerCase() }) },
+      );
+      setScheduled(result);
+      setShowConfirm(false);
+      await invalidate();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Noe gikk galt.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCancelDeletion() {
+    setLoading(true);
+    setError(null);
+    try {
+      await customFetch("/api/account/cancel-deletion", { method: "POST" });
+      setScheduled(null);
+      await invalidate();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Noe gikk galt.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (scheduled || isDeletionRequested) {
+    const deleteDate = scheduled?.scheduledDeleteAt
+      ? new Date(scheduled.scheduledDeleteAt).toLocaleDateString("no-NO")
+      : null;
+    return (
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-amber-400" />
+          <p className="text-sm font-bold text-amber-400">Kontosletting er planlagt</p>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Kontoen din er planlagt slettet{deleteDate ? ` ${deleteDate}` : ""}.
+          Du kan angre dette innen 14-dagersfristen ved å klikke nedenfor.
+        </p>
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+          onClick={handleCancelDeletion}
+          disabled={loading}
+        >
+          <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+          Angre — behold kontoen min
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 space-y-4">
       <div className="flex items-center gap-2">
@@ -276,33 +353,64 @@ function AccountDeletionSection() {
       <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
         <p>
           Sletting av konto er en separat og permanent handling.
-          Du vil bli bedt om å bekrefte eksplisitt, og kontoen settes i en 14-dagers
-          sletteventekø — du kan angre i denne perioden.
+          Kontoen settes i en <strong className="text-foreground">14-dagers sletteventekø</strong> — du kan angre i denne perioden.
         </p>
         <p>
-          <strong className="text-foreground">Hva som slettes:</strong>{" "}
-          Garasje, kjøretøy, servicelogg, kvitteringer, klubbmedlemskap og
-          personlige innstillinger anonymiseres eller slettes innen 14–30 dager etter forespørsel.
+          <strong className="text-foreground">Slettes:</strong>{" "}
+          Kjøretøy, servicelogg, kvitteringer, klubbmedlemskap og personlige innstillinger.
         </p>
         <p>
-          <strong className="text-foreground">Hva som beholdes:</strong>{" "}
+          <strong className="text-foreground">Beholdes:</strong>{" "}
           Kun det som er lovpålagt — minimale revisjons- og faktureringsdata for regnskapsformål.
         </p>
-        <p>
-          Abonnementsavtalen avsluttes automatisk ved sletting av konto.
-          Ingen refusjon ytes for gjenstående periode.
-        </p>
+        <p>Abonnementsavtalen avsluttes automatisk. Ingen refusjon for gjenstående periode.</p>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="text-red-400 border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
-        disabled
-        title="Kontakt support for å be om kontosletting"
-      >
-        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-        Be om sletting av konto — kontakt support
-      </Button>
+
+      {!showConfirm ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-red-400 border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
+          onClick={() => { setShowConfirm(true); setError(null); }}
+        >
+          <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+          Be om sletting av konto
+        </Button>
+      ) : (
+        <div className="space-y-3 pt-1">
+          <p className="text-xs text-red-400 font-semibold">
+            Skriv inn <span className="font-mono bg-red-500/10 px-1.5 py-0.5 rounded">{DELETION_CONFIRM_PHRASE}</span> for å bekrefte:
+          </p>
+          <input
+            type="text"
+            value={confirmInput}
+            onChange={e => { setConfirmInput(e.target.value); setError(null); }}
+            placeholder={DELETION_CONFIRM_PHRASE}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-red-500/30 bg-red-500/5 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-red-500/60"
+          />
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-red-400 border-red-500/30 hover:bg-red-500/20"
+              onClick={handleRequestDeletion}
+              disabled={loading || !confirmInput.trim()}
+            >
+              {loading ? "Behandler…" : "Bekreft sletting"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-muted-foreground"
+              onClick={() => { setShowConfirm(false); setConfirmInput(""); setError(null); }}
+              disabled={loading}
+            >
+              Avbryt
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

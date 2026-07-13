@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, desc, count, sql, gte } from "drizzle-orm";
-import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable } from "@workspace/db";
+import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable, subscriptionsTable, subscriptionEventsTable } from "@workspace/db";
 import { parseUserAuth, requireSuperAdmin } from "../middleware/userAuth";
 import { logAdminAction } from "../lib/adminAudit";
 import {
@@ -43,76 +43,30 @@ router.get("/admin/users-detailed", parseUserAuth, requireSuperAdmin, async (req
   res.json(result);
 });
 
-// ─── Billing / revenue stats ──────────────────────────────────────────────
+// ─── Billing stats (Vipps) ────────────────────────────────────────────────
 router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
-  const now = Math.floor(Date.now() / 1000);
-  const thirtyDaysAgo = now - 30 * 24 * 60 * 60;
-  const sixtyDaysAgo = now - 60 * 24 * 60 * 60;
-  const startOfYear = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-  const tierCounts = await db
-    .select({ tier: usersTable.subscriptionTier, cnt: count() })
-    .from(usersTable)
-    .groupBy(usersTable.subscriptionTier);
-
-  const tierMap: Record<string, number> = {};
-  for (const row of tierCounts) tierMap[row.tier ?? "free"] = Number(row.cnt);
-
-  const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
   const [newUsersRow] = await db
     .select({ cnt: count() })
     .from(usersTable)
-    .where(gte(usersTable.createdAt, new Date(monthStart * 1000)));
+    .where(gte(usersTable.createdAt, monthStart));
   const newUsersThisMonth = Number(newUsersRow?.cnt ?? 0);
 
-  let activeSubscriptions = 0;
-  let mrrOre = 0;
-  let revenueThisMonthOre = 0;
-  let revenueLastMonthOre = 0;
-  let revenueYtdOre = 0;
-
-  try {
-    const activeSubsResult = await db.execute(
-      sql`SELECT COUNT(*) AS cnt FROM stripe.subscriptions WHERE status = 'active'`
-    );
-    activeSubscriptions = Number((activeSubsResult.rows[0] as Record<string, unknown>)?.cnt ?? 0);
-
-    const mrrResult = await db.execute(sql`
-      SELECT COALESCE(SUM(
-        CASE
-          WHEN (item->>'plan_interval') = 'year' THEN (item->>'plan_amount')::bigint / 12
-          ELSE (item->>'plan_amount')::bigint
-        END
-      ), 0) AS mrr_ore
-      FROM stripe.subscriptions s,
-      jsonb_array_elements(s.items->'data') AS item
-      WHERE s.status = 'active'
-    `);
-    mrrOre = Number((mrrResult.rows[0] as Record<string, unknown>)?.mrr_ore ?? 0);
-
-    const revThisMonthResult = await db.execute(sql`
-      SELECT COALESCE(SUM(amount_paid), 0) AS total
-      FROM stripe.invoices
-      WHERE status = 'paid' AND created >= ${thirtyDaysAgo}
-    `);
-    revenueThisMonthOre = Number((revThisMonthResult.rows[0] as Record<string, unknown>)?.total ?? 0);
-
-    const revLastMonthResult = await db.execute(sql`
-      SELECT COALESCE(SUM(amount_paid), 0) AS total
-      FROM stripe.invoices
-      WHERE status = 'paid' AND created >= ${sixtyDaysAgo} AND created < ${thirtyDaysAgo}
-    `);
-    revenueLastMonthOre = Number((revLastMonthResult.rows[0] as Record<string, unknown>)?.total ?? 0);
-
-    const revYtdResult = await db.execute(sql`
-      SELECT COALESCE(SUM(amount_paid), 0) AS total
-      FROM stripe.invoices
-      WHERE status = 'paid' AND created >= ${startOfYear}
-    `);
-    revenueYtdOre = Number((revYtdResult.rows[0] as Record<string, unknown>)?.total ?? 0);
-  } catch {
-    // stripe schema may be empty in dev
+  // Subscription status counts from subscriptions table
+  const statusCounts = await db.execute(sql`
+    SELECT status, COUNT(*) AS cnt
+    FROM subscriptions
+    GROUP BY status
+  `);
+  const statusMap: Record<string, number> = {};
+  for (const r of statusCounts.rows as Array<Record<string, unknown>>) {
+    statusMap[String(r.status ?? "")] = Number(r.cnt ?? 0);
   }
+
+  const activeSubscriptions = statusMap["active"] ?? 0;
+  // MRR estimate: active subs × 100 NOK/month (one plan, no Vipps settlement data yet)
+  const mrrNok = activeSubscriptions * 100;
 
   const userGrowth = await db.execute(sql`
     SELECT
@@ -125,112 +79,75 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
     ORDER BY month_date
   `);
 
-  const toKr = (ore: number) => Math.round(ore / 100);
-
   res.json({
-    tiers: {
-      free: tierMap["free"] ?? 0,
-      standard: tierMap["standard"] ?? 0,
-      premium: tierMap["premium"] ?? 0,
-    },
+    provider: "vipps",
     newUsersThisMonth,
     activeSubscriptions,
-    mrr: toKr(mrrOre),
-    arr: toKr(mrrOre * 12),
-    revenueThisMonth: toKr(revenueThisMonthOre),
-    revenueLastMonth: toKr(revenueLastMonthOre),
-    revenueYtd: toKr(revenueYtdOre),
+    mrr: mrrNok,
+    arr: mrrNok * 12,
+    statusCounts: statusMap,
     userGrowth: (userGrowth.rows as Array<Record<string, unknown>>).map(r => ({
       month: String(r.month ?? ""),
       count: Number(r.cnt ?? 0),
     })),
+    note: "Revenue figures are estimated (100 NOK × active subscriptions). Actual settlement data requires Vipps Report API integration.",
   });
 });
 
 // ─── MRR history (last 12 months) ─────────────────────────────────────────
+// Returns new/churned subscription counts per month from subscription_events.
+// Revenue figures are estimated until Vipps Report API is integrated.
 router.get("/admin/mrr-history", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
-  let rows: Array<{ month: string; mrr: number; newSubs: number; churned: number }> = [];
+  const result = await db.execute(sql`
+    SELECT
+      TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YY') AS month,
+      DATE_TRUNC('month', created_at) AS month_date,
+      COUNT(*) FILTER (WHERE event_type = 'recurring.agreement-activated.v1') AS new_subs,
+      COUNT(*) FILTER (WHERE event_type IN ('recurring.agreement-stopped.v1','recurring.agreement-expired.v1')) AS churned
+    FROM subscription_events
+    WHERE created_at >= NOW() - INTERVAL '12 months'
+    GROUP BY DATE_TRUNC('month', created_at)
+    ORDER BY month_date
+  `);
 
-  try {
-    const result = await db.execute(sql`
-      SELECT
-        TO_CHAR(DATE_TRUNC('month', TO_TIMESTAMP(created)), 'Mon YY') AS month,
-        DATE_TRUNC('month', TO_TIMESTAMP(created)) AS month_date,
-        COALESCE(SUM(amount_paid), 0) AS revenue_ore,
-        COUNT(*) FILTER (WHERE status = 'paid') AS paid_count,
-        COUNT(*) FILTER (WHERE amount_paid = 0) AS zero_count
-      FROM stripe.invoices
-      WHERE created >= EXTRACT(EPOCH FROM NOW() - INTERVAL '12 months')
-      GROUP BY DATE_TRUNC('month', TO_TIMESTAMP(created))
-      ORDER BY month_date
-    `);
+  const eventRows = (result.rows as Array<Record<string, unknown>>).map(r => ({
+    month:   String(r.month ?? ""),
+    mrr:     0,   // estimated below
+    newSubs: Number(r.new_subs ?? 0),
+    churned: Number(r.churned ?? 0),
+  }));
 
-    rows = (result.rows as Array<Record<string, unknown>>).map(r => ({
-      month: String(r.month ?? ""),
-      mrr: Math.round(Number(r.revenue_ore ?? 0) / 100),
-      newSubs: Number(r.paid_count ?? 0),
-      churned: Number(r.zero_count ?? 0),
-    }));
-  } catch {
-    // No stripe schema yet
-  }
-
-  // If no data, return empty placeholder months
-  if (rows.length === 0) {
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      rows.push({
-        month: d.toLocaleDateString("nb-NO", { month: "short", year: "2-digit" }),
-        mrr: 0,
-        newSubs: 0,
-        churned: 0,
-      });
-    }
+  // Fill in any missing months with zero rows
+  const now = new Date();
+  const rows: typeof eventRows = [];
+  for (let i = 11; i >= 0; i--) {
+    const d     = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = d.toLocaleDateString("nb-NO", { month: "short", year: "2-digit" });
+    const found = eventRows.find(r => r.month.toLowerCase() === label.toLowerCase());
+    rows.push(found ?? { month: label, mrr: 0, newSubs: 0, churned: 0 });
   }
 
   res.json(rows);
 });
 
-// ─── Stripe invoices list ─────────────────────────────────────────────────
+// ─── Billing events (replaces Stripe invoices) ────────────────────────────
+// Shows recent subscription_events for operational monitoring.
 router.get("/admin/invoices", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
-  let invoices: Array<{
-    id: string;
-    customerEmail: string;
-    amount: number;
-    status: string;
-    created: number;
-    hostedUrl: string | null;
-  }> = [];
+  const events = await db
+    .select({
+      id:               subscriptionEventsTable.id,
+      userId:           subscriptionEventsTable.userId,
+      eventType:        subscriptionEventsTable.eventType,
+      processingStatus: subscriptionEventsTable.processingStatus,
+      error:            subscriptionEventsTable.error,
+      receivedAt:       subscriptionEventsTable.receivedAt,
+      processedAt:      subscriptionEventsTable.processedAt,
+    })
+    .from(subscriptionEventsTable)
+    .orderBy(desc(subscriptionEventsTable.receivedAt))
+    .limit(200);
 
-  try {
-    const result = await db.execute(sql`
-      SELECT
-        id,
-        customer_email,
-        amount_paid,
-        amount_due,
-        status,
-        created,
-        hosted_invoice_url
-      FROM stripe.invoices
-      ORDER BY created DESC
-      LIMIT 200
-    `);
-
-    invoices = (result.rows as Array<Record<string, unknown>>).map(r => ({
-      id: String(r.id ?? ""),
-      customerEmail: String(r.customer_email ?? "—"),
-      amount: Math.round(Number(r.amount_paid ?? r.amount_due ?? 0) / 100),
-      status: String(r.status ?? "unknown"),
-      created: Number(r.created ?? 0),
-      hostedUrl: r.hosted_invoice_url ? String(r.hosted_invoice_url) : null,
-    }));
-  } catch {
-    // No stripe schema
-  }
-
-  res.json(invoices);
+  res.json(events);
 });
 
 // ─── System health ────────────────────────────────────────────────────────
@@ -287,57 +204,83 @@ router.get("/admin/audit-log", parseUserAuth, requireSuperAdmin, async (req, res
   res.json(logs);
 });
 
-// ─── Subscription list from Stripe ────────────────────────────────────────
+// ─── Subscription list (Vipps) ────────────────────────────────────────────
+// Lists all users with a subscriptions row or non-default status.
+// agreementId is partially masked for security — last 6 chars only.
 router.get("/admin/subscriptions", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
-  const users = await db
-    .select({
-      id: usersTable.id,
-      name: usersTable.name,
-      email: usersTable.email,
-      subscriptionTier: usersTable.subscriptionTier,
-      subscriptionStatus: usersTable.subscriptionStatus,
-      stripeCustomerId: usersTable.stripeCustomerId,
-      stripeSubscriptionId: usersTable.stripeSubscriptionId,
-      createdAt: usersTable.createdAt,
-    })
-    .from(usersTable)
-    .where(
-      sql`${usersTable.subscriptionTier} != 'free' OR ${usersTable.stripeCustomerId} IS NOT NULL`
-    )
-    .orderBy(desc(usersTable.createdAt));
+  const rows = await db.execute(sql`
+    SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.role,
+      u.subscription_status,
+      u.vipps_agreement_id,
+      u.current_period_ends_at,
+      u.expires_at,
+      u.deletion_requested_at,
+      u.created_at,
+      s.id AS sub_id,
+      s.status AS sub_status,
+      s.plan_code,
+      s.cancel_at_period_end,
+      s.current_period_ends_at AS sub_period_ends,
+      s.canceled_at,
+      s.updated_at AS sub_updated,
+      pe.exemption_type,
+      pe.reason AS exemption_reason,
+      pe.expires_at AS exemption_expires,
+      (
+        SELECT event_type FROM subscription_events se
+        WHERE se.user_id = u.id
+        ORDER BY se.created_at DESC LIMIT 1
+      ) AS last_event_type,
+      (
+        SELECT processing_status FROM subscription_events se
+        WHERE se.user_id = u.id
+        ORDER BY se.created_at DESC LIMIT 1
+      ) AS last_event_status,
+      (
+        SELECT error FROM subscription_events se
+        WHERE se.user_id = u.id AND se.processing_status = 'failed'
+        ORDER BY se.created_at DESC LIMIT 1
+      ) AS last_billing_error
+    FROM users u
+    LEFT JOIN subscriptions s ON s.user_id = u.id
+    LEFT JOIN payment_exemptions pe
+      ON pe.user_id = u.id
+      AND pe.revoked_at IS NULL
+      AND (pe.expires_at IS NULL OR pe.expires_at > NOW())
+    ORDER BY u.created_at DESC
+    LIMIT 500
+  `);
 
-  let stripeData: Record<string, { status: string; currentPeriodEnd: number; cancelAtPeriodEnd: boolean; amount: number; interval: string }> = {};
+  const masked = (id: string | null | undefined): string | null => {
+    if (!id) return null;
+    return `****${id.slice(-6)}`;
+  };
 
-  try {
-    const result = await db.execute(sql`
-      SELECT
-        id,
-        status,
-        current_period_end,
-        cancel_at_period_end,
-        (items->'data'->0->>'plan_amount')::bigint AS amount,
-        items->'data'->0->>'plan_interval' AS plan_interval
-      FROM stripe.subscriptions
-      WHERE status IN ('active', 'past_due', 'canceled')
-    `);
-    for (const row of result.rows as Array<Record<string, unknown>>) {
-      if (row.id) {
-        stripeData[String(row.id)] = {
-          status: String(row.status ?? ""),
-          currentPeriodEnd: Number(row.current_period_end ?? 0),
-          cancelAtPeriodEnd: Boolean(row.cancel_at_period_end),
-          amount: Math.round(Number(row.amount ?? 0) / 100),
-          interval: String(row.plan_interval ?? "month"),
-        };
-      }
-    }
-  } catch {
-    // ok
-  }
-
-  const result = users.map(u => ({
-    ...u,
-    stripe: u.stripeSubscriptionId ? (stripeData[u.stripeSubscriptionId] ?? null) : null,
+  const result = (rows.rows as Array<Record<string, unknown>>).map(r => ({
+    userId:               Number(r.id),
+    name:                 r.name,
+    email:                r.email,
+    role:                 r.role,
+    userStatus:           r.subscription_status,
+    agreementIdMasked:    masked(r.vipps_agreement_id as string | null),
+    periodEndsAt:         r.sub_period_ends ?? r.current_period_ends_at,
+    expiresAt:            r.expires_at,
+    cancelAtPeriodEnd:    Boolean(r.cancel_at_period_end),
+    canceledAt:           r.canceled_at,
+    plan:                 r.plan_code ?? "monthly_100",
+    subStatus:            r.sub_status,
+    exemptionType:        r.exemption_type ?? null,
+    exemptionReason:      r.exemption_reason ?? null,
+    exemptionExpires:     r.exemption_expires ?? null,
+    lastEventType:        r.last_event_type ?? null,
+    lastEventStatus:      r.last_event_status ?? null,
+    lastBillingError:     r.last_billing_error ?? null,
+    deletionRequestedAt:  r.deletion_requested_at ?? null,
+    userCreatedAt:        r.created_at,
   }));
 
   res.json(result);

@@ -350,3 +350,31 @@ export async function getSubscriptionStatus(userId: number) {
 export function trialDaysRemaining(_trialEndsAt: Date | null | undefined): null {
   return null;
 }
+
+// ── canAccessFeature ──────────────────────────────────────────────────────────
+
+/**
+ * Checks whether a user has paid access and returns the fair-use limit for a feature.
+ *
+ * This is the gating check — it does NOT count current usage.
+ * Callers must separately query usage and compare against `limit`.
+ *
+ * When BILLING_ENFORCEMENT_ENABLED=false, always returns allowed=true.
+ * super_admin and exempt_internal users always get allowed=true.
+ */
+export async function canAccessFeature(
+  userId: number,
+  feature: FairUseFeature,
+): Promise<{ allowed: boolean; limit: number; reason?: string }> {
+  const limit = FAIR_USE_LIMITS[feature];
+  const access = await hasPaidAccess(userId);
+
+  if (!access) {
+    const reason =
+      (await getSubscriptionLockReason(userId)) ??
+      "Abonnementet er ikke aktivt.";
+    return { allowed: false, limit, reason };
+  }
+
+  return { allowed: true, limit };
+}

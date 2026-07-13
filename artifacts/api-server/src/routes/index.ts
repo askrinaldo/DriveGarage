@@ -38,6 +38,7 @@ import adminRouter from "./admin";
 import supportRouter from "./support";
 import projectsRouter from "./projects";
 import billingRouter from "./billing"; // Vipps Recurring — subscription + webhook routes
+import accountRouter from "./account"; // Account self-service: deletion request / cancel-deletion
 
 const router: IRouter = Router();
 
@@ -77,5 +78,6 @@ router.use(adminRouter);
 router.use(supportRouter);
 router.use(projectsRouter);
 router.use(billingRouter);
+router.use(accountRouter);
 
 export default router;
