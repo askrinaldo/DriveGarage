@@ -10,3 +10,4 @@
 - [API client schema duplication](api-client-schema-duplication.md) — lib/api-client-react has its own inlined Club/ClubWithMembers in src/generated/api.schemas.ts separate from lib/api-zod. Both must be updated when schema fields change.
 - [Express 5 params cast](express5-params-cast.md) — req.params.clubId can be string | string[] in strict TypeScript with Express 5 types; always cast with String() before parseInt.
 - [ApiError body access](api-error-body.md) — Generated client throws ApiError with parsed body on `err.data` (NOT `err.response.data`); wrong path silently hides backend error messages in toasts.
+- [Vipps Recurring spec audit](vipps-recurring-spec-audit.md) — Confirmed correct fields + all discrepancies fixed (charge currency, type, retryDays, plugin headers, MSN on auth, CANCELLED spelling).

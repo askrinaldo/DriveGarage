@@ -1,6 +1,11 @@
 /**
- * Vipps OAuth token management.
- * Caches token in memory and refreshes automatically before expiry.
+ * Vipps OAuth access token management.
+ *
+ * Token endpoint: POST /accesstoken/get (Access Token API)
+ * Required headers per official Quick Start guide:
+ *   client_id, client_secret, Ocp-Apim-Subscription-Key, Merchant-Serial-Number
+ *
+ * Token is cached in memory and refreshed 30 s before expiry.
  * NEVER log or expose the token value.
  */
 
@@ -17,7 +22,7 @@ interface CachedToken {
 
 let tokenCache: CachedToken | null = null;
 
-/** Margin before token expiry to trigger early refresh (30 seconds). */
+/** Refresh margin before token expiry (30 seconds). */
 const REFRESH_MARGIN_MS = 30_000;
 
 export async function getVippsAccessToken(): Promise<string> {
@@ -33,10 +38,12 @@ export async function getVippsAccessToken(): Promise<string> {
   const res = await fetch(`${base}/accesstoken/get`, {
     method: "POST",
     headers: {
-      "Content-Type":            "application/json",
-      "client_id":               creds.clientId,
-      "client_secret":           creds.clientSecret,
-      "Ocp-Apim-Subscription-Key": creds.subscriptionKey,
+      "Content-Type":               "application/json",
+      "client_id":                  creds.clientId,
+      "client_secret":              creds.clientSecret,
+      "Ocp-Apim-Subscription-Key":  creds.subscriptionKey,
+      // Merchant-Serial-Number is included per official Quick Start documentation
+      "Merchant-Serial-Number":     creds.merchantSerialNumber,
     },
     signal: AbortSignal.timeout(10_000),
   });
@@ -54,8 +61,8 @@ export async function getVippsAccessToken(): Promise<string> {
   }
 
   tokenCache = {
-    value:       data.access_token,
-    // expires_in is seconds; use expires_on (Unix seconds) when available
+    value: data.access_token,
+    // expires_on is Unix seconds; fall back to expires_in seconds from now
     expiresAtMs: data.expires_on
       ? data.expires_on * 1000
       : now + (data.expires_in ?? 3600) * 1000,
@@ -65,7 +72,7 @@ export async function getVippsAccessToken(): Promise<string> {
   return tokenCache.value;
 }
 
-/** Clears the in-memory token cache (useful for tests). */
+/** Clears the in-memory token cache (useful in tests or after credential rotation). */
 export function clearVippsTokenCache(): void {
   tokenCache = null;
 }

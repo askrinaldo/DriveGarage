@@ -1,7 +1,17 @@
 /**
  * Vipps Recurring Agreements API — v3
  *
- * https://developer.vippsmobilepay.com/docs/APIs/recurring-api/
+ * Verified against the official spec (July 2026):
+ *   POST   /recurring/v3/agreements                    — create draft agreement
+ *   GET    /recurring/v3/agreements/{agreementId}       — retrieve agreement
+ *   PATCH  /recurring/v3/agreements/{agreementId}       — update/stop agreement
+ *
+ * DraftAgreementV3 required fields: pricing, merchantRedirectUrl, productName.
+ * merchantAgreementUrl is required for Norwegian merchants.
+ * externalId is NOT a DraftAgreementV3 body field — use Idempotency-Key header only.
+ *
+ * Creating an ACTIVE agreement does NOT create monthly charges automatically.
+ * DriveGarage must schedule each charge via createVippsCharge() in charges.ts.
  */
 
 import crypto from "crypto";
@@ -10,13 +20,20 @@ import { getVippsCredentials } from "./config";
 import type {
   VippsCreateAgreementRequest,
   VippsCreateAgreementResponse,
-  VippsAgreement,
+  VippsAgreementResponse,
   VippsUpdateAgreementRequest,
 } from "./types";
 
 const BASE = "/recurring/v3/agreements";
 
-/** Creates a new recurring agreement. Returns agreementId + vippsConfirmationUrl. */
+/**
+ * Creates a new recurring agreement draft.
+ * The user must approve it in the Vipps app via vippsConfirmationUrl.
+ * Poll GET /recurring/v3/agreements/{agreementId} for status — do not rely on redirect.
+ *
+ * Pricing: fixed 100 NOK/month (10 000 øre), LEGACY type, monthly interval.
+ * No initialCharge — first charge is scheduled after agreement becomes ACTIVE.
+ */
 export async function createVippsAgreement(params: {
   userId: number;
   idempotencyKey?: string;
@@ -25,8 +42,6 @@ export async function createVippsAgreement(params: {
   const key   = params.idempotencyKey ?? crypto.randomUUID();
 
   const body: VippsCreateAgreementRequest = {
-    merchantAgreementUrl: creds.returnUrl,
-    merchantRedirectUrl:  creds.returnUrl,
     pricing: {
       type:     "LEGACY",
       amount:   10_000,   // 100 NOK in øre
@@ -36,9 +51,10 @@ export async function createVippsAgreement(params: {
       unit:  "MONTH",
       count: 1,
     },
-    productName:        "DriveGarage",
-    productDescription: "Full tilgang til DriveGarage for 100 kr per måned.",
-    externalId:         `user-${params.userId}-${key.slice(0, 8)}`,
+    merchantAgreementUrl: creds.returnUrl,   // "My page" — required for Norwegian merchants
+    merchantRedirectUrl:  creds.returnUrl,   // redirect after approval/rejection
+    productName:          "DriveGarage",
+    productDescription:   "Full tilgang til DriveGarage for 100 kr per måned.",
   };
 
   return vippsRequest<VippsCreateAgreementResponse>({
@@ -49,15 +65,21 @@ export async function createVippsAgreement(params: {
   });
 }
 
-/** Retrieves a single agreement by ID. */
-export async function getVippsAgreement(agreementId: string): Promise<VippsAgreement> {
-  return vippsRequest<VippsAgreement>({
+/**
+ * Retrieves the current state of an agreement.
+ * Use for polling after redirect from Vipps app (do not rely on redirect alone).
+ */
+export async function getVippsAgreement(agreementId: string): Promise<VippsAgreementResponse> {
+  return vippsRequest<VippsAgreementResponse>({
     method: "GET",
     path:   `${BASE}/${encodeURIComponent(agreementId)}`,
   });
 }
 
-/** Stops (cancels) an agreement. Idempotent — safe to call if already stopped. */
+/**
+ * Stops (cancels) an agreement by setting status to STOPPED.
+ * Idempotent — safe to call if already STOPPED or EXPIRED.
+ */
 export async function stopVippsAgreement(
   agreementId: string,
   idempotencyKey?: string,

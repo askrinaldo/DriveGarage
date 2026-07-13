@@ -1,37 +1,58 @@
 /**
  * Vipps Recurring Charges API — v3
  *
- * Charges are initiated by the merchant 2+ days before the due date.
- * Vipps Recurring handles retries and notifies via webhook.
+ * Key rules per official spec:
+ * - `due` must be at least 1 day in the future (production AND test)
+ * - `retryDays` is required for RECURRING charges; recommend ≥ 5 (max 14)
+ * - Currency is NOT sent in the charge request body (it is set at agreement level)
+ * - `type: "RECURRING"` must be set for scheduled monthly charges
+ * - Creating an active agreement does NOT auto-create charges; DriveGarage must
+ *   schedule each monthly charge explicitly.
  */
 
 import crypto from "crypto";
 import { vippsRequest } from "./client";
-import type { VippsCreateChargeRequest, VippsCharge } from "./types";
+import type {
+  VippsCreateChargeRequest,
+  VippsCharge,
+  VippsChargeReference,
+} from "./types";
 
 function chargesBase(agreementId: string): string {
   return `/recurring/v3/agreements/${encodeURIComponent(agreementId)}/charges`;
 }
 
-/** Creates a charge for an active agreement. Due date must be at least 2 calendar days ahead. */
+/**
+ * Creates a scheduled recurring charge for an active agreement.
+ *
+ * @param params.dueDate - Must be at least 1 day in the future.
+ * @param params.retryDays - Days to retry on failure. Default 5 (recommended).
+ * @param params.idempotencyKey - Passed as Idempotency-Key header; also used
+ *   as `orderId` to make the chargeId predictable for reconciliation.
+ */
 export async function createVippsCharge(params: {
   agreementId: string;
   amountNok: number;
   description: string;
   dueDate: Date;
+  retryDays?: number;
   idempotencyKey?: string;
-}): Promise<VippsCharge> {
+}): Promise<VippsChargeReference> {
   const key  = params.idempotencyKey ?? crypto.randomUUID();
+  // orderId becomes the chargeId; must match ^[a-zA-Z\d-]+, max 64 chars
+  const orderId = key.replace(/[^a-zA-Z0-9-]/g, "").slice(0, 64);
+
   const body: VippsCreateChargeRequest = {
-    amount:          Math.round(params.amountNok * 100),  // convert to øre
-    currency:        "NOK",
+    amount:          Math.round(params.amountNok * 100),  // NOK → øre
     description:     params.description,
-    due:             params.dueDate.toISOString().split("T")[0]!, // YYYY-MM-DD
     transactionType: "DIRECT_CAPTURE",
-    externalId:      key,
+    type:            "RECURRING",
+    due:             params.dueDate.toISOString().split("T")[0]!, // YYYY-MM-DD
+    retryDays:       params.retryDays ?? 5,
+    orderId,
   };
 
-  return vippsRequest<VippsCharge>({
+  return vippsRequest<VippsChargeReference>({
     method:         "POST",
     path:           chargesBase(params.agreementId),
     body,
@@ -39,7 +60,7 @@ export async function createVippsCharge(params: {
   });
 }
 
-/** Lists charges for a given agreement. */
+/** Lists all charges for a given agreement. */
 export async function listVippsCharges(agreementId: string): Promise<VippsCharge[]> {
   return vippsRequest<VippsCharge[]>({
     method: "GET",
@@ -47,10 +68,29 @@ export async function listVippsCharges(agreementId: string): Promise<VippsCharge
   });
 }
 
-/** Retrieves a single charge. */
-export async function getVippsCharge(agreementId: string, chargeId: string): Promise<VippsCharge> {
+/** Retrieves a single charge by chargeId. */
+export async function getVippsCharge(
+  agreementId: string,
+  chargeId: string,
+): Promise<VippsCharge> {
   return vippsRequest<VippsCharge>({
     method: "GET",
     path:   `${chargesBase(agreementId)}/${encodeURIComponent(chargeId)}`,
+  });
+}
+
+/**
+ * Cancels a PENDING or DUE charge.
+ * Idempotent — safe to call multiple times.
+ */
+export async function cancelVippsCharge(
+  agreementId: string,
+  chargeId: string,
+  idempotencyKey?: string,
+): Promise<void> {
+  await vippsRequest<void>({
+    method:         "DELETE",
+    path:           `${chargesBase(agreementId)}/${encodeURIComponent(chargeId)}`,
+    idempotencyKey: idempotencyKey ?? crypto.randomUUID(),
   });
 }
