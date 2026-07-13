@@ -187,6 +187,59 @@ describe("verifyVippsWebhookHmac", () => {
 
     expect(() => verifyVippsWebhookHmac(req, body)).toThrow(VippsWebhookAuthError);
   });
+
+  it("rejects a request with a stale x-ms-date (older than 5 minutes)", () => {
+    const body = Buffer.from(JSON.stringify({ eventType: "recurring.agreement-activated.v1" }));
+    // Use a date 6 minutes in the past
+    const staleDate = new Date(Date.now() - 6 * 60 * 1000).toUTCString();
+    const contentHash = crypto.createHash("sha256").update(body).digest("base64");
+    const stringToSign = `POST\n${TEST_PATH}\n${staleDate};${TEST_HOST};${contentHash}`;
+    const signature = crypto
+      .createHmac("sha256", Buffer.from(TEST_SECRET, "utf8"))
+      .update(stringToSign, "utf8")
+      .digest("base64");
+
+    const req = makeRequest({
+      "x-ms-date":           staleDate,
+      "x-ms-content-sha256": contentHash,
+      "authorization":       `HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=${signature}`,
+    });
+
+    // Signature is cryptographically valid but timestamp is stale → replay rejected
+    expect(() => verifyVippsWebhookHmac(req, body)).toThrow(VippsWebhookAuthError);
+  });
+
+  it("rejects a request with an unparseable x-ms-date", () => {
+    const body = Buffer.from("{}");
+    const { contentHash, authorization } = signRequest(body, TEST_SECRET, TEST_PATH, TEST_HOST);
+
+    const req = makeRequest({
+      "x-ms-date":           "not-a-date",
+      "x-ms-content-sha256": contentHash,
+      "authorization":       authorization,
+    });
+
+    expect(() => verifyVippsWebhookHmac(req, body)).toThrow(VippsWebhookAuthError);
+  });
+
+  it("rejects a request more than 1 minute in the future", () => {
+    const body = Buffer.from("{}");
+    const futureDate = new Date(Date.now() + 2 * 60 * 1000).toUTCString();
+    const contentHash = crypto.createHash("sha256").update(body).digest("base64");
+    const stringToSign = `POST\n${TEST_PATH}\n${futureDate};${TEST_HOST};${contentHash}`;
+    const signature = crypto
+      .createHmac("sha256", Buffer.from(TEST_SECRET, "utf8"))
+      .update(stringToSign, "utf8")
+      .digest("base64");
+
+    const req = makeRequest({
+      "x-ms-date":           futureDate,
+      "x-ms-content-sha256": contentHash,
+      "authorization":       `HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=${signature}`,
+    });
+
+    expect(() => verifyVippsWebhookHmac(req, body)).toThrow(VippsWebhookAuthError);
+  });
 });
 
 // ─── parseVippsWebhookEvent tests ─────────────────────────────────────────────

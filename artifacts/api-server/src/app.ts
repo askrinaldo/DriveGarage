@@ -14,6 +14,7 @@ import { parseAuth, resolveClubActorFromUser } from "./middleware/auth";
 import { parseUserAuth } from "./middleware/userAuth";
 import { clerkUserAuth } from "./middleware/clerkUserAuth";
 import { globalRateLimit, writeRateLimit } from "./middleware/rateLimiter";
+import { requirePaidAccess } from "./middleware/billingAccess";
 
 // Fail fast on startup if required env vars are missing
 validateEnv();
@@ -132,6 +133,27 @@ app.use((req, res, next) => {
     return;
   }
   next();
+});
+
+// Billing access gate — requires paid subscription for authenticated feature routes.
+// No-op when BILLING_ENFORCEMENT_ENABLED != "true" (hasPaidAccess returns true).
+// Unauthenticated routes (no req.userAuth.userId) pass through immediately.
+// Billing, account, auth, admin, and health routes are excluded by path prefix.
+const BILLING_EXCLUDED_PREFIXES = [
+  "/api/billing",
+  "/api/account",
+  "/api/auth",
+  "/api/user-auth",
+  "/api/admin",
+  "/api/health",
+  "/api/tenants",
+];
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (BILLING_EXCLUDED_PREFIXES.some(p => req.path.startsWith(p))) {
+    next();
+    return;
+  }
+  requirePaidAccess(req, res, next);
 });
 
 app.use("/api", router);

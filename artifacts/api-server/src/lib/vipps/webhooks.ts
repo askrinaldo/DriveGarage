@@ -104,6 +104,23 @@ export function verifyVippsWebhookHmac(req: Request, rawBody: Buffer): void {
   const contentHashStr = Array.isArray(contentHash) ? contentHash[0]! : contentHash;
   const authStr        = Array.isArray(authHeader)  ? authHeader[0]!  : authHeader;
 
+  // 0. Replay protection — reject stale or future-dated requests.
+  //    The x-ms-date header is signed (part of the HMAC string-to-sign), so a
+  //    valid HMAC on a stale request means the attacker captured a real request.
+  //    5-minute window matches Azure Event Grid's own recommendation.
+  const requestTime = Date.parse(msDateStr);
+  if (isNaN(requestTime)) {
+    logger.warn({ msDate: msDateStr }, "Vipps webhook x-ms-date is not parseable");
+    throw new VippsWebhookAuthError();
+  }
+  const ageMs         = Date.now() - requestTime;
+  const MAX_AGE_MS    = 5 * 60 * 1_000;   // 5 minutes — stale
+  const MAX_FUTURE_MS = 60 * 1_000;        // 1 minute  — clock skew tolerance
+  if (ageMs > MAX_AGE_MS || ageMs < -MAX_FUTURE_MS) {
+    logger.warn({ ageMs }, "Vipps webhook x-ms-date outside acceptable window (replay protection)");
+    throw new VippsWebhookAuthError();
+  }
+
   // 1. Verify content hash: base64(SHA-256(rawBody))
   const expectedContentHash = crypto
     .createHash("sha256")

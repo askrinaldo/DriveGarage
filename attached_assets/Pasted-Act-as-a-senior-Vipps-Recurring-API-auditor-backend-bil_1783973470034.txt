@@ -1,0 +1,264 @@
+Act as a senior Vipps Recurring API auditor, backend billing engineer, and application security reviewer.
+
+Project: DriveGarage
+
+Goal:
+Perform one final implementation verification before we start testing against Vipps test credentials.
+
+Important:
+
+* Do not add unrelated features.
+* Do not redesign billing UI.
+* Do not reintroduce Stripe.
+* Do not claim success without showing evidence from the current code.
+* Use the current official Vipps Recurring API and Webhooks API documentation as the source of truth.
+* If current code differs from the official documentation, fix it.
+
+## 1. Verify all Recurring API endpoints actually used
+
+Return a table with:
+
+* purpose
+* HTTP method
+* endpoint path
+* code file/function
+* request payload
+* required headers
+* idempotency behavior
+* response fields consumed
+
+Include at minimum:
+
+* create agreement
+* get agreement
+* stop agreement
+* create recurring charge
+* get charge
+* list charges
+* cancel charge if implemented
+* refund charge
+* webhook registration requirements
+* webhook event handling
+
+Clearly mark any missing operation.
+
+## 2. Verify agreement payload
+
+Confirm the agreement request matches the current official Vipps schema.
+
+Verify:
+
+* product name
+* product description
+* 100 NOK monthly price
+* amount represented correctly in øre
+* interval/frequency
+* merchant redirect URL
+* merchant agreement URL if required
+* unique idempotency key
+* correct agreement type/status handling
+
+Do not rely on old examples in VIPPS_MEETING.md.
+
+## 3. Verify charge payload and monthly billing logic
+
+Confirm monthly charges are created by DriveGarage and not assumed to be automatic.
+
+Verify:
+
+* amount is 10000 øre
+* correct charge type
+* correct due date
+* correct lead-time rules
+* retryDays or equivalent matches current spec
+* unique orderId
+* unique idempotency key
+* duplicate prevention by subscription + billing period
+* only ACTIVE agreements are charged
+* canceled/expired/deletion_requested users are not charged
+* cancelAtPeriodEnd is respected
+* payment exemption users are not accidentally charged
+* scheduler can safely retry without double charging
+
+Show the exact conditions used by `runMonthlyBillingJob()`.
+
+## 4. Verify charge lifecycle
+
+Show how these states are handled:
+
+* created
+* pending
+* due
+* charged/captured
+* failed
+* canceled
+* refunded
+
+Verify that:
+
+* local `billing_charges` rows are created
+* webhook events update the correct row
+* reconciliation can recover missed webhooks
+* subscription access is not granted only because the agreement is ACTIVE
+* paid access depends on the actual subscription/charge state according to the intended product rules
+
+## 5. Verify webhook authentication
+
+Audit the complete webhook flow.
+
+Confirm:
+
+* raw request body is preserved
+* body SHA-256 is validated
+* `x-ms-date` is used
+* `x-ms-content-sha256` is used
+* `Host` is derived safely behind Replit proxy
+* request path/query matches the exact public webhook URL
+* official HMAC-SHA256 string-to-sign format is used
+* timing-safe comparison is used
+* invalid or missing headers return 401
+* modified body returns 401
+* bearer-token-only authentication is rejected
+* webhook secret is the value returned by Vipps during webhook registration
+
+Also verify replay protection:
+
+* timestamp tolerance
+* duplicate event id handling
+* idempotent processing
+
+If replay protection is missing, implement it.
+
+## 6. Verify billing enforcement safety
+
+Confirm current behavior for:
+
+* BILLING_ENFORCEMENT_ENABLED=false
+* BILLING_ENFORCEMENT_ENABLED=true
+* super_admin
+* active payment exemption
+* active subscription
+* past_due
+* payment_failed
+* canceled before period end
+* canceled after period end
+* expired
+* deletion_requested
+* deleted
+
+Confirm no current users are locked out while enforcement is disabled.
+
+## 7. Verify scheduler strategy
+
+Document exactly how production monthly billing will run.
+
+Provide:
+
+* recommended scheduler
+* endpoint or worker command
+* authentication mechanism
+* schedule timing
+* concurrency protection
+* lock/idempotency behavior
+* retry policy
+* alerting/logging when a job fails
+
+The scheduler endpoint must not be publicly callable without strong authentication.
+
+## 8. Verify secrets
+
+Return the exact required Replit Secrets:
+
+* VIPPS_CLIENT_ID
+* VIPPS_CLIENT_SECRET
+* VIPPS_SUBSCRIPTION_KEY
+* VIPPS_MERCHANT_SERIAL_NUMBER
+* VIPPS_BASE_URL or VIPPS_ENVIRONMENT
+* VIPPS_WEBHOOK_SECRET
+* VIPPS_WEBHOOK_EXPECTED_HOST if still required
+* BILLING_ENFORCEMENT_ENABLED
+* scheduler authentication secret if required
+
+For each secret, explain:
+
+* where it comes from
+* whether it is test or production-specific
+* whether it is currently missing
+
+Do not print secret values.
+
+## 9. Verify tests
+
+Run and report:
+
+* backend typecheck
+* frontend typecheck
+* unit tests
+* agreement payload tests
+* charge payload tests
+* duplicate monthly charge prevention
+* canceled subscription not charged
+* valid HMAC accepted
+* invalid HMAC rejected
+* modified body rejected
+* duplicate webhook processed once
+* reconciliation test
+* refund test
+* billing enforcement disabled/enabled
+* super_admin/payment exemption bypass
+
+Include:
+
+* number of tests
+* passed
+* failed
+* skipped
+
+## 10. Verify fair-use status
+
+Return an exact table showing whether each limit is:
+
+* defined
+* enforced
+* tested
+
+Limits:
+
+* 10 vehicles
+* 200 receipts/documents
+* 50 AI requests/month
+* 25 PDF exports/month
+* 10 club memberships
+* 2 owned clubs
+
+Do not claim fair-use enforcement is complete if routes are not wired.
+
+## 11. Final checklist verdict
+
+Return:
+
+1. Official API compliance matrix
+2. Incorrect assumptions still found
+3. Files changed during remediation
+4. Agreement implementation status
+5. Charge implementation status
+6. Webhook verification status
+7. Scheduler readiness
+8. Billing enforcement readiness
+9. Secrets still required
+10. Test results
+11. Remaining blockers
+12. Final status:
+
+* NOT READY
+* READY FOR VIPPS TEST
+* READY FOR PRODUCTION REVIEW
+
+Do not return READY FOR VIPPS TEST unless:
+
+* official agreement payload is correct
+* monthly charge creation is correct
+* webhook HMAC verification is correct
+* duplicate charge/event prevention works
+* tests pass
+* remaining blockers are only external credentials and manual Vipps test setup

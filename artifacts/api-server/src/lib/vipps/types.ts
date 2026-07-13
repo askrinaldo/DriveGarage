@@ -200,7 +200,7 @@ export type VippsWebhookEventType =
 /**
  * Vipps webhook event payload.
  * Delivered to your registered callback URL.
- * Authorization is Bearer <secret> (from RegisterResponse.secret).
+ * Authorization is HMAC-SHA256 (Azure Event Grid scheme — see webhooks.ts).
  */
 export interface VippsWebhookEvent {
   msn: string;
