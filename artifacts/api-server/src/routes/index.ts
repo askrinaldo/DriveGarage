@@ -37,7 +37,7 @@ import financeInsightRouter from "./financeInsight";
 import adminRouter from "./admin";
 import supportRouter from "./support";
 import projectsRouter from "./projects";
-import billingRouter from "./billing"; // Vipps placeholder — routes return pending_integration
+import billingRouter from "./billing"; // Vipps Recurring — subscription + webhook routes
 
 const router: IRouter = Router();
 
@@ -76,6 +76,6 @@ router.use(financeInsightRouter);
 router.use(adminRouter);
 router.use(supportRouter);
 router.use(projectsRouter);
-router.use(billingRouter); // Vipps placeholder active
+router.use(billingRouter);
 
 export default router;

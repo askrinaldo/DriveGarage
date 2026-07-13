@@ -2,27 +2,27 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CompanyInfo } from "@/components/company-info";
 import {
-  CheckCircle2, Clock, Car, ArrowLeft, Zap,
+  CheckCircle2, Car, ArrowLeft, Zap, Shield,
 } from "lucide-react";
 
 const FEATURES = [
-  "7 dager gratis prøveperiode — ingen binding",
-  "Ubegrenset vedlikeholdslogg for kjøretøyene dine",
+  "Full vedlikeholdslogg for alle kjøretøyene dine",
   "Servicehistorikk med tidslinje",
   "Dokumenter og kvitteringer per kjøretøy",
-  "PDF-rapporter",
+  "PDF-rapporter og eksport",
   "Klubber og arrangementer for veterankjøretøy",
-  "Ingen betaling trekkes før du godkjenner Vipps-avtale",
+  "AI-vedlikeholdsråd",
+  "Ingen betaling trekkes uten at du godkjenner Vipps-avtale",
 ];
 
 const FAQ = [
   {
-    q: "Kreves det betaling for prøveperioden?",
-    a: "Nei. Prøveperioden er helt gratis i 7 dager. Du godkjenner en Vipps-betalingsavtale kun hvis du ønsker å fortsette.",
+    q: "Finnes det en gratis prøveperiode?",
+    a: "Nei. DriveGarage har én plan til 100 kr/mnd. Du godkjenner en Vipps-betalingsavtale ved oppstart — ingen betaling trekkes uten eksplisitt godkjenning i Vipps-appen.",
   },
   {
     q: "Kan jeg kansellere når som helst?",
-    a: "Ja. Du kan avslutte abonnementet ditt når som helst. Du beholder tilgangen til slutten av betalingsperioden. Data slettes ikke automatisk ved kansellering.",
+    a: "Ja. Du kan avslutte abonnementet ditt når som helst. Du beholder tilgangen til slutten av gjeldende betalingsperiode. Data slettes ikke automatisk ved kansellering.",
   },
   {
     q: "Hvordan betaler jeg?",
@@ -58,11 +58,11 @@ export default function PricingPage() {
             Enkel prising.
             <br />
             <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-              7 dager gratis.
+              Én plan.
             </span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Én plan. Ingen skjulte avgifter. Betaling via Vipps kommer snart.
+            Full tilgang til DriveGarage for 100 kr per måned. Betaling via Vipps.
           </p>
         </div>
 
@@ -93,10 +93,7 @@ export default function PricingPage() {
                   <span className="text-lg font-semibold text-foreground">kr</span>
                   <span className="text-muted-foreground text-sm">/mnd</span>
                 </div>
-                <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-2.5 py-0.5">
-                  <Clock className="w-3 h-3" />
-                  7 dager gratis prøveperiode inkludert
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">per bruker, per måned</p>
               </div>
             </div>
 
@@ -112,7 +109,7 @@ export default function PricingPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/sign-up" className="flex-1">
                 <Button className="w-full h-11 font-semibold bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white border-0 shadow-lg shadow-indigo-900/30">
-                  Start gratis prøveperiode
+                  Kom i gang
                 </Button>
               </Link>
               <Link href="/sign-in" className="flex-1">
@@ -124,39 +121,26 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Vipps info box */}
-        <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-600/8 to-cyan-600/8 px-6 py-5 mb-10">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-indigo-400" />
-            <p className="text-sm font-bold text-indigo-300">Betaling via Vipps — kommer snart</p>
-          </div>
-          <p className="text-sm text-foreground/75 leading-relaxed">
-            DriveGarage forberedes for <strong className="text-indigo-300">Vipps Recurring</strong> som betalingsløsning.
-            Ingen betaling trekkes nå og ingen betalingsinformasjon lagres.
-            Betalingsavtale godkjennes via Vipps-appen når tjenesten lanseres.
-          </p>
-        </div>
-
-        {/* Planlagt flyt */}
+        {/* Guarantees */}
         <div className="rounded-2xl border border-border/60 bg-card p-6 mb-10">
-          <h2 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-5">
-            Slik fungerer det
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { step: "1", label: "Start gratis prøveperiode" },
-              { step: "2", label: "Utforsk alle funksjoner i 7 dager" },
-              { step: "3", label: "Godkjenn Vipps-betalingsavtale" },
-              { step: "4", label: "Fortsett uten avbrudd for 100 kr/mnd" },
-            ].map(({ step, label }) => (
-              <div key={step} className="flex flex-col items-center text-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-sm font-black">
-                  {step}
-                </div>
-                <p className="text-xs text-muted-foreground leading-snug">{label}</p>
-              </div>
-            ))}
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-sm font-bold text-foreground">Trygt og enkelt</h2>
           </div>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-400/70 mt-0.5 shrink-0" />
+              Ingen betaling trekkes uten at du godkjenner Vipps-avtale
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-400/70 mt-0.5 shrink-0" />
+              Kanseller når som helst — tilgang til slutten av perioden
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-400/70 mt-0.5 shrink-0" />
+              Data beholdes i minst 90 dager etter utløp — reaktiver når du vil
+            </li>
+          </ul>
         </div>
 
         {/* FAQ */}

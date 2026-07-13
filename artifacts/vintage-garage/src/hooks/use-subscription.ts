@@ -4,8 +4,7 @@ import { customFetch } from "@workspace/api-client-react";
 // ── Subscription status types ─────────────────────────────────────────────────
 
 export type SubscriptionStatus =
-  | "trialing"
-  | "pending_vipps_agreement"
+  | "pending_payment_setup"
   | "active"
   | "past_due"
   | "payment_failed"
@@ -19,53 +18,67 @@ export interface SubscriptionInfo {
   status: SubscriptionStatus | null;
   plan: "monthly_100" | null;
   provider: "vipps";
-  providerStatus: "pending_integration" | "active";
-  trialStartedAt: string | null;
-  trialEndsAt: string | null;
+  vippsConfigured: boolean;
+  enforcementEnabled: boolean;
   currentPeriodEndsAt: string | null;
   canceledAt: string | null;
+  cancelAtPeriodEnd: boolean;
   expiresAt: string | null;
-  daysRemainingInTrial: number | null;
+  subscriptionId: number | null;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Access helpers ────────────────────────────────────────────────────────────
 
-export function canAccessApp(status: SubscriptionStatus | null): boolean {
-  if (!status) return true; // unknown → allow (pending integration)
-  return [
-    "trialing", "active", "exempt_internal",
-    "pending_vipps_agreement", "past_due", "payment_failed", "canceled",
-  ].includes(status);
+/**
+ * Returns true if the user should have access to paid features.
+ * When enforcement is disabled, always returns true.
+ */
+export function canAccessApp(
+  status: SubscriptionStatus | null,
+  enforcementEnabled = true,
+  currentPeriodEndsAt: string | null = null,
+): boolean {
+  if (!enforcementEnabled) return true;
+  if (!status) return true;
+  if (status === "active" || status === "exempt_internal") return true;
+  if (status === "past_due") return true;
+  if (
+    status === "canceled" &&
+    currentPeriodEndsAt &&
+    new Date(currentPeriodEndsAt) > new Date()
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export function hasFullAccess(status: SubscriptionStatus | null): boolean {
   if (!status) return true;
-  return ["trialing", "active", "exempt_internal"].includes(status);
+  return status === "active" || status === "exempt_internal";
 }
 
 export function statusLabel(status: SubscriptionStatus | null): string {
   const MAP: Record<SubscriptionStatus, string> = {
-    trialing: "Prøveperiode",
-    pending_vipps_agreement: "Venter på Vipps-godkjenning",
-    active: "Aktivt abonnement",
-    past_due: "Betaling forfalt",
-    payment_failed: "Betaling feilet",
-    canceled: "Kansellert",
-    expired: "Utløpt",
-    exempt_internal: "Intern fritak",
-    deletion_requested: "Sletting forespurt",
-    deleted: "Slettet",
+    pending_payment_setup: "Betaling ikke satt opp",
+    active:                "Aktivt abonnement",
+    past_due:              "Betaling forfalt",
+    payment_failed:        "Betaling feilet",
+    canceled:              "Kansellert",
+    expired:               "Utløpt",
+    exempt_internal:       "Intern fritak",
+    deletion_requested:    "Sletting forespurt",
+    deleted:               "Slettet",
   };
-  return status ? (MAP[status] ?? status) : "Betaling ikke aktivert";
+  return status ? (MAP[status] ?? status) : "Ikke aktivert";
 }
 
 export function statusBadgeVariant(
   status: SubscriptionStatus | null,
 ): "success" | "warning" | "danger" | "neutral" {
-  if (!status || status === "trialing") return "success";
+  if (!status || status === "pending_payment_setup") return "neutral";
   if (status === "active" || status === "exempt_internal") return "success";
-  if (status === "pending_vipps_agreement" || status === "canceled") return "warning";
-  if (status === "past_due" || status === "payment_failed") return "danger";
+  if (status === "canceled" || status === "past_due") return "warning";
+  if (status === "payment_failed" || status === "expired") return "danger";
   return "neutral";
 }
 
@@ -79,28 +92,14 @@ async function fetchSubscription(): Promise<SubscriptionInfo> {
 
 export function useSubscription() {
   return useQuery({
-    queryKey: SUBSCRIPTION_QK,
-    queryFn: fetchSubscription,
+    queryKey:  SUBSCRIPTION_QK,
+    queryFn:   fetchSubscription,
     staleTime: 60_000,
-    retry: false,
+    retry:     false,
   });
 }
 
 export function useInvalidateSubscription() {
   const qc = useQueryClient();
   return () => qc.invalidateQueries({ queryKey: SUBSCRIPTION_QK });
-}
-
-// ── Legacy compat exports (used in billing.tsx / profile.tsx) ─────────────────
-/** @deprecated use SubscriptionStatus instead */
-export type SubscriptionTier = "free" | "standard" | "premium";
-
-/** @deprecated kept for backward compat only */
-export function tierLabel(tier: SubscriptionTier): string {
-  return { free: "Prøveperiode", standard: "Standard", premium: "Premium" }[tier];
-}
-
-/** @deprecated kept for backward compat only */
-export function tierColor(_tier: SubscriptionTier): string {
-  return "text-indigo-400";
 }

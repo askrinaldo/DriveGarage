@@ -1,0 +1,477 @@
+Act as a senior SaaS billing architect, Vipps integration engineer, backend security engineer, and full-stack developer.
+
+Project: DriveGarage
+
+URGENT NEXT PHASE — Implement Vipps subscription foundation.
+
+We now have access to the Vipps environment and are ready to begin configuration.
+
+Updated business decision:
+
+* Remove the 7-day free trial completely.
+* No permanent free plan.
+* One subscription only.
+* Price: 100 NOK per month.
+* Payment provider: Vipps.
+* Stripe must never be reintroduced.
+* Users require an active Vipps subscription to use the paid application.
+* Existing payment exemptions for internal/test/partner users must continue working.
+
+Do not return a planning-only response.
+Audit the current implementation briefly, then implement the safest complete foundation possible.
+
+## 1. Remove all trial logic
+
+Remove or retire all user-facing and runtime logic related to:
+
+* 7-day free trial
+* trialing status
+* trialStartedAt
+* trialEndsAt
+* days remaining
+* trial banners
+* “Start gratis prøveperiode”
+* free-trial marketing copy
+* automatic transition from trial to paid
+
+Do not perform destructive database changes solely to delete old nullable columns if they already exist. They may remain unused temporarily, but must no longer affect access decisions or UI.
+
+Update all Norwegian and translated UI copy.
+
+## 2. Final subscription model
+
+Use one plan:
+
+* Plan code: `monthly_100`
+* Display name: `DriveGarage`
+* Price: 100 NOK/month
+* Provider: Vipps
+* Renewal: monthly
+
+Supported statuses should be simplified to:
+
+* `pending_payment_setup`
+* `active`
+* `past_due`
+* `payment_failed`
+* `canceled`
+* `expired`
+* `exempt_internal`
+* `deletion_requested`
+* `deleted`
+
+Rules:
+
+* `active` → full access
+* `exempt_internal` → full access
+* `pending_payment_setup` → only onboarding, billing, account, legal and support pages
+* `past_due` → temporary grace access with clear warning
+* `payment_failed` → paid functionality locked
+* `canceled` → access continues until `currentPeriodEndsAt`
+* `expired` → paid functionality locked
+* `deletion_requested` → account locked except deletion status/support
+* `deleted` → no access
+
+## 3. Existing users and rollout safety
+
+Do not suddenly lock all existing development/admin accounts during implementation.
+
+Implement a safe rollout mechanism:
+
+* super_admin users retain access
+* active payment exemptions retain access
+* optionally support a temporary environment flag such as `BILLING_ENFORCEMENT_ENABLED=false`
+* billing enforcement must be switchable on only after Vipps end-to-end testing passes
+
+When enforcement is disabled:
+
+* display subscription status UI
+* allow application use
+* do not pretend payment is active
+
+When enforcement is enabled:
+
+* central subscription middleware/helper controls access
+
+Document the exact switch required for go-live.
+
+## 4. Database subscription model
+
+Audit existing billing and subscription fields first.
+
+Create or complete a proper subscription structure using the existing schema conventions.
+
+Prefer a dedicated subscriptions table if it is safe and consistent with the project architecture.
+
+Required information:
+
+* id
+* userId
+* provider = `vipps`
+* planCode = `monthly_100`
+* status
+* vippsAgreementId nullable
+* currentPeriodStartsAt nullable
+* currentPeriodEndsAt nullable
+* canceledAt nullable
+* cancelAtPeriodEnd boolean
+* pastDueAt nullable
+* expiresAt nullable
+* createdAt
+* updatedAt
+
+Also add a subscription events/audit table if not already available:
+
+* subscriptionId
+* userId
+* providerEventId or idempotency key
+* eventType
+* processingStatus
+* sanitized payload or metadata
+* receivedAt
+* processedAt
+* error message nullable
+
+Never store credentials or secrets in the database.
+
+Use safe, additive, non-destructive migrations.
+
+## 5. Vipps credentials and environment
+
+Add environment validation for Vipps, but do not expose values.
+
+Expected configuration may include:
+
+* VIPPS_CLIENT_ID
+* VIPPS_CLIENT_SECRET
+* VIPPS_SUBSCRIPTION_KEY
+* VIPPS_MERCHANT_SERIAL_NUMBER
+* VIPPS_ENVIRONMENT
+* VIPPS_CALLBACK_URL
+* VIPPS_RETURN_URL
+* BILLING_ENFORCEMENT_ENABLED
+
+Important:
+
+* Do not invent credentials.
+* Do not print secret values.
+* Stop and clearly identify any secrets I must enter manually.
+* Keep Vipps secrets backend-only.
+* Frontend must never receive client secret or subscription key.
+
+Use the current official Vipps API contract available to the project. Do not blindly rely on outdated endpoints from old internal documentation. Clearly report any mismatch between the current Vipps documentation and `VIPPS_MEETING.md`.
+
+## 6. Modular Vipps backend structure
+
+Create a maintainable structure such as:
+
+`src/lib/vipps/`
+
+* `config.ts`
+* `auth.ts`
+* `client.ts`
+* `agreements.ts`
+* `charges.ts`
+* `webhooks.ts`
+* `types.ts`
+* `errors.ts`
+
+Requirements:
+
+* OAuth token caching
+* refresh before token expiry
+* request timeout
+* safe retry only where appropriate
+* idempotency for create/mutate operations
+* structured logging with no secrets
+* normalized errors
+* test and production base URLs selected from environment
+
+## 7. Vipps API routes
+
+Implement the safest available versions of:
+
+* `POST /api/billing/vipps/start-agreement`
+* `GET /api/billing/vipps/status`
+* `POST /api/billing/vipps/cancel`
+* `POST /api/billing/vipps/webhook`
+
+All user routes require authenticated Clerk user.
+
+Start agreement:
+
+* prevent duplicate active agreements
+* use idempotency
+* bind agreement to the authenticated database user
+* store agreement reference server-side
+* return only safe redirect/status information
+
+Status:
+
+* return only the current user’s subscription
+* never expose another user’s agreement
+* never return secrets
+
+Cancel:
+
+* only cancel the authenticated user’s subscription
+* set `cancelAtPeriodEnd` where appropriate
+* do not delete account data
+* clearly calculate/store the final access date
+
+Webhook:
+
+* verify webhook authenticity according to the current Vipps requirements
+* reject invalid events
+* process idempotently
+* log sanitized event information
+* update subscription state safely
+* never trust frontend redirect parameters as payment confirmation
+* webhook/API verification must be the source of truth
+
+Do not deploy an insecure webhook with a TODO signature check. If authentic verification cannot yet be implemented, keep the route disabled and report the blocker.
+
+## 8. Central access control
+
+Create one central source of truth, for example:
+
+* `getEffectiveSubscription(userId)`
+* `hasPaidAccess(userId)`
+* `canAccessFeature(userId, feature)`
+* `getSubscriptionLockReason(userId)`
+
+Access decisions must include:
+
+* active subscription
+* payment exemption
+* super_admin bypass
+* cancellation period
+* past-due grace period
+* billing enforcement environment flag
+
+Do not scatter raw status checks across route files.
+
+Create middleware for paid application routes, but initially apply it carefully.
+
+Always keep these available even when access is locked:
+
+* `/billing`
+* `/account` or profile/settings
+* `/privacy`
+* `/terms`
+* `/cookies`
+* `/contact`
+* logout
+* subscription reactivation/setup
+* account deletion
+* permitted data export
+
+Do not delete or hide user data merely because access is locked.
+
+## 9. Cancellation behavior
+
+Implement a simple cancellation experience.
+
+Billing page must show:
+
+* current plan
+* 100 kr/month
+* current subscription status
+* next renewal/access end date
+* button: `Avslutt abonnement`
+
+Cancellation flow:
+
+1. Show a confirmation dialog.
+2. Explain that future renewal stops.
+3. Explain that access continues until the already-paid period ends.
+4. Explain that cancellation does not delete the account or data.
+5. Send the cancellation request to the backend.
+6. Confirm the final access date.
+7. Allow reactivation if supported by the Vipps agreement state.
+
+Never cancel solely in frontend state.
+
+## 10. Data retention and account deletion
+
+Subscription cancellation/payment failure:
+
+* must not delete data instantly
+* lock paid functionality when entitlement ends
+* preserve data for 90 days after expiration
+* allow reactivation during the retention period
+* show clear retention information to the user
+* notify before future permanent cleanup when notification infrastructure exists
+
+Account deletion:
+
+* separate from subscription cancellation
+* require explicit confirmation
+* require the user to type a confirmation phrase or equivalent
+* cancel the active Vipps agreement first
+* schedule deletion with a 14-day grace period
+* allow cancellation of the deletion request during the grace period
+* after grace period, delete or anonymize:
+
+  * vehicles
+  * service records
+  * receipts/documents
+  * trip logs
+  * personal settings
+  * club memberships and user-created content where legally/product-wise appropriate
+* retain only minimal records required for accounting, fraud prevention and audit, with clear retention rules
+
+Do not implement permanent deletion without reviewing foreign-key dependencies and producing a safe deletion transaction/service.
+
+## 11. Pricing and billing frontend
+
+Update public pricing:
+
+* `100 kr/mnd`
+* one plan only
+* no free plan
+* no trial
+* no Standard/Premium distinction
+* no storage/GB/MB wording
+* no “unlimited” wording
+* payment through Vipps
+
+Suggested user-facing message:
+
+“Full tilgang til DriveGarage for 100 kr per måned. Abonnementet administreres og betales med Vipps.”
+
+Logged-out CTA:
+
+* `Kom i gang`
+* leads to sign-up
+
+After sign-up:
+
+* user is sent to billing/payment setup before paid app access when billing enforcement is enabled
+
+Billing page:
+
+* show real API-backed state when available
+* show configuration/test state honestly when Vipps is not yet complete
+* never display fake active payment
+* no Stripe references
+* no disabled “coming soon” UI once the test integration is ready
+
+## 12. Fair-use limits
+
+Retain internal fair-use rules:
+
+* max 10 vehicles
+* max 200 receipts/documents
+* max 50 AI requests per billing month
+* max 25 PDF exports per billing month
+* max 10 club memberships
+* max 2 owned clubs
+
+Do not describe these as storage limits.
+Do not show GB or MB.
+Do not say unlimited.
+
+Implement central constants and usage checks where safe.
+
+When a limit is reached:
+
+* return a structured error
+* show a friendly frontend message
+* do not crash
+* admins and exempt users may bypass only if explicitly configured
+
+## 13. Admin visibility
+
+Extend the existing admin interface safely so authorized admins can see:
+
+* user
+* plan
+* status
+* agreement reference, partially masked
+* current period end
+* cancel-at-period-end
+* payment exemption
+* last sanitized billing event
+* last billing error
+
+Do not expose Vipps credentials.
+All admin subscription changes must be audit logged with reason.
+
+## 14. Documentation cleanup
+
+Update:
+
+* `VIPPS_MEETING.md`
+* `ARCHITECTURE.md`
+* privacy policy payment section
+* terms/subscription section
+* billing implementation documentation
+
+Remove outdated claims about:
+
+* 7-day trial
+* free tier
+* Standard 69 kr
+* Premium 129 kr
+* Stripe as a fallback
+* downgrade to free access
+
+Document the final model:
+
+* one plan
+* 100 NOK/month
+* no trial
+* Vipps
+* cancellation at period end
+* 90-day retention after access expires
+* separate account deletion flow
+
+Mark legal text as draft where professional review is still required.
+
+## 15. Testing and validation
+
+Run:
+
+* backend typecheck/build
+* frontend typecheck/build
+* DB migration verification
+* API startup without Stripe
+* secret redaction verification
+* authenticated ownership tests
+* duplicate agreement test
+* webhook invalid-auth rejection test
+* webhook duplicate-event test
+* cancel-at-period-end test
+* expired-access test
+* super_admin bypass test
+* payment exemption test
+* billing enforcement disabled/enabled test
+* pricing and billing page smoke tests
+* account deletion request test without actually deleting production data
+
+Do not activate production billing automatically.
+
+## Deliverable
+
+Return:
+
+1. Files changed
+2. Database changes
+3. Vipps modules created
+4. API routes implemented
+5. Frontend changes
+6. Subscription/access rules
+7. Cancellation behavior
+8. Data retention/deletion behavior
+9. Credentials still required from me
+10. Tests passed/failed
+11. Known blockers
+12. Exact next manual steps in Replit/Vipps
+13. Clear status:
+
+* NOT READY
+* READY FOR VIPPS TEST
+* READY FOR PRODUCTION REVIEW
+
+Stop before any manual secret entry is required, and clearly tell me exactly which Replit Secrets must be added.

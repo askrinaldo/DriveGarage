@@ -9,6 +9,9 @@
  * - req.userAuth is already set (JWT path took precedence)
  * - No Clerk session present
  * - Any DB error (request proceeds as unauthenticated)
+ *
+ * JIT provisioning: new users get subscriptionStatus = "pending_payment_setup".
+ * No trial logic — users must set up a Vipps agreement to get paid access.
  */
 
 import { getAuth, clerkClient } from "@clerk/express";
@@ -51,9 +54,8 @@ export async function clerkUserAuth(
       const email =
         clerkUser.emailAddresses[0]?.emailAddress ?? `${clerkUserId}@clerk.user`;
       const firstName = clerkUser.firstName ?? "";
-      const lastName = clerkUser.lastName ?? "";
-      const fullName =
-        [firstName, lastName].filter(Boolean).join(" ") || email;
+      const lastName  = clerkUser.lastName ?? "";
+      const fullName  = [firstName, lastName].filter(Boolean).join(" ") || email;
 
       // Try to link to an existing account with the same email
       const [existing] = await db
@@ -69,30 +71,27 @@ export async function clerkUserAuth(
         user = { ...existing, replitUserId: clerkUserId };
       } else {
         try {
-          const now = new Date();
-          const trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
           const [created] = await db
             .insert(usersTable)
             .values({
-              name: fullName,
+              name:               fullName,
               email,
-              passwordHash: null,
-              replitUserId: clerkUserId,
-              role: "user",
-              isActive: true,
-              subscriptionTier: "free",
-              subscriptionPlan: "monthly_100",
-              subscriptionStatus: "trialing",
-              trialStartedAt: now,
-              trialEndsAt,
+              passwordHash:       null,
+              replitUserId:       clerkUserId,
+              role:               "user",
+              isActive:           true,
+              subscriptionTier:   "free",
+              subscriptionPlan:   "monthly_100",
+              subscriptionStatus: "pending_payment_setup",
             })
             .returning();
           user = created!;
         } catch (insertErr: unknown) {
           // Concurrent JIT race: another parallel request already inserted this user.
           // Recover by re-selecting the row that won the race.
-          const pgCode = (insertErr as { cause?: { code?: string } })?.cause?.code
-            ?? (insertErr as { code?: string })?.code;
+          const pgCode =
+            (insertErr as { cause?: { code?: string } })?.cause?.code ??
+            (insertErr as { code?: string })?.code;
           if (pgCode === "23505") {
             const [raceWinner] = await db
               .select()
@@ -130,20 +129,20 @@ export async function clerkUserAuth(
         .returning();
       await db.insert(tenantMembershipsTable).values({
         tenantId: newTenant!.id,
-        userId: user.id,
-        role: "owner",
+        userId:   user.id,
+        role:     "owner",
       });
       tenant = { id: newTenant!.id, name: tName };
     }
 
     req.userAuth = {
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role as "user" | "super_admin",
-      tenantId: tenant.id,
-      tenantName: tenant.name,
-      tenantRole: "owner",
+      userId:          user.id,
+      email:           user.email,
+      name:            user.name,
+      role:            user.role as "user" | "super_admin",
+      tenantId:        tenant.id,
+      tenantName:      tenant.name,
+      tenantRole:      "owner",
       isPersonalTenant: true,
     };
   } catch (err) {

@@ -17,6 +17,8 @@ export * from "./badges";
 export * from "./marketplace";
 export * from "./serviceReminders";
 export * from "./users";
+export * from "./subscriptions";
+export * from "./subscriptionEvents";
 export * from "./supportTickets";
 export * from "./suggestions";
 export * from "./vehicleTransfers";

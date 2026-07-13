@@ -1,8 +1,7 @@
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 
 export const SUBSCRIPTION_STATUSES = [
-  "trialing",
-  "pending_vipps_agreement",
+  "pending_payment_setup",
   "active",
   "past_due",
   "payment_failed",
@@ -34,11 +33,12 @@ export const usersTable = pgTable("users", {
   // ── Vipps subscription fields ────────────────────────────────────────────
   /** "monthly_100" is the only plan. Null = not yet set (legacy rows). */
   subscriptionPlan: text("subscription_plan"),
-  /** Full status lifecycle. See SUBSCRIPTION_STATUSES for valid values. */
-  subscriptionStatus: text("subscription_status").default("trialing"),
+  /** Status reflecting the active subscription state. */
+  subscriptionStatus: text("subscription_status").default("pending_payment_setup"),
   vippsAgreementId: text("vipps_agreement_id"),
 
   // ── Timeline ─────────────────────────────────────────────────────────────
+  // trialStartedAt and trialEndsAt retained as nullable columns — unused going forward
   trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEndsAt: timestamp("current_period_ends_at", { withTimezone: true }),
