@@ -177,9 +177,11 @@ export function parseVippsWebhookEvent(rawBody: Buffer): VippsWebhookEvent {
   const b = body as Record<string, unknown>;
 
   const eventType = b.eventType as string | undefined;
-  const reference = b.reference as string | undefined;
+  // Vipps test environment sends `agreementId` instead of `reference` — accept both.
+  const reference = (b.reference ?? b.agreementId) as string | undefined;
   const msn       = b.msn as string | undefined;
-  const timestamp = b.timestamp as string | undefined;
+  // Vipps test environment sends `occurred` instead of `timestamp` — accept both.
+  const timestamp = (b.timestamp ?? b.occurred) as string | undefined;
 
   if (!eventType || !reference || !msn || !timestamp) {
     throw new Error(`Malformed webhook payload — missing fields. Got: ${Object.keys(b).join(", ")}`);
@@ -189,7 +191,7 @@ export function parseVippsWebhookEvent(rawBody: Buffer): VippsWebhookEvent {
     msn,
     reference,
     eventType:   eventType as VippsWebhookEvent["eventType"],
-    agreementId: b.agreementId as string | undefined,
+    agreementId: (b.agreementId ?? b.reference) as string | undefined,
     chargeId:    b.chargeId    as string | undefined,
     timestamp,
   };

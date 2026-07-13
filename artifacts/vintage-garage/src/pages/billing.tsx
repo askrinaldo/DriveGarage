@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
@@ -43,11 +43,68 @@ function SubscriptionStatusCard() {
   const [canceling, setCanceling] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [reconciling, setReconciling] = useState(false);
+  const [reconcileMessage, setReconcileMessage] = useState<string | null>(null);
+  const reconcileAttempts = useRef(0);
 
-  if (isLoading) {
+  // Detect return from Vipps redirect and reconcile subscription status.
+  // Vipps appends ?agreementId=agr_xxx to the merchantRedirectUrl.
+  useEffect(() => {
+    const params            = new URLSearchParams(window.location.search);
+    const redirectAgreementId = params.get("agreementId");
+    if (!redirectAgreementId) return;
+
+    // Capture as string so TypeScript knows it's non-null inside the poll closure
+    const agreementIdStr: string = redirectAgreementId;
+
+    // Remove ?agreementId from URL without triggering a page reload
+    const cleanUrl = window.location.pathname + window.location.hash;
+    window.history.replaceState({}, "", cleanUrl);
+
+    setReconciling(true);
+    setReconcileMessage("Aktiverer abonnement via Vipps…");
+    reconcileAttempts.current = 0;
+
+    const MAX_ATTEMPTS = 15; // 30 s total (2 s interval)
+
+    async function poll() {
+      reconcileAttempts.current += 1;
+      try {
+        const result = await customFetch<{ status: string; agreementStatus: string | null }>(
+          `/api/billing/vipps/status?agreementId=${encodeURIComponent(agreementIdStr)}`,
+          { method: "GET" },
+        );
+
+        if (result.status === "active") {
+          await invalidate();
+          setReconciling(false);
+          setReconcileMessage(null);
+          return;
+        }
+      } catch {
+        // Network / auth error — keep retrying
+      }
+
+      if (reconcileAttempts.current < MAX_ATTEMPTS) {
+        setTimeout(poll, 2000);
+      } else {
+        setReconciling(false);
+        setReconcileMessage("Betalingsbekreftelse tar litt lenger tid enn ventet. Prøv å oppdatere siden om et øyeblikk.");
+      }
+    }
+
+    poll();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (isLoading || reconciling) {
     return (
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6">
-        <p className="text-xs text-muted-foreground">Laster abonnementsstatus…</p>
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-2">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 text-indigo-400 animate-spin" />
+          <p className="text-xs text-muted-foreground">
+            {reconciling ? (reconcileMessage ?? "Aktiverer abonnement…") : "Laster abonnementsstatus…"}
+          </p>
+        </div>
       </div>
     );
   }
@@ -185,6 +242,10 @@ function SubscriptionStatusCard() {
           )}
         </div>
       </div>
+
+      {reconcileMessage && (
+        <p className="text-xs text-amber-400 mt-2">{reconcileMessage}</p>
+      )}
 
       {actionError && (
         <p className="text-xs text-red-400 mt-2">{actionError}</p>

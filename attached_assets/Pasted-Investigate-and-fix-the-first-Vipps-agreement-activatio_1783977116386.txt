@@ -1,0 +1,81 @@
+Investigate and fix the first Vipps agreement activation flow.
+
+Context:
+- The test user successfully approved the recurring agreement in the Vipps test environment.
+- Vipps appears to have accepted the agreement.
+- DriveGarage /billing still shows that the user can activate the subscription again.
+- Do not create a charge yet.
+- Do not enable billing enforcement.
+
+Tasks:
+
+1. Identify the exact test user and local subscription created by the latest agreement attempt.
+
+2. Query Vipps directly using the stored vippsAgreementId:
+   GET /recurring/v3/agreements/{agreementId}
+
+3. Report the actual Vipps agreement status:
+   - PENDING
+   - ACTIVE
+   - STOPPED
+   - REJECTED
+   - EXPIRED
+   - or other
+
+4. Inspect webhook logs and subscription_events:
+   - Was recurring.agreement-activated.v1 received?
+   - Was it accepted or rejected?
+   - Did HMAC verification pass?
+   - Was there a host, path, date, hash or signature mismatch?
+   - Was the event processed idempotently?
+   - Did it update the correct subscription row?
+
+5. Inspect the local subscriptions row:
+   - status
+   - vippsAgreementId
+   - userId
+   - currentPeriodStartsAt
+   - currentPeriodEndsAt
+   - updatedAt
+
+6. Inspect the frontend billing status flow:
+   - Which endpoint does /billing call?
+   - Does it call the correct current route?
+   - Does it poll after redirect?
+   - Does it invalidate/refetch the subscription query?
+   - Does it recognize local status "active" correctly?
+   - Why does it still render “Aktiver abonnement”?
+
+7. Fix the root cause.
+   Requirements:
+   - Vipps API/webhook is the source of truth.
+   - Do not trust query parameters as proof of activation.
+   - If Vipps returns ACTIVE but the webhook was missed, the authenticated status endpoint may safely reconcile and update the local subscription.
+   - Prevent duplicate agreements: do not show “Aktiver abonnement” when an ACTIVE or valid PENDING agreement already exists.
+   - After activation, /billing must show:
+     - Status: Aktiv
+     - Plan: DriveGarage
+     - Price: 100 kr/mnd
+     - agreement reference masked
+     - cancellation button
+   - Refresh automatically after redirect and while status is pending.
+   - Handle errors with a user-friendly message, not a crash.
+
+8. Verify:
+   - Vipps status is ACTIVE
+   - local status is active
+   - /billing displays active
+   - “Aktiver abonnement” is hidden
+   - “Avslutt abonnement” is visible
+   - refreshing the page preserves the active state
+   - no duplicate agreement is created
+
+Return:
+1. Root cause
+2. Vipps agreement status
+3. Webhook result
+4. Local DB status before/after
+5. Files changed
+6. Frontend fix
+7. Verification results
+8. Exact next step for cancellation testing

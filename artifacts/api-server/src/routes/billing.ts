@@ -77,10 +77,24 @@ router.post("/billing/vipps/start-agreement", parseUserAuth, requireUser, async 
   const userId = req.userAuth!.userId;
 
   try {
-    // Prevent duplicate active agreements
+    // Prevent duplicate agreements — if any agreementId is stored, query Vipps first.
     const current = await getEffectiveSubscription(userId);
-    if (current.status === "active" && current.vippsAgreementId) {
+    if (current.status === "active") {
       throw new VippsDuplicateAgreementError();
+    }
+
+    if (current.vippsAgreementId && isVippsConfigured()) {
+      try {
+        const existing = await getVippsAgreement(current.vippsAgreementId);
+        if (existing.status === "ACTIVE" || existing.status === "PENDING") {
+          throw new VippsDuplicateAgreementError();
+        }
+        // STOPPED or EXPIRED — allow a fresh agreement
+      } catch (err) {
+        if (err instanceof VippsDuplicateAgreementError) throw err;
+        // Vipps API unreachable — log and fall through to create new agreement
+        req.log.warn({ err, agreementId: current.vippsAgreementId }, "Could not verify existing agreement status — allowing new agreement");
+      }
     }
 
     const sub            = await getOrCreateSubscriptionRow(userId);
@@ -119,18 +133,44 @@ router.post("/billing/vipps/start-agreement", parseUserAuth, requireUser, async 
 });
 
 // ── GET /billing/vipps/status ─────────────────────────────────────────────────
+// Accepts optional ?agreementId= from the Vipps redirect URL so the frontend
+// can reconcile immediately after the user approves in Vipps.
 
 router.get("/billing/vipps/status", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const userId = req.userAuth!.userId;
   const sub    = await getEffectiveSubscription(userId);
 
-  if (!sub.vippsAgreementId || !isVippsConfigured()) {
+  // Prefer agreementId from DB; fall back to query param passed after Vipps redirect
+  const queryAgreementId = typeof req.query.agreementId === "string"
+    ? req.query.agreementId
+    : null;
+  const agreementId = sub.vippsAgreementId ?? queryAgreementId;
+
+  if (!agreementId || !isVippsConfigured()) {
     res.json({ status: sub.status, agreementStatus: null });
     return;
   }
 
   try {
-    const agreement = await getVippsAgreement(sub.vippsAgreementId);
+    const agreement = await getVippsAgreement(agreementId);
+
+    // Reconcile: Vipps is ACTIVE but our local record is not → update DB now.
+    // This handles the case where the webhook was missed or rejected.
+    if (agreement.status === "ACTIVE" && sub.status !== "active") {
+      const subRow = await getOrCreateSubscriptionRow(userId);
+      const now    = new Date();
+      await updateSubscriptionStatus({
+        subscriptionId:       subRow.id,
+        userId,
+        status:               "active",
+        vippsAgreementId:     agreementId,
+        currentPeriodEndsAt:  new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+      });
+      req.log.info({ userId, agreementId }, "Subscription reconciled to active via status poll");
+      res.json({ status: "active", agreementStatus: "ACTIVE" });
+      return;
+    }
+
     res.json({
       status:          sub.status,
       agreementStatus: agreement.status,
