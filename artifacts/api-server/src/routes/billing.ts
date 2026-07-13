@@ -15,7 +15,7 @@
 import crypto from "crypto";
 import { Router } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, usersTable, subscriptionsTable, subscriptionEventsTable } from "@workspace/db";
+import { db, usersTable, subscriptionsTable, subscriptionEventsTable, billingChargesTable } from "@workspace/db";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import {
   getEffectiveSubscription,
@@ -28,7 +28,7 @@ import {
 } from "../lib/subscription";
 import { isVippsConfigured, isBillingEnforcementEnabled } from "../lib/vipps/config";
 import { createVippsAgreement, getVippsAgreement, stopVippsAgreement } from "../lib/vipps/agreements";
-import { verifyVippsWebhookAuth, parseVippsWebhookEvent, mapWebhookEventToStatus } from "../lib/vipps/webhooks";
+import { verifyVippsWebhookHmac, parseVippsWebhookEvent, mapWebhookEventToStatus } from "../lib/vipps/webhooks";
 import { VippsNotConfiguredError, VippsDuplicateAgreementError, VippsWebhookAuthError } from "../lib/vipps/errors";
 import type { SubscriptionStatus } from "@workspace/db";
 
@@ -194,12 +194,21 @@ router.post("/billing/vipps/cancel", parseUserAuth, requireUser, async (req, res
 // No user auth — Vipps calls this directly.
 
 router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
-  // 1. Verify webhook auth — reject immediately if invalid
+  // req.body is a Buffer here — app.ts applies express.raw() to this path
+  const rawBody = req.body as Buffer;
+
+  if (!Buffer.isBuffer(rawBody) || rawBody.length === 0) {
+    req.log.warn({ type: typeof req.body }, "Vipps webhook: body is not a Buffer — check app.ts raw body middleware");
+    res.status(400).json({ error: "Raw body required" });
+    return;
+  }
+
+  // 1. Verify HMAC-SHA256 signature — reject immediately if invalid
   try {
-    verifyVippsWebhookAuth(req);
+    verifyVippsWebhookHmac(req, rawBody);
   } catch (err) {
     if (err instanceof VippsWebhookAuthError) {
-      req.log.warn({ ip: req.ip }, "Rejected Vipps webhook: auth failed");
+      req.log.warn({ ip: req.ip }, "Rejected Vipps webhook: HMAC verification failed");
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
@@ -208,7 +217,7 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
 
   let event;
   try {
-    event = parseVippsWebhookEvent(req.body);
+    event = parseVippsWebhookEvent(rawBody);
   } catch (parseErr) {
     req.log.warn({ err: parseErr }, "Rejected Vipps webhook: parse error");
     res.status(400).json({ error: "Malformed payload" });
@@ -276,32 +285,89 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
     return;
   }
 
-  // 5. Map event to new status and apply
-  const newStatus = mapWebhookEventToStatus(event.eventType);
+  // 5. Apply event-specific state transitions
+  const now = new Date();
+  let statusChanged = false;
 
   try {
-    if (newStatus) {
-      const now = new Date();
-      await updateSubscriptionStatus({
-        subscriptionId: sub.id,
-        userId:         sub.userId,
-        status:         newStatus as SubscriptionStatus,
-        vippsAgreementId: agreementId,
-        currentPeriodEndsAt: newStatus === "active"
-          ? new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
-          : sub.currentPeriodEndsAt ?? undefined,
-        canceledAt: newStatus === "canceled" ? now : sub.canceledAt ?? undefined,
-      });
+    // ── Charge-level events: update billing_charges table ───────────────────
+    const chargeId = event.chargeId;
 
-      req.log.info({ userId: sub.userId, agreementId, newStatus }, "Subscription status updated via webhook");
+    if (event.eventType === "recurring.charge-captured.v1" && chargeId) {
+      await db
+        .update(billingChargesTable)
+        .set({ status: "charged", chargedAt: now, updatedAt: now })
+        .where(eq(billingChargesTable.vippsChargeId, chargeId));
+
+      // Restore to active only if previously past_due (recovered failed payment)
+      if (sub.status === "past_due") {
+        await updateSubscriptionStatus({
+          subscriptionId:       sub.id,
+          userId:               sub.userId,
+          status:               "active",
+          vippsAgreementId:     agreementId,
+          currentPeriodEndsAt:  new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+        });
+        req.log.info({ userId: sub.userId, chargeId }, "Subscription restored to active after charge capture");
+        statusChanged = true;
+      }
+    } else if (event.eventType === "recurring.charge-failed.v1" && chargeId) {
+      await db
+        .update(billingChargesTable)
+        .set({ status: "failed", failedAt: now, updatedAt: now })
+        .where(eq(billingChargesTable.vippsChargeId, chargeId));
+
+      // Mark subscription past_due
+      await updateSubscriptionStatus({
+        subscriptionId:   sub.id,
+        userId:           sub.userId,
+        status:           "past_due",
+        vippsAgreementId: agreementId,
+      });
+      req.log.info({ userId: sub.userId, chargeId }, "Subscription marked past_due after charge failure");
+      statusChanged = true;
+
+    } else if (event.eventType === "recurring.charge-canceled.v1" && chargeId) {
+      await db
+        .update(billingChargesTable)
+        .set({ status: "cancelled", cancelledAt: now, updatedAt: now })
+        .where(eq(billingChargesTable.vippsChargeId, chargeId));
+
+    } else {
+      // ── Agreement-level events ─────────────────────────────────────────────
+      const newStatus = mapWebhookEventToStatus(event.eventType);
+      if (newStatus && newStatus !== "active") {
+        // "active" from agreement-activated is handled normally
+        await updateSubscriptionStatus({
+          subscriptionId:      sub.id,
+          userId:              sub.userId,
+          status:              newStatus as SubscriptionStatus,
+          vippsAgreementId:    agreementId,
+          currentPeriodEndsAt: sub.currentPeriodEndsAt ?? undefined,
+          canceledAt:          newStatus === "canceled" ? now : sub.canceledAt ?? undefined,
+        });
+        req.log.info({ userId: sub.userId, agreementId, newStatus }, "Subscription status updated via webhook");
+        statusChanged = true;
+      } else if (newStatus === "active") {
+        // agreement-activated: set active and extend period
+        await updateSubscriptionStatus({
+          subscriptionId:       sub.id,
+          userId:               sub.userId,
+          status:               "active",
+          vippsAgreementId:     agreementId,
+          currentPeriodEndsAt:  new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+        });
+        req.log.info({ userId: sub.userId, agreementId }, "Agreement activated — subscription active");
+        statusChanged = true;
+      }
     }
 
     await db
       .update(subscriptionEventsTable)
-      .set({ processingStatus: "processed", processedAt: new Date() })
-      .where(and(eq(subscriptionEventsTable.id, eventRow!.id)));
+      .set({ processingStatus: "processed", processedAt: now })
+      .where(eq(subscriptionEventsTable.id, eventRow!.id));
 
-    res.status(200).json({ received: true });
+    res.status(200).json({ received: true, statusChanged });
   } catch (updateErr) {
     req.log.error({ err: updateErr, agreementId }, "Webhook processing error");
     await db
@@ -309,7 +375,7 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
       .set({
         processingStatus: "failed",
         error:            String(updateErr),
-        processedAt:      new Date(),
+        processedAt:      now,
       })
       .where(eq(subscriptionEventsTable.id, eventRow!.id));
 

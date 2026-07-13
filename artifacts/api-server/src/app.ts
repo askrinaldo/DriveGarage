@@ -93,7 +93,17 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 app.use(globalRateLimit);
 
 app.use(cookieParser());
-app.use(express.json({ limit: "2mb" }));
+// Webhook path must receive the raw Buffer body for HMAC-SHA256 verification.
+// All other routes use standard JSON parsing.
+const VIPPS_WEBHOOK_PATH = "/api/billing/vipps/webhook";
+app.use((req, res, next) => {
+  if (req.method === "POST" && req.path === VIPPS_WEBHOOK_PATH) {
+    // express.raw captures the body as a Buffer, preserving exact bytes for HMAC
+    express.raw({ type: () => true, limit: "2mb" })(req, res, next);
+  } else {
+    express.json({ limit: "2mb" })(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 // Clerk middleware — populates req.auth from session cookie/token.

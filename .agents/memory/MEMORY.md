@@ -12,3 +12,5 @@
 - [ApiError body access](api-error-body.md) — Generated client throws ApiError with parsed body on `err.data` (NOT `err.response.data`); wrong path silently hides backend error messages in toasts.
 - [Vipps Recurring spec audit](vipps-recurring-spec-audit.md) — Confirmed correct fields + all discrepancies fixed (charge currency, type, retryDays, plugin headers, MSN on auth, CANCELLED spelling).
 - [Vipps billing infra complete](vipps-billing-infra.md) — canAccessFeature, requirePaidAccess middleware, account deletion routes, FAIR_USE_LIMITS vehicle check, admin Stripe SQL removed, billing.tsx deletion UI live.
+- [Vipps webhook HMAC](vipps-webhook-hmac.md) — HMAC-SHA256 (not Bearer). Secret from Vipps registration. Express must use express.raw() on webhook path for raw Buffer body.
+- [Vipps monthly charges](vipps-monthly-charges.md) — Merchant creates every charge manually. billing_charges table with UNIQUE(subscription_id, billing_period) prevents double-charge. Active agreement ≠ paid.

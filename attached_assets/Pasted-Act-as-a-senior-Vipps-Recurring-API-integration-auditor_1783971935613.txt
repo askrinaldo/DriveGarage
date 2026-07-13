@@ -1,0 +1,279 @@
+Act as a senior Vipps Recurring API integration auditor and backend security engineer.
+
+Project: DriveGarage
+
+URGENT: Audit and correct the current Vipps implementation against the current official Vipps MobilePay documentation.
+
+Source of truth:
+
+* Official Recurring API checklist
+* Official Recurring API quick start
+* Official Recurring API guide
+* Official Recurring API OpenAPI specification
+* Official Webhooks API request authentication guide
+* Official Recurring API changelog
+
+Do not trust previous internal conclusions if they conflict with the official documentation.
+
+Important confirmed issues from the previous report:
+
+1. The previous report claimed:
+   “Vipps Recurring initiates charges automatically after agreement activation.”
+
+This is incorrect.
+
+Official rule:
+
+* Charges are NOT created automatically from an agreement.
+* DriveGarage, as merchant, must create every recurring charge.
+* Each charge requires a unique orderId and idempotency key.
+* Recurring charges should be created according to the official lead-time and due-date rules.
+
+2. The previous report claimed webhook authentication uses:
+   `Authorization: Bearer <VIPPS_WEBHOOK_SECRET>`
+
+This is incorrect for the official Webhooks API.
+
+Official webhook verification requires:
+
+* the secret returned by Vipps when the webhook is registered
+* raw request body
+* `x-ms-date`
+* `x-ms-content-sha256`
+* `Host`
+* `Authorization: HMAC-SHA256 ...`
+* SHA-256 content hash validation
+* HMAC-SHA256 signature verification over:
+  `POST\n<pathAndQuery>\n<date>;<host>;<contentHash>`
+
+Do not generate an arbitrary bearer-token webhook secret and treat that as secure verification.
+
+## Task 1 — Checklist audit
+
+Create a complete matrix based on the official Recurring API checklist.
+
+For every required or relevant checklist item, return:
+
+* Checklist item
+* Official endpoint/requirement
+* Implemented?
+* Verified?
+* File/location
+* Test evidence
+* Gap
+* Required fix
+
+Include at minimum:
+
+### Agreements
+
+* Create agreement
+* Retrieve agreement
+* Update agreement
+* Stop agreement
+* Correct product name
+* Correct product description
+* Correct price: 10000 øre / NOK
+* Correct monthly interval
+* Correct merchant redirect URL
+* Correct merchant agreement URL
+* Unique idempotency key
+
+### Charges
+
+* Create recurring charge
+* List charges
+* Retrieve charge
+* Cancel charge
+* Refund charge
+* Capture reserved charge only if relevant
+* Unique orderId
+* Unique idempotency key
+* Correct due date / lead time
+* Retry configuration
+* Charge state reconciliation
+* Monthly scheduling
+
+### Webhooks
+
+* Register webhook using official Webhooks API
+* Persist webhook id
+* Persist the secret returned by Vipps securely
+* HMAC verification using raw request body
+* Content hash verification
+* Signature verification
+* Event idempotency
+* Replay/timestamp protection where recommended
+* Duplicate-event handling
+* Agreement stopped event
+* Agreement activated event
+* Charge captured/charged event
+* Charge failed event
+* Refund-related events if available
+
+### Error handling
+
+* Official Vipps problem response parsing
+* 4xx handling
+* 5xx retry policy
+* timeout handling
+* token expiry handling
+* duplicate request handling
+* safe logging without secrets
+
+## Task 2 — Correct webhook authentication
+
+Replace the current bearer-token webhook verification with the official HMAC verification.
+
+Requirements:
+
+* Capture and verify the exact raw request body before JSON parsing changes it.
+* Validate `x-ms-content-sha256`.
+* Validate `Authorization` HMAC-SHA256 signature.
+* Use the exact request method, path/query, date, host and content hash format required by Vipps.
+* Use timing-safe comparison.
+* Reject invalid or missing headers with 401.
+* Reject modified payloads.
+* Do not log the secret or full sensitive payload.
+* Add unit tests using the official sample format.
+* If Replit/Express proxying changes Host or path, document and handle this safely without weakening verification.
+
+The webhook secret must be the value returned by Vipps when registering the webhook.
+
+Do not instruct me to generate a random bearer secret.
+
+## Task 3 — Implement monthly recurring charges
+
+Implement merchant-controlled monthly charge creation.
+
+Required behavior:
+
+* Only create charges for subscriptions with an ACTIVE Vipps agreement.
+* Amount: 10000 øre.
+* Currency and body must exactly match the current API schema.
+* Type: RECURRING.
+* Create each charge with a unique orderId.
+* Use a unique idempotency key.
+* Store Vipps chargeId/orderId, due date, amount and status.
+* Prevent duplicate charges for the same user and billing period.
+* Reconcile local state against Vipps.
+* Update subscription status based on actual charge result.
+* Do not mark a subscription paid merely because the agreement is ACTIVE.
+
+Implement a safe scheduler/job design:
+
+* identify subscriptions needing a monthly charge
+* create charge according to current Vipps lead-time requirement
+* support retries safely
+* record processing results
+* never double-charge
+
+If Replit does not provide reliable cron/background jobs, implement:
+
+* a protected scheduled endpoint or worker-compatible job
+* documentation for the production scheduler
+* idempotency and locking to prevent concurrent duplicate runs
+
+## Task 4 — Implement missing checklist endpoints
+
+Audit the current Vipps modules and add missing non-optional checklist operations where applicable:
+
+* GET agreement
+* PATCH agreement
+* stop agreement
+* GET list charges
+* POST create charge
+* GET charge
+* DELETE cancel charge
+* POST refund charge
+* capture reserved charge only if used
+
+Do not expose these as insecure public endpoints.
+Use service-layer functions and authenticated/admin routes only where needed.
+
+## Task 5 — Fix secrets/configuration
+
+Correct the secret list.
+
+Expected merchant/API credentials:
+
+* VIPPS_CLIENT_ID
+* VIPPS_CLIENT_SECRET
+* VIPPS_SUBSCRIPTION_KEY
+* VIPPS_MERCHANT_SERIAL_NUMBER
+* VIPPS_BASE_URL
+
+Webhook configuration:
+
+* VIPPS_WEBHOOK_ID if useful
+* VIPPS_WEBHOOK_SECRET must be the secret returned from webhook registration
+
+Do not ask me to generate the webhook secret manually unless the official API explicitly requires that.
+
+Document the exact webhook registration request and how to securely save the returned secret in Replit Secrets.
+
+## Task 6 — Testing
+
+Add tests for:
+
+* OAuth token retrieval/cache
+* agreement creation idempotency
+* duplicate agreement prevention
+* monthly charge creation
+* duplicate billing-period charge prevention
+* retrieve charge/status
+* cancel charge
+* refund charge
+* HMAC-valid webhook accepted
+* invalid HMAC rejected
+* modified body rejected
+* duplicate webhook event processed once
+* ACTIVE agreement does not itself count as successful monthly payment
+* CHARGED/captured charge updates paid access
+* failed charge updates past_due/payment_failed correctly
+* cancellation keeps access only until currentPeriodEndsAt
+
+Use mocked Vipps responses where credentials are unavailable.
+
+## Task 7 — Correct documentation and status
+
+Update:
+
+* VIPPS_MEETING.md
+* ARCHITECTURE.md
+* billing implementation docs
+
+Remove these incorrect statements:
+
+* “Vipps creates monthly charges automatically”
+* “Bearer webhook secret is official webhook verification”
+* “READY FOR VIPPS TEST” before checklist gaps are closed
+
+Return a final checklist-based status:
+
+* NOT READY
+* READY FOR VIPPS TEST
+* READY FOR PRODUCTION REVIEW
+
+Do not claim READY FOR VIPPS TEST unless:
+
+* monthly charge creation exists
+* official HMAC webhook verification exists
+* required checklist endpoints are implemented
+* tests pass
+* the only remaining blocker is external test credentials/manual portal configuration
+
+Deliverable:
+
+1. Checklist compliance matrix
+2. Incorrect assumptions found
+3. Files changed
+4. Webhook verification implementation
+5. Monthly charge implementation
+6. Scheduler/job implementation
+7. Endpoints implemented
+8. Tests passed/failed
+9. Exact secrets required
+10. Exact manual Vipps portal steps
+11. Remaining blockers
+12. Final status

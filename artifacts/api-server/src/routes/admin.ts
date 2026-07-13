@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { eq, desc, count, sql, gte } from "drizzle-orm";
-import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable, subscriptionsTable, subscriptionEventsTable } from "@workspace/db";
+import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable, subscriptionsTable, subscriptionEventsTable, billingChargesTable } from "@workspace/db";
 import { parseUserAuth, requireSuperAdmin } from "../middleware/userAuth";
+import { runMonthlyBillingJob, reconcileCharges, currentBillingPeriod } from "../lib/billing/monthlyCharges";
 import { logAdminAction } from "../lib/adminAudit";
 import {
   getActivePaymentExemptionForUser,
@@ -422,6 +423,82 @@ router.delete("/admin/users/:id/payment-exemption", parseUserAuth, requireSuperA
     const status = message.includes("no active exemption") ? 404 : 400;
     res.status(status).json({ error: message });
   }
+});
+
+// ── POST /admin/billing/run-monthly-charges ───────────────────────────────────
+// Triggers the monthly charge creation job. Idempotent — safe to run multiple
+// times; existing charges for the current period are skipped.
+// In production: call from an external scheduler on the 1st of each month.
+
+router.post("/admin/billing/run-monthly-charges", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const { dryRun, limitToUserId } = req.body as {
+    dryRun?: boolean;
+    limitToUserId?: number;
+  };
+
+  try {
+    const result = await runMonthlyBillingJob({
+      dryRun:        dryRun === true,
+      limitToUserId: limitToUserId !== undefined ? Number(limitToUserId) : undefined,
+    });
+
+    req.log.info(result, "Monthly billing job triggered by admin");
+    res.json({ ok: true, result });
+  } catch (err) {
+    req.log.error({ err }, "Monthly billing job error");
+    res.status(500).json({ error: "Billing job failed", detail: String(err) });
+  }
+});
+
+// ── POST /admin/billing/reconcile-charges ─────────────────────────────────────
+// Reconciles stale pending/due charges against Vipps state.
+
+router.post("/admin/billing/reconcile-charges", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  try {
+    const result = await reconcileCharges();
+    req.log.info(result, "Charge reconciliation triggered by admin");
+    res.json({ ok: true, result });
+  } catch (err) {
+    req.log.error({ err }, "Charge reconciliation error");
+    res.status(500).json({ error: "Reconciliation failed", detail: String(err) });
+  }
+});
+
+// ── GET /admin/billing/charges ────────────────────────────────────────────────
+// Lists recent billing charge rows for auditing.
+
+router.get("/admin/billing/charges", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const limitParam = parseInt(String(req.query.limit ?? "50"), 10);
+  const limit = Math.min(Math.max(1, isNaN(limitParam) ? 50 : limitParam), 200);
+  const period = req.query.period as string | undefined;
+
+  const rows = await db
+    .select({
+      id:             billingChargesTable.id,
+      subscriptionId: billingChargesTable.subscriptionId,
+      userId:         billingChargesTable.userId,
+      billingPeriod:  billingChargesTable.billingPeriod,
+      orderId:        billingChargesTable.orderId,
+      vippsChargeId:  billingChargesTable.vippsChargeId,
+      amountNok:      billingChargesTable.amountNok,
+      status:         billingChargesTable.status,
+      dueDate:        billingChargesTable.dueDate,
+      chargedAt:      billingChargesTable.chargedAt,
+      failedAt:       billingChargesTable.failedAt,
+      retryCount:     billingChargesTable.retryCount,
+      lastError:      billingChargesTable.lastError,
+      createdAt:      billingChargesTable.createdAt,
+    })
+    .from(billingChargesTable)
+    .where(period ? sql`${billingChargesTable.billingPeriod} = ${period}` : sql`1=1`)
+    .orderBy(desc(billingChargesTable.createdAt))
+    .limit(limit);
+
+  res.json({
+    charges: rows,
+    currentPeriod: currentBillingPeriod(),
+    count: rows.length,
+  });
 });
 
 export default router;

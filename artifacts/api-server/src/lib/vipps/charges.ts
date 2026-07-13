@@ -94,3 +94,28 @@ export async function cancelVippsCharge(
     idempotencyKey: idempotencyKey ?? crypto.randomUUID(),
   });
 }
+
+/**
+ * Refunds a CHARGED charge, partially or fully.
+ *
+ * @param amount      - Amount to refund in øre. Must be ≤ the original charge amount.
+ * @param description - Required description shown to the user (max 45 chars per spec).
+ *
+ * Idempotent per idempotencyKey — supply the same key to safely retry.
+ * Returns void (HTTP 200 with no body per spec).
+ */
+export async function refundVippsCharge(
+  agreementId: string,
+  chargeId: string,
+  params: { amountOre: number; description: string; idempotencyKey?: string },
+): Promise<void> {
+  await vippsRequest<void>({
+    method:         "POST",
+    path:           `${chargesBase(agreementId)}/${encodeURIComponent(chargeId)}/refund`,
+    body: {
+      amount:      params.amountOre,
+      description: params.description.slice(0, 45),
+    },
+    idempotencyKey: params.idempotencyKey ?? crypto.randomUUID(),
+  });
+}
