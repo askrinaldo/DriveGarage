@@ -21,6 +21,7 @@ import type {
   VippsCreateAgreementRequest,
   VippsCreateAgreementResponse,
   VippsAgreementResponse,
+  VippsAgreementStatus,
   VippsUpdateAgreementRequest,
 } from "./types";
 
@@ -74,6 +75,24 @@ export async function getVippsAgreement(agreementId: string): Promise<VippsAgree
     method: "GET",
     path:   `${BASE}/${encodeURIComponent(agreementId)}`,
   });
+}
+
+/**
+ * Lists agreements for this merchant, optionally filtered by status.
+ * Use status="ACTIVE" to find the user's current active agreement.
+ *
+ * Vipps returns only agreements belonging to this merchant serial number.
+ * Use productName to distinguish DriveGarage agreements from others.
+ */
+export async function listVippsAgreements(
+  statusFilter?: VippsAgreementStatus,
+): Promise<VippsAgreementResponse[]> {
+  const query = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : "";
+  const data  = await vippsRequest<VippsAgreementResponse[]>({
+    method: "GET",
+    path:   `${BASE}${query}`,
+  });
+  return Array.isArray(data) ? data : [];
 }
 
 /**

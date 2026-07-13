@@ -1,0 +1,105 @@
+Investigate and fix the Vipps 409 active-agreement recovery flow.
+
+Context:
+- Vipps returns HTTP 409: "user already has an active user agreement".
+- DriveGarage does not show the subscription as active.
+- The user cannot cancel/disable the existing agreement.
+- Do not create another agreement.
+- Do not enable billing enforcement yet.
+
+Goal:
+Recover and link the existing active Vipps agreement to the correct local user and make cancellation available.
+
+Tasks:
+
+1. Identify the affected production user.
+   Check:
+   - users row
+   - subscriptions row
+   - stored vippsAgreementId on users/subscriptions
+   - latest subscription_events
+   - latest billing logs
+
+2. Inspect the 409 response from Vipps.
+   Determine whether it includes:
+   - agreementId
+   - existing agreement reference
+   - location/header
+   - error details that can be used to retrieve the active agreement
+
+3. Find the existing agreement safely.
+   Use, in this order:
+   - stored local vippsAgreementId
+   - agreementId from redirect/query state
+   - agreementId/reference from the 409 response
+   - official Vipps lookup/list endpoint supported by the current Recurring API
+
+   Do not guess agreement IDs.
+
+4. Reconcile local state.
+   If Vipps confirms the agreement is ACTIVE:
+   - create or update the local subscriptions row
+   - bind it to the authenticated user
+   - store vippsAgreementId
+   - set status = active
+   - set planCode = monthly_100
+   - set provider = vipps
+   - set current period fields safely if known
+   - add a sanitized subscription event/audit entry
+
+5. Fix start-agreement behavior.
+   When Vipps returns 409 because an active agreement already exists:
+   - do not return a raw HTTP error to the user
+   - reconcile the existing agreement
+   - return a safe response such as:
+     {
+       "status": "active",
+       "recovered": true,
+       "message": "Eksisterende Vipps-avtale ble funnet og koblet til kontoen."
+     }
+   - never create duplicates
+
+6. Fix billing status endpoint.
+   GET /api/billing/subscription or the current status route must:
+   - reconcile an existing known agreement when local state is missing
+   - return active state if Vipps is ACTIVE
+   - never show “Aktiver abonnement” for a valid ACTIVE agreement
+
+7. Fix frontend.
+   After reconciliation, /billing must show:
+   - Status: Aktiv
+   - Plan: DriveGarage
+   - 100 kr/mnd
+   - masked agreement reference
+   - button: “Avslutt abonnement”
+
+   Hide:
+   - “Aktiver abonnement”
+   - raw 409 error text
+
+8. Cancellation.
+   Verify that the cancellation button:
+   - targets the recovered agreement
+   - calls the official stop-agreement operation
+   - updates local state to canceled
+   - sets cancelAtPeriodEnd/currentPeriodEndsAt correctly
+   - does not delete user data
+
+9. Test in production safely.
+   - Do not create a new agreement.
+   - Reconcile the existing active agreement.
+   - Refresh /billing.
+   - Confirm active status is persistent.
+   - Confirm cancellation button is visible.
+   - Do not actually cancel until I confirm, unless a dedicated test agreement is being used.
+
+Return:
+1. Root cause
+2. Existing Vipps agreement ID masked
+3. Vipps status
+4. Local DB state before/after
+5. Files changed
+6. 409 recovery behavior
+7. Frontend result
+8. Whether cancellation is now ready
+9. Exact next manual step

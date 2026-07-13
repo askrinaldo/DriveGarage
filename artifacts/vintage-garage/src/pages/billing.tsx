@@ -118,15 +118,47 @@ function SubscriptionStatusCard() {
   const canStart          = vippsConfigured && status !== "active";
   const canCancel         = ["active", "past_due"].includes(status ?? "");
 
+  // On mount: if status is pending, force a fresh subscription check.
+  // GET /billing/subscription now reconciles against Vipps automatically,
+  // so this causes the billing page to show the active state without any user action.
+  const hasTriggeredReconcile = useRef(false);
+  useEffect(() => {
+    if (!hasTriggeredReconcile.current && sub?.status === "pending_payment_setup") {
+      hasTriggeredReconcile.current = true;
+      void invalidate();
+    }
+  }, [sub?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleStartAgreement() {
     setStarting(true);
     setActionError(null);
     try {
-      const result = await customFetch<{ redirectUrl: string }>(
+      const result = await customFetch<{
+        redirectUrl?: string;
+        status?: string;
+        recovered?: boolean;
+        message?: string;
+      }>(
         "/api/billing/vipps/start-agreement",
         { method: "POST" },
       );
-      window.location.href = result.redirectUrl;
+
+      // Server found and reconciled an existing active agreement — no Vipps redirect needed.
+      if (result.recovered) {
+        await invalidate();
+        setStarting(false);
+        return;
+      }
+
+      // Normal flow: redirect user to Vipps to approve the new agreement.
+      if (result.redirectUrl) {
+        window.location.href = result.redirectUrl;
+        return;
+      }
+
+      // Unexpected response shape — surface a message
+      setActionError("Uventet svar fra serveren. Prøv å laste siden på nytt.");
+      setStarting(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Noe gikk galt. Prøv igjen.";
       setActionError(msg);

@@ -27,9 +27,9 @@ import {
   PLAN_DISPLAY_NAME,
 } from "../lib/subscription";
 import { isVippsConfigured, isBillingEnforcementEnabled } from "../lib/vipps/config";
-import { createVippsAgreement, getVippsAgreement, stopVippsAgreement } from "../lib/vipps/agreements";
+import { createVippsAgreement, getVippsAgreement, stopVippsAgreement, listVippsAgreements } from "../lib/vipps/agreements";
 import { verifyVippsWebhookHmac, parseVippsWebhookEvent, mapWebhookEventToStatus } from "../lib/vipps/webhooks";
-import { VippsNotConfiguredError, VippsDuplicateAgreementError, VippsWebhookAuthError } from "../lib/vipps/errors";
+import { VippsNotConfiguredError, VippsDuplicateAgreementError, VippsWebhookAuthError, VippsApiError } from "../lib/vipps/errors";
 import type { SubscriptionStatus } from "@workspace/db";
 
 const router = Router();
@@ -38,7 +38,32 @@ const router = Router();
 
 router.get("/billing/subscription", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const userId = req.userAuth!.userId;
-  const sub    = await getEffectiveSubscription(userId);
+  let sub      = await getEffectiveSubscription(userId);
+
+  // Passive reconciliation: if status shows no active payment, silently ask Vipps
+  // whether an active agreement exists (catches missed/rejected webhooks).
+  // Only runs when status is pending — active/canceled/expired users skip this.
+  if (sub.status === "pending_payment_setup" && isVippsConfigured()) {
+    try {
+      const agreements = await listVippsAgreements("ACTIVE");
+      const found      = agreements.find(a => a.productName === "DriveGarage");
+      if (found) {
+        const subRow = await getOrCreateSubscriptionRow(userId);
+        const now    = new Date();
+        await updateSubscriptionStatus({
+          subscriptionId:      subRow.id,
+          userId,
+          status:              "active",
+          vippsAgreementId:    found.id,
+          currentPeriodEndsAt: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+        });
+        sub = await getEffectiveSubscription(userId);
+        req.log.info({ userId, agreementId: found.id }, "Subscription reconciled on GET /billing/subscription");
+      }
+    } catch (reconcileErr) {
+      req.log.warn({ err: reconcileErr }, "Silent reconciliation failed on subscription fetch");
+    }
+  }
 
   res.json({
     status:               sub.status,
@@ -124,10 +149,46 @@ router.post("/billing/vipps/start-agreement", parseUserAuth, requireUser, async 
       res.status(503).json({ error: err.message, code: err.code });
       return;
     }
-    if (err instanceof VippsDuplicateAgreementError) {
-      res.status(409).json({ error: err.message, code: err.code });
+
+    // Vipps returned 409 (user already has an active agreement) or we detected a
+    // local duplicate. Instead of surfacing a raw error, find the existing agreement,
+    // reconcile it to the user's local subscription, and return a recovered response.
+    const isVippsDuplicate = err instanceof VippsDuplicateAgreementError;
+    const isVipps409       = err instanceof VippsApiError && err.statusCode === 409;
+    if (isVippsDuplicate || isVipps409) {
+      req.log.info({ userId }, "409 from Vipps — attempting to reconcile existing active agreement");
+      try {
+        const agreements = await listVippsAgreements("ACTIVE");
+        const found      = agreements.find(a => a.productName === "DriveGarage");
+        if (found) {
+          const subRow = await getOrCreateSubscriptionRow(userId);
+          const now    = new Date();
+          await updateSubscriptionStatus({
+            subscriptionId:      subRow.id,
+            userId,
+            status:              "active",
+            vippsAgreementId:    found.id,
+            currentPeriodEndsAt: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+          });
+          req.log.info({ userId, agreementId: found.id }, "Existing Vipps agreement reconciled via 409 recovery");
+          res.json({
+            status:    "active",
+            recovered: true,
+            message:   "Eksisterende Vipps-avtale ble funnet og koblet til kontoen.",
+          });
+          return;
+        }
+      } catch (listErr) {
+        req.log.error({ err: listErr }, "Failed to list Vipps agreements during 409 recovery");
+      }
+      // Could not recover automatically — tell the user to reload
+      res.status(409).json({
+        error: "Du har allerede en aktiv Vipps-avtale. Last inn siden på nytt — avtalen kobles automatisk.",
+        code:  "VIPPS_DUPLICATE_AGREEMENT",
+      });
       return;
     }
+
     throw err;
   }
 });
@@ -169,6 +230,27 @@ router.get("/billing/vipps/status", parseUserAuth, requireUser, async (req, res)
       req.log.info({ userId, agreementId }, "Subscription reconciled to active via status poll");
       res.json({ status: "active", agreementStatus: "ACTIVE" });
       return;
+    }
+
+    // Stored agreementId is STOPPED/EXPIRED — try listing to find a different ACTIVE agreement.
+    // This happens when the user approved a later agreement that superseded a stopped one.
+    if (agreement.status !== "ACTIVE" && sub.status !== "active") {
+      const allActive = await listVippsAgreements("ACTIVE");
+      const found     = allActive.find(a => a.productName === "DriveGarage");
+      if (found) {
+        const subRow = await getOrCreateSubscriptionRow(userId);
+        const now    = new Date();
+        await updateSubscriptionStatus({
+          subscriptionId:       subRow.id,
+          userId,
+          status:               "active",
+          vippsAgreementId:     found.id,
+          currentPeriodEndsAt:  new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+        });
+        req.log.info({ userId, agreementId: found.id }, "Reconciled via list — stored ID was superseded");
+        res.json({ status: "active", agreementStatus: "ACTIVE" });
+        return;
+      }
     }
 
     res.json({
