@@ -216,35 +216,27 @@ export default function LandingPage() {
       </header>
 
       {/* ══ HERO ══ */}
-      <section className="relative h-screen min-h-[680px] flex flex-col justify-end overflow-hidden">
-        {/* Photo — let it breathe */}
-        {/* Photo: full width, natural 1:1 ratio, vertically centred to show car + mountains */}
+      <section className="relative h-screen min-h-[640px] flex flex-col justify-end overflow-hidden">
+        {/* object-cover fills every viewport cleanly — no black bars, no gaps */}
         <img
           src="/hero-fjord.png"
           alt="1964 Volvo P1800 on a Norwegian mountain road"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: "50% 38%" }}
           draggable={false}
-          style={{
-            position: "absolute",
-            left: 0,
-            width: "100%",
-            height: "auto",
-            top: "50%",
-            transform: "translateY(-43%)",
-            imageRendering: "auto",
-          }}
         />
-        {/* Bottom gradient for text legibility — lighter than before */}
+        {/* Bottom gradient — keeps text readable without burying the photo */}
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.65) 18%, rgba(8,8,8,0.08) 45%, rgba(0,0,0,0) 68%)",
+            background: "linear-gradient(to top, rgba(8,8,8,1) 0%, rgba(8,8,8,0.72) 20%, rgba(8,8,8,0.12) 48%, rgba(0,0,0,0) 70%)",
           }}
         />
-        {/* Left vignette — very subtle */}
+        {/* Subtle left vignette */}
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(to right, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 45%)",
+            background: "linear-gradient(to right, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0) 48%)",
           }}
         />
 
@@ -364,60 +356,151 @@ export default function LandingPage() {
           <FadeIn className="mb-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-500 mb-4">Plattformen</p>
             <h2
-              className="font-bold text-white tracking-[-0.03em] leading-[1.05] max-w-lg"
-              style={{ fontSize: "clamp(32px, 4vw, 52px)" }}
+              className="font-bold text-white tracking-[-0.03em] leading-[1.05] max-w-xl"
+              style={{ fontSize: "clamp(28px, 3.8vw, 48px)" }}
             >
-              Orden. Oversikt. Historie.
+              Se hva du får med DriveGarage.
             </h2>
           </FadeIn>
 
-          {/* Showcase panel */}
-          <FadeIn delay={60}>
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d] overflow-hidden">
-              {/* Vehicle strip */}
-              <div className="border-b border-white/[0.05] px-6 py-4 flex items-center gap-4 overflow-x-auto no-scrollbar">
-                {[
-                  { name: "1968 Volvo Amazon", km: "87 400 km", active: true },
-                  { name: "1972 Triumph Bonneville", km: "22 100 km", active: false },
-                  { name: "1955 Ford F100", km: "141 200 km", active: false },
-                ].map(({ name, km, active }) => (
-                  <div
-                    key={name}
-                    className={`shrink-0 px-4 py-2.5 rounded-xl border text-left transition-colors ${
-                      active
-                        ? "border-amber-500/30 bg-amber-500/8"
-                        : "border-white/[0.07] hover:border-white/[0.12]"
-                    }`}
-                  >
-                    <p className={`text-[12px] font-semibold ${active ? "text-white" : "text-white/50"}`}>{name}</p>
-                    <p className="text-[10px] text-white/25 mt-0.5">{km}</p>
-                  </div>
-                ))}
+          {/* ── Row 1: Service history (full width) ── */}
+          <FadeIn delay={40}>
+            <div className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d] overflow-hidden mb-4">
+              <div className="border-b border-white/[0.05] px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Wrench className="w-3.5 h-3.5 text-amber-400/70" />
+                  <span className="text-[12px] font-semibold text-white/60">Servicelogg — 1968 Volvo Amazon</span>
+                </div>
+                <span className="text-[11px] text-white/20">47 poster</span>
               </div>
-
-              {/* Service history */}
-              <div className="px-6 py-6 space-y-0 divide-y divide-white/[0.04]">
+              <div className="divide-y divide-white/[0.04]">
                 {[
-                  { date: "Mar 2024", title: "Oljeskift og filterbytte",          cost: "1 200 kr", cat: "Service",     dot: "bg-amber-400" },
-                  { date: "Nov 2023", title: "Bremseservice foran",               cost: "3 800 kr", cat: "Bremser",     dot: "bg-orange-400" },
-                  { date: "Jun 2023", title: "EU-kontroll bestått",               cost: "620 kr",   cat: "Kontroll",    dot: "bg-emerald-400" },
-                  { date: "Jan 2023", title: "Nye dekk — Michelin Pilot Sport",   cost: "6 400 kr", cat: "Dekk",        dot: "bg-sky-400" },
-                  { date: "Aug 2022", title: "Motorgjennomgang og justeringer",   cost: "12 500 kr", cat: "Motor",      dot: "bg-violet-400" },
+                  { date: "Mar 2024", title: "Oljeskift og filterbytte",         cost: "1 200 kr", cat: "Service",  dot: "bg-amber-400" },
+                  { date: "Nov 2023", title: "Bremseservice foran",              cost: "3 800 kr", cat: "Bremser",  dot: "bg-orange-400" },
+                  { date: "Jun 2023", title: "EU-kontroll bestått",              cost: "620 kr",   cat: "Kontroll", dot: "bg-emerald-400" },
+                  { date: "Jan 2023", title: "Nye dekk — Michelin Pilot Sport",  cost: "6 400 kr", cat: "Dekk",     dot: "bg-sky-400" },
+                  { date: "Aug 2022", title: "Motorgjennomgang og justeringer",  cost: "12 500 kr",cat: "Motor",    dot: "bg-violet-400" },
                 ].map(({ date, title, cost, cat, dot }) => (
-                  <div key={title} className="flex items-center gap-4 py-3.5 group hover:bg-white/[0.015] -mx-2 px-2 rounded-lg transition-colors">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
+                  <div key={title} className="flex items-center gap-4 px-5 py-3.5">
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
                     <p className="text-[11px] text-white/25 w-20 shrink-0 tabular-nums">{date}</p>
-                    <p className="text-[13.5px] text-white/75 flex-1 truncate group-hover:text-white transition-colors">{title}</p>
-                    <span className="text-[11px] text-white/25 bg-white/[0.05] border border-white/[0.07] px-2 py-0.5 rounded-md shrink-0">{cat}</span>
-                    <p className="text-[13px] text-white/55 tabular-nums shrink-0 text-right w-20">{cost}</p>
+                    <p className="text-[13px] text-white/70 flex-1 truncate">{title}</p>
+                    <span className="text-[10.5px] text-white/25 bg-white/[0.05] border border-white/[0.07] px-2 py-0.5 rounded hidden sm:block">{cat}</span>
+                    <p className="text-[12.5px] text-white/45 tabular-nums text-right w-20">{cost}</p>
                   </div>
                 ))}
               </div>
+              <div className="border-t border-white/[0.04] px-5 py-3 flex items-center justify-between bg-white/[0.01]">
+                <p className="text-[11px] text-white/20">Totalt 47 serviceposter</p>
+                <p className="text-[12px] text-amber-500/60 font-medium">24 520 kr samlet kostnad</p>
+              </div>
+            </div>
+          </FadeIn>
 
-              {/* Bottom summary */}
-              <div className="border-t border-white/[0.05] px-6 py-4 flex items-center justify-between">
-                <p className="text-[12px] text-white/25">5 av 47 serviceposter · Volvo Amazon 1968</p>
-                <p className="text-[12px] text-amber-500/70 font-medium">Totalt: 24 520 kr</p>
+          {/* ── Row 2: Dashboard + Documents side by side ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Dashboard */}
+            <FadeIn delay={80}>
+              <div className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d] overflow-hidden h-full">
+                <div className="border-b border-white/[0.05] px-5 py-3 flex items-center gap-3">
+                  <Car className="w-3.5 h-3.5 text-amber-400/70" />
+                  <span className="text-[12px] font-semibold text-white/60">Min garasje</span>
+                </div>
+                <div className="p-4 space-y-3">
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { val: "3",       sub: "Kjøretøy" },
+                      { val: "47",      sub: "Serviceposter" },
+                      { val: "31 020",  sub: "kr totalt" },
+                    ].map(({ val, sub }) => (
+                      <div key={sub} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+                        <p className="text-[18px] font-bold text-white tabular-nums">{val}</p>
+                        <p className="text-[10px] text-white/30 mt-0.5">{sub}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Vehicle cards */}
+                  <div className="space-y-2">
+                    {[
+                      { name: "1968 Volvo Amazon",        reg: "AB 12345", last: "Mar 2024" },
+                      { name: "1972 Triumph Bonneville",  reg: "CD 67890", last: "Jan 2024" },
+                      { name: "1955 Ford F100",           reg: "EF 11223", last: "Sep 2023" },
+                    ].map(({ name, reg, last }, i) => (
+                      <div key={name} className="flex items-center gap-3 bg-white/[0.025] border border-white/[0.06] rounded-xl px-3 py-2.5">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${i === 0 ? "bg-amber-500/15" : "bg-white/[0.05]"}`}>
+                          <Car className={`w-3.5 h-3.5 ${i === 0 ? "text-amber-400" : "text-white/30"}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12.5px] font-medium text-white/80 truncate">{name}</p>
+                          <p className="text-[10.5px] text-white/30">{reg}</p>
+                        </div>
+                        <p className="text-[10.5px] text-white/25 shrink-0">{last}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
+
+            {/* Documents */}
+            <FadeIn delay={100}>
+              <div className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d] overflow-hidden h-full">
+                <div className="border-b border-white/[0.05] px-5 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-3.5 h-3.5 text-amber-400/70" />
+                    <span className="text-[12px] font-semibold text-white/60">Dokumenter</span>
+                  </div>
+                  <span className="text-[11px] text-white/20">12 filer</span>
+                </div>
+                <div className="divide-y divide-white/[0.04]">
+                  {[
+                    { icon: "📋", name: "EU-kontroll 2024.pdf",         date: "Jun 2024",  size: "1.2 MB",  color: "text-emerald-400" },
+                    { icon: "🧾", name: "Oljeskift kvittering.jpg",      date: "Mar 2024",  size: "340 KB",  color: "text-amber-400" },
+                    { icon: "📄", name: "Forsikringsbevis 2024.pdf",     date: "Jan 2024",  size: "890 KB",  color: "text-sky-400" },
+                    { icon: "🧾", name: "Bremseservice kvittering.jpg",  date: "Nov 2023",  size: "512 KB",  color: "text-amber-400" },
+                    { icon: "📋", name: "Kjøpskontrakt 1968.pdf",        date: "Aug 2021",  size: "2.4 MB",  color: "text-violet-400" },
+                  ].map(({ icon, name, date, size, color }) => (
+                    <div key={name} className="flex items-center gap-3 px-5 py-3">
+                      <span className="text-base shrink-0">{icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12.5px] text-white/70 truncate">{name}</p>
+                        <p className="text-[10.5px] text-white/25">{date} · {size}</p>
+                      </div>
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${color}`} />
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-white/[0.04] px-5 py-3 bg-white/[0.01]">
+                  <p className="text-[11px] text-white/20">3 kjøretøy · 12 dokumenter totalt</p>
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+
+          {/* ── Row 3: Clubs ── */}
+          <FadeIn delay={120}>
+            <div className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d] overflow-hidden">
+              <div className="border-b border-white/[0.05] px-5 py-3 flex items-center gap-3">
+                <Users className="w-3.5 h-3.5 text-amber-400/70" />
+                <span className="text-[12px] font-semibold text-white/60">Veteranklubber i nærheten</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.04]">
+                {[
+                  { name: "Norsk Volvo Klubb",          members: 847,  location: "Oslo",      badge: "NVK" },
+                  { name: "Klassisk MC Forum",           members: 1243, location: "Bergen",    badge: "KMF" },
+                  { name: "Veteranbil Rogaland",         members: 412,  location: "Stavanger", badge: "VBR" },
+                ].map(({ name, members, location, badge }) => (
+                  <div key={name} className="px-5 py-4 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                      <span className="text-[9px] font-black text-amber-400 tracking-wide">{badge}</span>
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-medium text-white/80">{name}</p>
+                      <p className="text-[11px] text-white/30">{members.toLocaleString("nb-NO")} medlemmer · {location}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </FadeIn>
