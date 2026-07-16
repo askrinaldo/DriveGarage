@@ -1,0 +1,265 @@
+Act as a Principal Product Designer, Senior UX Architect and Community Platform Designer.
+
+Project:
+DriveGarage
+
+This phase redesigns ONLY the Club Detail page (the page shown after opening a club).
+
+IMPORTANT
+
+This is a FRONTEND/UI redesign only.
+
+Do NOT modify:
+
+- Backend
+- Database
+- API
+- Authentication
+- Authorization
+- RBAC
+- Club permissions
+- Business logic
+- Routes
+- Existing functionality
+
+Only redesign the interface and user experience.
+
+----------------------------------------------------
+
+GOAL
+
+The club page should feel like the digital clubhouse for enthusiasts.
+
+Not Facebook.
+
+Not Discord.
+
+Not Reddit.
+
+Think:
+
+• Porsche Club
+• BMW M Owners
+• Cars & Coffee
+• Steam Community
+• Apple quality
+
+The page should feel premium, clean and automotive.
+
+----------------------------------------------------
+
+KEEP ALL EXISTING FEATURES
+
+Do not remove anything.
+
+Keep:
+
+- Club posts
+- Members
+- Events
+- Gallery
+- Join/Leave
+- Admin actions
+- Club settings
+- Invitations
+- Moderation
+
+Only improve layout and presentation.
+
+----------------------------------------------------
+
+NEW PAGE STRUCTURE
+
+Hero section
+
+Large club cover image
+
+Club logo
+
+Club name
+
+Short description
+
+Member count
+
+Privacy badge
+
+Created date
+
+Primary action button
+
+----------------------------------------------------
+
+Navigation tabs
+
+Overview
+
+Posts
+
+Gallery
+
+Events
+
+Members
+
+About
+
+Settings (admins only)
+
+Use sticky tabs while scrolling.
+
+----------------------------------------------------
+
+Overview
+
+This becomes the landing page.
+
+Display:
+
+Recent posts
+
+Upcoming events
+
+Newest photos
+
+Recent members
+
+Latest activity
+
+Only previews with "View all".
+
+----------------------------------------------------
+
+Posts
+
+Timeline layout.
+
+Large spacing.
+
+Easy to read.
+
+Modern cards.
+
+Images look premium.
+
+Comments collapse cleanly.
+
+----------------------------------------------------
+
+Gallery
+
+Large masonry/grid.
+
+Beautiful vehicle photography.
+
+Hover animations.
+
+Lightbox.
+
+----------------------------------------------------
+
+Events
+
+Modern event cards.
+
+Date
+
+Location
+
+Attending count
+
+CTA
+
+----------------------------------------------------
+
+Members
+
+Grid of members.
+
+Avatar
+
+Name
+
+Role
+
+Join date
+
+Admin badges
+
+Search members.
+
+----------------------------------------------------
+
+About
+
+Club description
+
+Rules
+
+Contact
+
+Links
+
+Location
+
+----------------------------------------------------
+
+VISUAL STYLE
+
+Premium automotive.
+
+Large spacing.
+
+Rounded cards.
+
+Dark elegant theme.
+
+Orange accent.
+
+Minimal borders.
+
+Modern typography.
+
+Beautiful hover animations.
+
+No clutter.
+
+----------------------------------------------------
+
+MICRO INTERACTIONS
+
+Smooth transitions.
+
+Loading skeletons.
+
+Fade animations.
+
+Card hover.
+
+Tab animations.
+
+----------------------------------------------------
+
+RESPONSIVE
+
+Desktop
+
+Tablet
+
+Mobile
+
+----------------------------------------------------
+
+OUTPUT
+
+Return only:
+
+Files changed
+
+Components updated
+
+UX improvements
+
+Typecheck result
+
+Build result
