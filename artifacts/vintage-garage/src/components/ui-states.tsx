@@ -80,36 +80,43 @@ export function PageSkeleton() {
 
 export function DashboardSkeleton() {
   return (
-    <div className="min-h-screen space-y-8 pb-12 animate-pulse">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2">
-        <div className="space-y-2.5">
-          <Bone className="h-3 w-20" />
-          <Bone className="h-9 w-56" />
-          <Bone className="h-3 w-44 opacity-60" />
+    <div className="min-h-screen space-y-6 pb-12 animate-pulse">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-1">
+        <div className="space-y-2">
+          <Bone className="h-3 w-48 opacity-50" />
+          <Bone className="h-8 w-52" />
         </div>
-        <Bone className="h-10 w-36" />
+        <div className="flex gap-2">
+          <Bone className="h-9 w-28 rounded-lg hidden sm:block" />
+          <Bone className="h-9 w-36 rounded-lg" />
+        </div>
       </div>
-      <Bone className="h-20 rounded-2xl" />
+      {/* Status bar */}
+      <Bone className="h-9 rounded-xl" />
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Bone key={i} className="h-28 rounded-2xl" />
+          <Bone key={i} className="h-24 rounded-xl" />
         ))}
       </div>
+      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4">
-          <Bone className="h-4 w-28" />
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Bone key={i} className="h-44 rounded-2xl" />
-            ))}
-          </div>
-          <Bone className="h-40 rounded-2xl" />
+          {/* Vehicle hero */}
+          <Bone className="h-72 rounded-2xl" />
+          {/* Category breakdown */}
+          <Bone className="h-40 rounded-xl" />
         </div>
         <div className="space-y-4">
-          <Bone className="h-4 w-28" />
-          <Bone className="h-60 rounded-2xl" />
-          <Bone className="h-28 rounded-2xl" />
-          <Bone className="h-36 rounded-2xl" />
+          {/* Activity */}
+          <Bone className="h-3 w-28 opacity-50" />
+          <Bone className="h-56 rounded-xl" />
+          {/* Clubs */}
+          <Bone className="h-3 w-20 opacity-50 mt-1" />
+          <Bone className="h-28 rounded-xl" />
+          {/* Quick actions */}
+          <Bone className="h-32 rounded-xl" />
         </div>
       </div>
     </div>

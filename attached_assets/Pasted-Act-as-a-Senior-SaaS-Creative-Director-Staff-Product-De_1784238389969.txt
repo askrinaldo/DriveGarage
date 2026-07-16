@@ -1,0 +1,291 @@
+Act as a Senior SaaS Creative Director, Staff Product Designer, Senior UX Architect and Senior Frontend Engineer.
+
+Project: DriveGarage
+
+The attached dashboard images are DESIGN INSPIRATION ONLY.
+
+DO NOT COPY THEM.
+
+DO NOT RECREATE THEIR LAYOUT.
+
+Analyze WHY they feel premium and use those principles to create a completely original design language for DriveGarage.
+
+==================================================
+THIS IS PHASE 1 OF A COMPLETE PRODUCT REDESIGN
+==================================================
+
+This phase ONLY establishes the design foundation for the authenticated application.
+
+DO NOT redesign every page.
+
+DO NOT redesign landing pages.
+
+DO NOT redesign marketing pages.
+
+DO NOT redesign clubs, billing or vehicle detail pages yet.
+
+Those will come in later phases.
+
+==================================================
+THIS IS A FRONTEND TASK ONLY
+==================================================
+
+Do NOT modify:
+
+- Backend
+- Database
+- Authentication
+- Authorization
+- RBAC
+- Vipps
+- Billing logic
+- Subscription logic
+- Routes
+- APIs
+- Middleware
+- Business logic
+- Existing functionality
+
+==================================================
+MOST IMPORTANT RULE
+==================================================
+
+DO NOT REMOVE ANY FEATURES.
+
+DO NOT REMOVE BUTTONS.
+
+DO NOT REMOVE MENUS.
+
+DO NOT REMOVE NAVIGATION.
+
+DO NOT REMOVE ACTIONS.
+
+DO NOT REMOVE EXISTING FUNCTIONALITY.
+
+The inspiration images do NOT contain all functionality.
+
+DriveGarage contains many more features.
+
+Everything that exists today MUST still exist afterwards.
+
+Improve the presentation.
+
+Never reduce functionality.
+
+==================================================
+GOAL OF PHASE 1
+==================================================
+
+Build the complete authenticated design system.
+
+This design system will become the foundation for every future page.
+
+Everything must look like one premium application.
+
+==================================================
+REDESIGN THESE GLOBAL COMPONENTS
+==================================================
+
+Sidebar
+
+- navigation
+- spacing
+- icons
+- active states
+- hover states
+- profile section
+- footer section
+
+Top navigation
+
+- page title
+- breadcrumbs
+- action buttons
+- notifications
+- user menu
+
+Global layout
+
+- spacing
+- containers
+- grid
+- page width
+- responsiveness
+
+Cards
+
+Create ONE consistent card system.
+
+Statistics cards
+
+Information cards
+
+Action cards
+
+Preview cards
+
+Status cards
+
+Forms
+
+Inputs
+
+Dropdowns
+
+Checkboxes
+
+Switches
+
+Date pickers
+
+Search fields
+
+Buttons
+
+Primary
+
+Secondary
+
+Ghost
+
+Danger
+
+Icon
+
+Loading
+
+Disabled
+
+Typography
+
+Spacing
+
+Colors
+
+Icons
+
+Shadows
+
+Border radius
+
+Animations
+
+Loading states
+
+Skeletons
+
+Empty states
+
+==================================================
+DASHBOARD
+==================================================
+
+Only redesign the Dashboard.
+
+This is the application's most important page.
+
+The user's primary vehicle should become the centerpiece.
+
+Create a premium hero section.
+
+If multiple vehicles exist:
+
+Create a premium horizontal vehicle selector.
+
+Improve:
+
+• Hero section
+
+• Quick actions
+
+• Statistics
+
+• Recent activity
+
+• Service reminders
+
+• Vehicle overview
+
+• Clubs preview
+
+• Empty states
+
+• Information hierarchy
+
+==================================================
+DESIGN DIRECTION
+==================================================
+
+Think:
+
+Apple
+
+Linear
+
+Notion
+
+Porsche
+
+Polestar
+
+Rivian
+
+Scandinavian minimalism.
+
+Elegant.
+
+Modern.
+
+Premium.
+
+Timeless.
+
+Reduce the AI-generated feeling.
+
+Increase whitespace.
+
+Improve visual hierarchy.
+
+Improve typography.
+
+Improve consistency.
+
+Create a dashboard users are excited to return to.
+
+==================================================
+DO NOT TOUCH
+==================================================
+
+Do not redesign:
+
+Vehicle Detail pages
+
+Clubs
+
+Billing
+
+Landing page
+
+Marketing pages
+
+Settings
+
+Those will each have their own dedicated redesign phase.
+
+==================================================
+OUTPUT
+==================================================
+
+Return only:
+
+1. Design decisions made.
+
+2. Components redesigned.
+
+3. Files changed.
+
+4. Build result.
+
+5. Typecheck result.
+
+Do not continue into future phases.

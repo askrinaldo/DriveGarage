@@ -1,9 +1,9 @@
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown,
-  User, ChevronDown, HelpCircle, Palette, CreditCard,
+  User, ChevronDown, HelpCircle, CreditCard,
   IdCard, Building2, ChevronRight, Settings, Menu, Sun, Moon,
-  Scale, FileText, Mail,
+  Scale, FileText, Mail, Palette, Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
@@ -18,16 +18,8 @@ import { useTheme } from "@/contexts/theme";
 import { useTranslation } from "react-i18next";
 import { FlagSwitcher } from "@/components/language-switcher";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-interface TenantEntry {
-  tenantId: number;
-  tenantName: string;
-  role: string;
-  isPersonal: boolean;
-}
+interface LayoutProps { children: React.ReactNode }
+interface TenantEntry { tenantId: number; tenantName: string; role: string; isPersonal: boolean }
 
 function authHeader(token: string | null): Record<string, string> {
   if (!token) return {};
@@ -38,21 +30,18 @@ export function Layout({ children }: LayoutProps) {
   const [location, navigate] = useLocation();
   const { isAuthenticated, isSuperAdmin, name, logout, token, tenantId, tenantName, isPersonalTenant, switchTenant } = useUserAuth();
   const { t } = useTranslation();
-
   const { mode, setMode } = useTheme();
   const isDark = mode === "dark" || (mode === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-  function toggleDarkMode() {
-    setMode(isDark ? "light" : "dark");
-  }
+  function toggleDarkMode() { setMode(isDark ? "light" : "dark"); }
 
   const navItems = [
-    { href: "/dashboard",       label: t("nav.overview"),      icon: LayoutDashboard, gradient: "from-indigo-500 to-cyan-500"   },
-    { href: "/vehicles",        label: t("nav.myGarage"),      icon: Car,             gradient: "from-sky-500 to-blue-500"      },
-    { href: "/clubs",           label: t("nav.clubs"),         icon: Users,           gradient: "from-violet-500 to-purple-500" },
-    { href: "/membership-card", label: t("nav.membershipCard"),icon: IdCard,          gradient: "from-cyan-500 to-teal-500"     },
-    { href: "/billing",         label: t("nav.subscription"),  icon: CreditCard,      gradient: "from-emerald-500 to-teal-500"  },
-    { href: "/help",            label: t("nav.help"),          icon: HelpCircle,      gradient: "from-slate-400 to-slate-500"   },
+    { href: "/dashboard",       label: t("nav.overview"),       icon: LayoutDashboard },
+    { href: "/vehicles",        label: t("nav.myGarage"),       icon: Car             },
+    { href: "/clubs",           label: t("nav.clubs"),          icon: Users           },
+    { href: "/membership-card", label: t("nav.membershipCard"), icon: IdCard          },
+    { href: "/billing",         label: t("nav.subscription"),   icon: CreditCard      },
+    { href: "/help",            label: t("nav.help"),           icon: HelpCircle      },
   ];
 
   const [tenants, setTenants] = useState<TenantEntry[]>([]);
@@ -80,30 +69,27 @@ export function Layout({ children }: LayoutProps) {
   }
 
   const hasMultipleTenants = tenants.length > 1;
+  const initials = name ? name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase() : "?";
 
   const sidebar = (
-    <aside className="w-64 flex-shrink-0 flex flex-col h-full bg-sidebar border-r border-sidebar-border">
+    <aside className="w-60 flex-shrink-0 flex flex-col h-full bg-sidebar border-r border-sidebar-border">
 
       {/* Logo */}
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-center justify-between mb-2.5">
-          <Link href="/dashboard">
-            <div className="flex items-center gap-3 cursor-pointer group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-900/30 group-hover:shadow-indigo-900/50 transition-shadow">
-                <Wrench className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-black text-lg tracking-tight text-sidebar-foreground">DriveGarage</span>
+      <div className="px-4 pt-5 pb-4 flex items-center justify-between">
+        <Link href="/dashboard">
+          <div className="flex items-center gap-2.5 cursor-pointer group">
+            <div className="w-7 h-7 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <Wrench className="w-3.5 h-3.5 text-primary" />
             </div>
-          </Link>
-          <button
-            onClick={toggleDarkMode}
-            title={isDark ? t("theme.switchToLight") : t("theme.switchToDark")}
-            className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
-          >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-        </div>
-        <FlagSwitcher className="justify-center" />
+            <span className="font-black text-[15px] tracking-tight text-sidebar-foreground">DriveGarage</span>
+          </div>
+        </Link>
+        <button
+          onClick={toggleDarkMode}
+          className="p-1.5 rounded-md text-sidebar-foreground/35 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent transition-all"
+        >
+          {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+        </button>
       </div>
 
       {/* Tenant switcher */}
@@ -111,15 +97,15 @@ export function Layout({ children }: LayoutProps) {
         <div className="px-3 pb-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-sidebar-border bg-sidebar-accent/30 hover:bg-sidebar-accent/60 transition-colors text-left group">
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 flex items-center justify-center shrink-0">
-                  <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+              <button className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-sidebar-border/60 bg-sidebar-accent/20 hover:bg-sidebar-accent/50 transition-colors text-left group">
+                <div className="w-5 h-5 rounded bg-muted/60 flex items-center justify-center shrink-0">
+                  <Building2 className="w-3 h-3 text-sidebar-foreground/50" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-sidebar-foreground/80 truncate">{tenantName ?? t("tenant.myGarage")}</p>
-                  <p className="text-[10px] text-sidebar-foreground/40">{isPersonalTenant ? t("tenant.personalAccount") : t("tenant.organization")}</p>
+                  <p className="text-[11px] font-semibold text-sidebar-foreground/75 truncate leading-tight">{tenantName ?? t("tenant.myGarage")}</p>
+                  <p className="text-[10px] text-sidebar-foreground/35 leading-tight">{isPersonalTenant ? t("tenant.personalAccount") : t("tenant.organization")}</p>
                 </div>
-                <ChevronRight className="w-3 h-3 text-sidebar-foreground/30 group-hover:text-sidebar-foreground/50 transition-colors shrink-0" />
+                <ChevronRight className="w-3 h-3 text-sidebar-foreground/25 shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
@@ -132,7 +118,7 @@ export function Layout({ children }: LayoutProps) {
                     <DropdownMenuItem
                       key={tenant.tenantId}
                       onClick={() => void handleSwitchTenant(tenant.tenantId)}
-                      className={cn("gap-2", tenant.tenantId === tenantId && "text-indigo-500")}
+                      className={cn("gap-2", tenant.tenantId === tenantId && "text-primary")}
                       disabled={switchingTenant}
                     >
                       <Building2 className="w-3.5 h-3.5 shrink-0" />
@@ -158,33 +144,27 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-1 space-y-0.5 overflow-y-auto">
-        <div className="pb-1 px-1">
-          <p className="text-[10px] font-bold text-sidebar-foreground/30 uppercase tracking-widest mb-2">{t("nav.navigation")}</p>
+        <div className="pb-2 px-1">
+          <p className="text-[10px] font-bold text-sidebar-foreground/25 uppercase tracking-widest">{t("nav.navigation")}</p>
         </div>
 
         {navItems.map((item) => {
           const isActive = location === item.href || location.startsWith(item.href + "/");
           return (
             <Link key={item.href} href={item.href}>
-              <div
-                className={cn(
-                  "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer text-sm font-medium group",
-                  isActive
-                    ? "text-sidebar-foreground bg-sidebar-accent"
-                    : "text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50"
-                )}
-              >
+              <div className={cn(
+                "relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 cursor-pointer text-[13px]",
+                isActive
+                  ? "bg-sidebar-accent text-sidebar-foreground font-semibold"
+                  : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 font-medium"
+              )}>
                 {isActive && (
-                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-gradient-to-b ${item.gradient}`} />
+                  <div className="absolute left-0 inset-y-1.5 w-[2px] rounded-r-full bg-primary" />
                 )}
-                <div className={cn(
-                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all",
-                  isActive
-                    ? `bg-gradient-to-br ${item.gradient} shadow-sm`
-                    : "bg-sidebar-accent/50 group-hover:bg-sidebar-accent"
-                )}>
-                  <item.icon className={cn("w-3.5 h-3.5", isActive ? "text-white" : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70")} />
-                </div>
+                <item.icon className={cn(
+                  "w-4 h-4 shrink-0",
+                  isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/40"
+                )} />
                 <span className="flex-1">{item.label}</span>
               </div>
             </Link>
@@ -194,14 +174,12 @@ export function Layout({ children }: LayoutProps) {
         {isSuperAdmin && (
           <Link href="/admin">
             <div className={cn(
-              "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer text-sm font-medium group",
+              "relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 cursor-pointer text-[13px] font-medium",
               location === "/admin"
-                ? "text-sidebar-foreground bg-sidebar-accent"
-                : "text-amber-500/70 hover:text-amber-500 hover:bg-amber-500/10"
+                ? "bg-amber-500/15 text-amber-400 font-semibold"
+                : "text-amber-500/60 hover:text-amber-400 hover:bg-amber-500/10"
             )}>
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0">
-                <Crown className="w-3.5 h-3.5 text-white" />
-              </div>
+              <Crown className="w-4 h-4 shrink-0" />
               {t("nav.adminPanel")}
             </div>
           </Link>
@@ -213,10 +191,10 @@ export function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-3 space-y-2 border-t border-sidebar-border">
+      <div className="p-3 space-y-1.5 border-t border-sidebar-border">
         <Link href="/vehicles/new">
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600/80 to-cyan-600/80 hover:from-indigo-500/90 hover:to-cyan-500/90 transition-all cursor-pointer text-sm font-semibold text-white shadow-sm">
-            <Plus className="w-4 h-4" />
+          <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer text-[13px] font-semibold">
+            <Plus className="w-3.5 h-3.5" />
             {t("vehicle.addVehicle")}
           </div>
         </Link>
@@ -224,15 +202,15 @@ export function Layout({ children }: LayoutProps) {
         {isAuthenticated ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-sm">
-                  {name ? name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+              <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-sidebar-accent/40 transition-colors cursor-pointer">
+                <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 text-primary font-bold text-[11px]">
+                  {initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-sidebar-foreground/80 truncate">{name}</p>
+                  <p className="text-[12px] font-semibold text-sidebar-foreground/80 truncate leading-tight">{name}</p>
                   {isSuperAdmin
-                    ? <p className="text-[10px] text-amber-500/80">{t("auth.superAdmin")}</p>
-                    : <p className="text-[10px] text-sidebar-foreground/35">{t("auth.loggedIn")}</p>
+                    ? <p className="text-[10px] text-amber-400/80 leading-tight">{t("auth.superAdmin")}</p>
+                    : <p className="text-[10px] text-sidebar-foreground/35 leading-tight">{t("auth.loggedIn")}</p>
                   }
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-sidebar-foreground/25 shrink-0" />
@@ -256,12 +234,23 @@ export function Layout({ children }: LayoutProps) {
                   </DropdownMenuItem>
                 </>
               )}
+              <DropdownMenuSeparator />
               <div className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2 mb-2">
                   <Palette className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t("nav.theme")}</span>
                 </div>
                 <ThemeControls />
+              </div>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Språk</span>
+                </div>
+                <div onPointerDown={(e) => e.stopPropagation()}>
+                  <FlagSwitcher />
+                </div>
               </div>
               <DropdownMenuSeparator />
               <div className="px-2 py-1.5">
@@ -289,19 +278,19 @@ export function Layout({ children }: LayoutProps) {
         ) : (
           <div className="flex gap-2">
             <Link href="/login" className="flex-1">
-              <div className="flex items-center justify-center px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 transition-all cursor-pointer text-xs font-bold text-white">
+              <div className="flex items-center justify-center px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer text-xs font-bold">
                 {t("auth.logIn")}
               </div>
             </Link>
             <Link href="/register" className="flex-1">
-              <div className="flex items-center justify-center px-3 py-2 rounded-xl border border-sidebar-border hover:bg-sidebar-accent/50 transition-colors cursor-pointer text-xs font-semibold text-sidebar-foreground/50">
+              <div className="flex items-center justify-center px-3 py-2 rounded-lg border border-sidebar-border hover:bg-sidebar-accent/50 transition-colors cursor-pointer text-xs font-semibold text-sidebar-foreground/50">
                 {t("auth.register")}
               </div>
             </Link>
           </div>
         )}
 
-        <CompanyInfo className="px-3 pt-1 text-[10px] leading-relaxed text-sidebar-foreground/35" />
+        <CompanyInfo className="px-2 pt-1 text-[10px] leading-relaxed text-sidebar-foreground/25" />
       </div>
     </aside>
   );
@@ -310,7 +299,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex min-h-screen w-full bg-background">
 
       {/* Desktop sidebar */}
-      <div className="hidden md:flex flex-col w-64 shrink-0">
+      <div className="hidden md:flex flex-col w-60 shrink-0">
         {sidebar}
       </div>
 
@@ -323,7 +312,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Mobile drawer */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 md:hidden transition-transform duration-300",
+        "fixed inset-y-0 left-0 z-50 w-60 md:hidden transition-transform duration-300",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {sidebar}
@@ -338,15 +327,14 @@ export function Layout({ children }: LayoutProps) {
             <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors">
               <Menu className="w-5 h-5 text-sidebar-foreground/60" />
             </button>
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
-              <Wrench className="w-4 h-4 text-white" />
+            <div className="w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Wrench className="w-3 h-3 text-primary" />
             </div>
-            <span className="font-black text-base text-sidebar-foreground tracking-tight">DriveGarage</span>
+            <span className="font-black text-[15px] text-sidebar-foreground tracking-tight">DriveGarage</span>
           </div>
           <div className="flex items-center gap-1.5">
             <button
               onClick={toggleDarkMode}
-              title={isDark ? t("theme.switchToLight") : t("theme.switchToDark")}
               className="p-2 rounded-lg text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-sidebar-accent transition-colors"
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -357,14 +345,14 @@ export function Layout({ children }: LayoutProps) {
               </button>
             ) : (
               <Link href="/login">
-                <div className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 text-white text-xs font-bold">
+                <div className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold">
                   {t("auth.logIn")}
                 </div>
               </Link>
             )}
             <Link href="/vehicles/new">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600">
-                <Plus className="w-4 h-4 text-white" />
+              <div className="p-2 rounded-lg bg-primary">
+                <Plus className="w-4 h-4 text-primary-foreground" />
               </div>
             </Link>
           </div>
