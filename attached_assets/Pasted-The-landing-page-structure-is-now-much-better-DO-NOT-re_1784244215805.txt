@@ -1,0 +1,136 @@
+The landing page structure is now much better.
+
+DO NOT redesign it from scratch.
+
+This task is about polishing and making the entire experience feel like one premium product.
+
+IMPORTANT
+
+Do NOT modify any backend code.
+
+Do NOT modify authentication logic.
+
+Do NOT modify Clerk/Auth configuration.
+
+Do NOT modify APIs, routing or business logic.
+
+Frontend/UI improvements only.
+
+------------------------------------------------------------
+
+LANDING PAGE POLISH
+
+The current structure is correct.
+
+Now focus on refinement.
+
+• Reduce the generic SaaS feeling.
+• Make the design feel handcrafted instead of AI generated.
+• Replace feature grids with larger product showcases where appropriate.
+• Use more real application screenshots.
+• Use more automotive photography.
+• Reduce excessive whitespace by approximately 30%.
+• Add subtle variation between sections instead of making every section pure black.
+• Keep the page relatively short.
+• Do not add unnecessary sections.
+• Do not increase the amount of text.
+
+The objective is quality, not quantity.
+
+------------------------------------------------------------
+
+VISUAL CONSISTENCY
+
+The experience must feel seamless from the first visit until the user reaches their dashboard.
+
+Currently there is a visual disconnect between the landing page and the authentication pages.
+
+The following pages must be redesigned to match the same visual language:
+
+• Sign in
+• Register
+• Forgot password
+• Email verification
+• Loading/authentication screens
+• Any authentication-related dialogs
+
+Keep the authentication flow clean and minimal.
+
+Use the same:
+
+• color palette
+• typography
+• spacing
+• buttons
+• border radius
+• shadows
+• icon style
+• branding
+• animations
+
+The user should never feel like they have left DriveGarage.
+
+The transition from Landing Page → Login → Register → Dashboard should feel like one single premium product.
+
+------------------------------------------------------------
+
+THEME
+
+Avoid pure black everywhere.
+
+Introduce subtle depth using different dark surfaces.
+
+Backgrounds should feel layered instead of flat.
+
+Cards should be slightly lighter than the page background.
+
+Use orange only for important actions and highlights.
+
+------------------------------------------------------------
+
+MICRO INTERACTIONS
+
+Improve polish by adding subtle interactions:
+
+• smoother hover states
+• button transitions
+• page transitions
+• loading skeletons
+• image fade-ins
+• section reveal animations
+
+Animations should feel premium and almost invisible.
+
+------------------------------------------------------------
+
+FINAL GOAL
+
+The entire experience should feel like a professionally designed automotive platform.
+
+From landing page...
+
+↓
+
+Registration...
+
+↓
+
+Login...
+
+↓
+
+Dashboard...
+
+...everything should look like it belongs to the same design system.
+
+Nothing should feel like a default component or a separate application.
+
+Return only:
+
+• Components updated
+• Files changed
+• UX improvements
+• Accessibility improvements
+• Performance impact
+• Typecheck result
+• Build result

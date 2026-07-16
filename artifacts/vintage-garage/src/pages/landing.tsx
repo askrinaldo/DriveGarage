@@ -313,21 +313,21 @@ export default function LandingPage() {
       </section>
 
       {/* ══ HOW IT WORKS ══ */}
-      <section id="slik-fungerer" className="py-28 md:py-36 border-b border-white/[0.05]">
+      <section id="slik-fungerer" className="py-20 md:py-26 border-b border-white/[0.05] bg-[#0c0c0c]">
         <div className="max-w-[1180px] mx-auto px-6 md:px-10">
           <FadeIn>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-500 mb-4">
               {t("landing.howItWorks.badge")}
             </p>
             <h2
-              className="font-bold text-white tracking-[-0.03em] leading-[1.05] mb-20"
+              className="font-bold text-white tracking-[-0.03em] leading-[1.05] mb-14"
               style={{ fontSize: "clamp(32px, 4vw, 52px)" }}
             >
               I gang på to minutter.
             </h2>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-14 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
             {[
               {
                 n: "1",
@@ -359,9 +359,9 @@ export default function LandingPage() {
       </section>
 
       {/* ══ APP SHOWCASE ══ */}
-      <section className="py-28 md:py-36 border-b border-white/[0.05]">
+      <section className="py-20 md:py-26 border-b border-white/[0.05] bg-[#080808]">
         <div className="max-w-[1180px] mx-auto px-6 md:px-10">
-          <FadeIn className="mb-16">
+          <FadeIn className="mb-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-500 mb-4">Plattformen</p>
             <h2
               className="font-bold text-white tracking-[-0.03em] leading-[1.05] max-w-lg"
@@ -425,9 +425,9 @@ export default function LandingPage() {
       </section>
 
       {/* ══ FEATURES ══ */}
-      <section id="funksjoner" className="py-28 md:py-36 border-b border-white/[0.05]">
+      <section id="funksjoner" className="py-20 md:py-26 border-b border-white/[0.05] bg-[#050505]">
         <div className="max-w-[1180px] mx-auto px-6 md:px-10">
-          <FadeIn className="mb-16">
+          <FadeIn className="mb-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-500 mb-4">
               {t("landing.features.badge")}
             </p>
@@ -489,9 +489,9 @@ export default function LandingPage() {
       </section>
 
       {/* ══ PRICING ══ */}
-      <section id="priser" className="py-28 md:py-36 border-b border-white/[0.05]">
+      <section id="priser" className="py-20 md:py-26 border-b border-white/[0.05] bg-[#0d0d0d]">
         <div className="max-w-[1180px] mx-auto px-6 md:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-16 items-start">
             <FadeIn>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-500 mb-4">
                 {t("landing.pricing.badge")}
@@ -558,9 +558,9 @@ export default function LandingPage() {
       </section>
 
       {/* ══ FAQ ══ */}
-      <section id="faq" className="py-28 md:py-36 border-b border-white/[0.05]">
+      <section id="faq" className="py-20 md:py-26 border-b border-white/[0.05] bg-[#080808]">
         <div className="max-w-[1180px] mx-auto px-6 md:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-16 lg:gap-20">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16">
             <FadeIn>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-500 mb-4">FAQ</p>
               <h2
@@ -580,7 +580,7 @@ export default function LandingPage() {
       </section>
 
       {/* ══ CLOSING CTA ══ */}
-      <section className="relative py-36 md:py-48 overflow-hidden">
+      <section className="relative py-28 md:py-36 overflow-hidden">
         <img
           src="/hero-fjord.png"
           alt=""
