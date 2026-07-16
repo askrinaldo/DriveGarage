@@ -64,10 +64,6 @@ function Bone({ className = "" }: { className?: string }) {
   return <div className={`bg-muted/50 rounded-xl ${className}`} />;
 }
 
-/**
- * Shown by <Suspense> while a lazy route chunk is being downloaded.
- * Renders inside the Layout content area.
- */
 export function PageSkeleton() {
   return (
     <div className="p-2 space-y-5 animate-pulse max-w-6xl mx-auto">
@@ -82,14 +78,9 @@ export function PageSkeleton() {
   );
 }
 
-/**
- * Mirrors the Dashboard layout — shown on first load instead of a spinner.
- * Subsequent refetches use keepPreviousData so the dashboard stays visible.
- */
 export function DashboardSkeleton() {
   return (
     <div className="min-h-screen space-y-8 pb-12 animate-pulse">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2">
         <div className="space-y-2.5">
           <Bone className="h-3 w-20" />
@@ -98,15 +89,12 @@ export function DashboardSkeleton() {
         </div>
         <Bone className="h-10 w-36" />
       </div>
-      {/* Trial banner */}
       <Bone className="h-20 rounded-2xl" />
-      {/* 4 stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <Bone key={i} className="h-28 rounded-2xl" />
         ))}
       </div>
-      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4">
           <Bone className="h-4 w-28" />
@@ -128,7 +116,6 @@ export function DashboardSkeleton() {
   );
 }
 
-/** Mirrors the vehicle list page layout — 6 card placeholders */
 export function VehicleListSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
@@ -141,8 +128,38 @@ export function VehicleListSkeleton() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Bone key={i} className="h-40 rounded-xl border border-border/30" />
+          <Bone key={i} className="h-52 rounded-xl border border-border/30" />
         ))}
+      </div>
+    </div>
+  );
+}
+
+export function VehicleDetailSkeleton() {
+  return (
+    <div className="space-y-6 pb-24 animate-pulse">
+      {/* Back + title row */}
+      <div className="flex items-start gap-4">
+        <Bone className="h-10 w-10 rounded-lg shrink-0" />
+        <div className="space-y-2 flex-1">
+          <Bone className="h-8 w-2/3" />
+          <Bone className="h-4 w-1/2 opacity-60" />
+        </div>
+        <div className="flex gap-2 shrink-0">
+          {Array.from({ length: 4 }).map((_, i) => <Bone key={i} className="h-10 w-10 rounded-lg" />)}
+        </div>
+      </div>
+      {/* Hero image placeholder */}
+      <Bone className="h-48 rounded-xl" />
+      {/* Stats row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => <Bone key={i} className="h-20 rounded-xl" />)}
+      </div>
+      {/* Tabs bar */}
+      <Bone className="h-12 rounded-lg" />
+      {/* Timeline items */}
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => <Bone key={i} className="h-36 rounded-xl" />)}
       </div>
     </div>
   );
