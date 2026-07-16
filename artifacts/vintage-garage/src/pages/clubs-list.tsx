@@ -9,36 +9,37 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Users, MapPin, Car, Bike, Lock, Search, Globe,
   Crown, UserPlus, Loader2, ArrowRight, Shield, User,
-  ChevronRight, Compass,
+  Compass, X,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+/* ─── Static maps ──────────────────────────────────────────────── */
 
 const bannerGradients: Record<string, string> = {
-  car: "from-blue-950 via-blue-900/60 to-blue-800/20",
-  motorcycle: "from-amber-950 via-amber-900/60 to-amber-800/20",
-  both: "from-emerald-950 via-emerald-900/60 to-emerald-800/20",
+  car:        "from-blue-950 via-blue-900/70 to-blue-800/30",
+  motorcycle: "from-amber-950 via-amber-900/70 to-amber-800/30",
+  both:       "from-emerald-950 via-emerald-900/70 to-emerald-800/30",
 };
 
-const typeColor: Record<string, string> = {
-  car: "bg-blue-500/20 text-blue-300",
-  motorcycle: "bg-amber-500/20 text-amber-300",
-  both: "bg-emerald-500/20 text-emerald-300",
+const typePillColor: Record<string, string> = {
+  car:        "bg-blue-500/20 text-blue-300 border border-blue-500/20",
+  motorcycle: "bg-amber-500/20 text-amber-300 border border-amber-500/20",
+  both:       "bg-emerald-500/20 text-emerald-300 border border-emerald-500/20",
 };
 
 const typeLabel: Record<string, string> = {
-  car: "Bil",
+  car:        "Bil",
   motorcycle: "Motorsykkel",
-  both: "Bil & MC",
+  both:       "Bil & MC",
 };
 
 const TypeIcon = ({ type, size = "default" }: { type: string; size?: "sm" | "default" | "lg" }) => {
-  const cls = size === "lg" ? "w-8 h-8" : size === "sm" ? "w-3.5 h-3.5" : "w-5 h-5";
+  const cls = size === "lg" ? "w-7 h-7" : size === "sm" ? "w-3.5 h-3.5" : "w-5 h-5";
   if (type === "car") return <Car className={cls} />;
   if (type === "motorcycle") return <Bike className={cls} />;
   return (
@@ -48,6 +49,8 @@ const TypeIcon = ({ type, size = "default" }: { type: string; size?: "sm" | "def
     </span>
   );
 };
+
+/* ─── Data type ─────────────────────────────────────────────────── */
 
 interface ClubLike {
   id: number;
@@ -63,148 +66,213 @@ interface ClubLike {
   joinMode?: string;
 }
 
-function MembershipRoleBadge({ role }: { role: "owner" | "admin" | "member" | null }) {
-  if (role === "owner") return (
-    <Badge className="text-xs bg-yellow-500/15 text-yellow-300 border-yellow-500/25 gap-1">
-      <Crown className="w-2.5 h-2.5" /> Eier
-    </Badge>
-  );
-  if (role === "admin") return (
-    <Badge className="text-xs bg-blue-500/15 text-blue-300 border-blue-500/25 gap-1">
-      <Shield className="w-2.5 h-2.5" /> Admin
-    </Badge>
-  );
-  if (role === "member") return (
-    <Badge className="text-xs bg-emerald-500/15 text-emerald-300 border-emerald-500/25 gap-1">
-      <User className="w-2.5 h-2.5" /> Medlem
-    </Badge>
-  );
+/* ─── Role badge ────────────────────────────────────────────────── */
+
+function RolePill({ role }: { role: "owner" | "admin" | "member" | null }) {
+  if (role === "owner")
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/20">
+        <Crown className="w-2.5 h-2.5" /> Eier
+      </span>
+    );
+  if (role === "admin")
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20">
+        <Shield className="w-2.5 h-2.5" /> Admin
+      </span>
+    );
+  if (role === "member")
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
+        <User className="w-2.5 h-2.5" /> Medlem
+      </span>
+    );
   return null;
 }
 
+/* ─── Skeleton ──────────────────────────────────────────────────── */
+
 function ClubCardSkeleton() {
   return (
-    <Card className="overflow-hidden flex flex-col h-full">
-      <div className="h-32 bg-muted animate-pulse" />
-      <CardContent className="pt-0 px-4 pb-4 flex flex-col flex-1">
-        <div className="flex items-end gap-3 -mt-5 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-muted border-2 border-background animate-pulse shrink-0" />
-          <div className="flex-1 pb-0.5 space-y-1.5">
-            <div className="h-3 bg-muted rounded animate-pulse w-16" />
+    <div className="rounded-2xl border border-border/40 bg-card overflow-hidden flex flex-col animate-pulse">
+      <div className="h-44 bg-muted/60" />
+      <div className="px-5 pt-4 pb-5 flex flex-col gap-3">
+        <div className="flex items-center gap-3 -mt-9">
+          <div className="w-14 h-14 rounded-2xl bg-muted border-4 border-card shrink-0" />
+          <div className="flex gap-1.5 mt-5">
+            <div className="h-5 w-14 bg-muted rounded-full" />
           </div>
         </div>
-        <div className="h-4 bg-muted rounded animate-pulse w-3/4 mb-2" />
-        <div className="h-3 bg-muted rounded animate-pulse w-full mb-1.5" />
-        <div className="h-3 bg-muted rounded animate-pulse w-4/5 mb-4" />
-        <div className="h-8 bg-muted rounded-lg animate-pulse mt-auto" />
-      </CardContent>
-    </Card>
+        <div className="h-4 bg-muted rounded w-3/5" />
+        <div className="h-3 bg-muted rounded w-full" />
+        <div className="h-3 bg-muted rounded w-4/5" />
+        <div className="h-9 bg-muted rounded-xl mt-1" />
+      </div>
+    </div>
   );
 }
+
+/* ─── Club card ─────────────────────────────────────────────────── */
 
 interface ClubCardProps {
   club: ClubLike;
   membershipRole?: "owner" | "admin" | "member" | null;
   action?: React.ReactNode;
+  index?: number;
 }
 
-function ClubCard({ club, membershipRole, action }: ClubCardProps) {
-  const gradient = bannerGradients[club.clubType] ?? "from-primary/60 via-primary/30 to-primary/10";
-  return (
-    <Link href={`/clubs/${club.id}`}>
-      <Card className="group hover-elevate cursor-pointer h-full flex flex-col border-border/60 bg-card">
-        {/* Banner */}
-        <div className="relative h-32 shrink-0 overflow-hidden rounded-t-lg">
-          {club.bannerUrl ? (
-            <img
-              src={club.bannerUrl}
-              alt=""
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-              <div className="text-white/10">
-                <TypeIcon type={club.clubType} size="lg" />
-              </div>
-            </div>
-          )}
-          {/* Privacy badge */}
-          <div className="absolute top-2.5 right-2.5">
-            {club.isPrivate ? (
-              <span className="flex items-center gap-1 text-[10px] font-medium bg-black/65 backdrop-blur-sm text-white/90 rounded-full px-2 py-0.5 border border-white/10">
-                <Lock className="w-2.5 h-2.5" /> Privat
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-[10px] font-medium bg-black/65 backdrop-blur-sm text-white/90 rounded-full px-2 py-0.5 border border-white/10">
-                <Globe className="w-2.5 h-2.5" /> Offentlig
-              </span>
-            )}
-          </div>
-        </div>
+function ClubCard({ club, membershipRole, action, index = 0 }: ClubCardProps) {
+  const gradient = bannerGradients[club.clubType] ?? "from-primary/60 via-primary/40 to-primary/10";
 
-        <CardContent className="flex-1 flex flex-col px-4 pt-0 pb-4">
-          {/* Logo + type badge row — floats up into banner */}
-          <div className="flex items-end gap-3 -mt-5 mb-3 relative z-10">
-            {club.logoUrl ? (
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+    >
+      <Link href={`/clubs/${club.id}`}>
+        <div className="group rounded-2xl border border-border/40 bg-card overflow-hidden flex flex-col cursor-pointer hover:border-border/70 hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
+          {/* Banner */}
+          <div className="relative h-44 shrink-0 overflow-hidden">
+            {club.bannerUrl ? (
               <img
-                src={club.logoUrl}
-                alt={club.name}
-                className="w-10 h-10 rounded-xl border-2 border-background object-cover shrink-0 bg-muted"
+                src={club.bannerUrl}
+                alt=""
+                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
               />
             ) : (
-              <div className="w-10 h-10 rounded-xl border-2 border-background bg-muted flex items-center justify-center shrink-0">
-                <TypeIcon type={club.clubType} size="sm" />
+              <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                <div className="text-white/[0.07]">
+                  <TypeIcon type={club.clubType} size="lg" />
+                </div>
               </div>
             )}
-            <div className="flex flex-wrap gap-1 pb-0.5">
-              <Badge className={`text-[10px] px-1.5 py-0 ${typeColor[club.clubType] ?? ""} border-0`}>
-                {typeLabel[club.clubType] ?? club.clubType}
-              </Badge>
-              <MembershipRoleBadge role={membershipRole ?? null} />
+
+            {/* Privacy pill — top right */}
+            <div className="absolute top-3 right-3">
+              {club.isPrivate ? (
+                <span className="flex items-center gap-1 text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white/80 rounded-full px-2.5 py-1 border border-white/10">
+                  <Lock className="w-2.5 h-2.5" /> Privat
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] font-semibold bg-black/60 backdrop-blur-md text-white/80 rounded-full px-2.5 py-1 border border-white/10">
+                  <Globe className="w-2.5 h-2.5" /> Offentlig
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Name */}
-          <h3 className="font-semibold text-[15px] leading-snug line-clamp-2 mb-1.5 group-hover:text-primary transition-colors">
-            {club.name}
-          </h3>
+          {/* Content */}
+          <div className="px-5 pt-4 pb-5 flex flex-col flex-1">
+            {/* Logo + badges row — overlaps banner */}
+            <div className="flex items-end gap-3 -mt-11 mb-3.5 relative z-10">
+              {club.logoUrl ? (
+                <img
+                  src={club.logoUrl}
+                  alt={club.name}
+                  className="w-14 h-14 rounded-2xl border-4 border-card object-cover shrink-0 bg-muted shadow-md"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-2xl border-4 border-card bg-muted/80 flex items-center justify-center shrink-0 shadow-md">
+                  <TypeIcon type={club.clubType} size="sm" />
+                </div>
+              )}
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                <span className={cn("inline-flex items-center text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full", typePillColor[club.clubType])}>
+                  {typeLabel[club.clubType] ?? club.clubType}
+                </span>
+                <RolePill role={membershipRole ?? null} />
+              </div>
+            </div>
 
-          {/* Description */}
-          {club.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-3">
-              {club.description}
-            </p>
-          )}
+            {/* Name */}
+            <h3 className="font-bold text-[15px] leading-snug line-clamp-2 mb-1.5 group-hover:text-primary transition-colors duration-200">
+              {club.name}
+            </h3>
 
-          {/* Stats */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-auto mb-3">
-            <span className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              {club.memberCount.toLocaleString("nb-NO")}{" "}
-              {club.memberCount === 1 ? "medlem" : "medlemmer"}
-            </span>
-            {club.location && (
-              <span className="flex items-center gap-1 min-w-0">
-                <MapPin className="w-3 h-3 shrink-0" />
-                <span className="truncate">{club.location}</span>
-              </span>
+            {/* Description */}
+            {club.description && (
+              <p className="text-[12.5px] text-muted-foreground/60 line-clamp-2 leading-relaxed mb-3.5">
+                {club.description}
+              </p>
             )}
-          </div>
 
-          {/* Action */}
-          {action}
-        </CardContent>
-      </Card>
-    </Link>
+            {/* Stats */}
+            <div className="flex items-center gap-3 text-[12px] text-muted-foreground/50 mt-auto mb-4">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                {club.memberCount.toLocaleString("nb-NO")}{" "}
+                {club.memberCount === 1 ? "medlem" : "medlemmer"}
+              </span>
+              {club.location && (
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{club.location}</span>
+                </span>
+              )}
+            </div>
+
+            {/* Action */}
+            {action}
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 }
 
+/* ─── Type filter pill ──────────────────────────────────────────── */
+
 const TYPE_FILTERS = [
-  { value: "all", label: "Alle" },
-  { value: "car", label: "Bil" },
+  { value: "all",        label: "Alle" },
+  { value: "car",        label: "Bil" },
   { value: "motorcycle", label: "Motorsykkel" },
-  { value: "both", label: "Begge" },
+  { value: "both",       label: "Begge" },
 ];
+
+/* ─── Action button helpers ─────────────────────────────────────── */
+
+function ActionBtn({
+  children,
+  variant = "primary",
+  onClick,
+  disabled,
+  href,
+}: {
+  children: React.ReactNode;
+  variant?: "primary" | "secondary" | "ghost" | "locked";
+  onClick?: (e: React.MouseEvent) => void;
+  disabled?: boolean;
+  href?: string;
+}) {
+  const base =
+    "w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-[12px] font-bold uppercase tracking-wide transition-all duration-200 select-none";
+  const styles = {
+    primary:   "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.98]",
+    secondary: "bg-muted/60 text-foreground/80 border border-border/50 hover:bg-muted hover:border-border",
+    ghost:     "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+    locked:    "bg-muted/30 text-muted-foreground/50 border border-border/30 cursor-default",
+  };
+
+  const cls = cn(base, styles[variant], disabled && "opacity-50 pointer-events-none");
+
+  if (href) {
+    return (
+      <Link href={href} onClick={(e) => e.stopPropagation()}>
+        <button className={cls}>{children}</button>
+      </Link>
+    );
+  }
+  return (
+    <button className={cls} disabled={disabled} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MAIN PAGE
+══════════════════════════════════════════════════════════════════ */
 
 export default function ClubsList() {
   const { isSignedIn } = useAuth();
@@ -216,6 +284,7 @@ export default function ClubsList() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [joiningId, setJoiningId] = useState<number | null>(null);
 
+  /* ── Data fetching ── */
   const { data: myClubs, isLoading: myLoading } = useListClubs(
     { scope: "mine" },
     {
@@ -289,74 +358,111 @@ export default function ClubsList() {
 
   const hasActiveFilter = typeFilter !== "all" || !!search;
 
+  /* ── Render ── */
   return (
-    <div className="space-y-10">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-12 pb-12">
+
+      {/* ════════════════════════════
+          PAGE HEADER
+      ════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex flex-col sm:flex-row sm:items-end justify-between gap-5"
+      >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Klubber</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-widest mb-2">
+            Fellesskap
+          </p>
+          <h1 className="text-3xl font-black text-foreground uppercase tracking-tight leading-none">
+            Klubber
+          </h1>
+          <p className="text-[13px] text-muted-foreground/55 mt-2">
             Finn og bli med i veteranklubber for biler og motorsykler.
           </p>
         </div>
         <Link href="/clubs/new">
-          <Button className="shrink-0 gap-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-black uppercase tracking-wider shadow-lg shadow-primary/15 shrink-0"
+          >
             <Plus className="w-4 h-4" />
             Opprett klubb
-          </Button>
+          </motion.button>
         </Link>
-      </div>
+      </motion.div>
 
-      {/* Mine klubber */}
+      {/* ════════════════════════════
+          MY CLUBS
+      ════════════════════════════ */}
       {isSignedIn && (
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">Mine klubber</h2>
-              {!myLoading && myClubs && myClubs.length > 0 && (
-                <span className="text-xs bg-primary/15 text-primary rounded-full px-2 py-0.5 font-medium">
-                  {myClubs.length}
-                </span>
-              )}
-            </div>
+        <section className="space-y-5">
+          {/* Section header */}
+          <div className="flex items-center gap-3">
+            <h2 className="text-[11px] font-black text-muted-foreground/50 uppercase tracking-widest">
+              Mine klubber
+            </h2>
+            {!myLoading && myClubs && myClubs.length > 0 && (
+              <span className="text-[10px] font-bold bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                {myClubs.length}
+              </span>
+            )}
           </div>
 
+          {/* Loading */}
           {myLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               <ClubCardSkeleton />
               <ClubCardSkeleton />
               <ClubCardSkeleton />
             </div>
           ) : !myClubs || myClubs.length === 0 ? (
-            <div className="border border-dashed border-border/60 rounded-xl py-12 text-center bg-muted/20">
-              <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-muted-foreground" />
+            /* Empty — no clubs */
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="rounded-2xl border border-dashed border-border/50 bg-card/30 px-8 py-12 text-center"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-muted/60 border border-border/40 flex items-center justify-center mx-auto mb-5">
+                <Users className="w-7 h-7 text-muted-foreground/40" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Du er ikke med i noen klubber ennå.
+              <p className="text-[14px] font-bold text-foreground/60 mb-1.5">
+                Du er ikke med i noen klubber ennå
               </p>
-              <p className="text-xs text-muted-foreground/70 mt-1.5 max-w-xs mx-auto">
-                Utforsk offentlige klubber nedenfor, eller opprett din egen.
+              <p className="text-[12.5px] text-muted-foreground/45 max-w-xs mx-auto mb-7 leading-relaxed">
+                Utforsk offentlige klubber nedenfor, eller opprett din første og inviter andre entusiaster.
               </p>
-              <Link href="/clubs/new">
-                <Button variant="outline" size="sm" className="mt-5 gap-2">
-                  <Plus className="w-3.5 h-3.5" />
-                  Opprett din første klubb
-                </Button>
-              </Link>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/clubs/new">
+                  <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-bold uppercase tracking-wide shadow-md shadow-primary/15">
+                    <Plus className="w-3.5 h-3.5" />
+                    Opprett en klubb
+                  </button>
+                </Link>
+                <button
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border/50 hover:border-border bg-transparent hover:bg-muted/20 transition-colors text-[12px] font-bold uppercase tracking-wide text-foreground/60"
+                  onClick={() => document.getElementById("discover-section")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  Utforsk klubber
+                </button>
+              </div>
+            </motion.div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {myClubs.map((club) => (
+            /* Club cards */
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {myClubs.map((club, i) => (
                 <ClubCard
                   key={club.id}
                   club={club}
                   membershipRole={myRoleFor(club)}
+                  index={i}
                   action={
-                    <Button
+                    <ActionBtn
                       variant="secondary"
-                      size="sm"
-                      className="w-full gap-1.5"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -365,7 +471,7 @@ export default function ClubsList() {
                     >
                       Åpne klubb
                       <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
+                    </ActionBtn>
                   }
                 />
               ))}
@@ -374,155 +480,179 @@ export default function ClubsList() {
         </section>
       )}
 
-      {/* Divider */}
-      {isSignedIn && <div className="border-t border-border/50" />}
+      {/* Separator */}
+      {isSignedIn && <div className="border-t border-border/30" />}
 
-      {/* Utforsk */}
-      <section className="space-y-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <Compass className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">Utforsk klubber</h2>
+      {/* ════════════════════════════
+          DISCOVER CLUBS
+      ════════════════════════════ */}
+      <section id="discover-section" className="space-y-6">
+        {/* Section header */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center shrink-0">
+            <Compass className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-xs text-muted-foreground mt-1 ml-7">
-            Offentlige klubber er åpne for alle. Private klubber vises ikke her.
-          </p>
+          <div>
+            <h2 className="text-[11px] font-black text-muted-foreground/50 uppercase tracking-widest">
+              Utforsk klubber
+            </h2>
+            <p className="text-[11px] text-muted-foreground/35 mt-0.5">
+              Offentlige klubber er åpne for alle
+            </p>
+          </div>
         </div>
 
-        {/* Search + type filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        {/* Search + filters */}
+        <div className="space-y-3">
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 pointer-events-none" />
             <Input
-              placeholder="Søk etter navn, sted..."
+              placeholder="Søk etter klubbnavn, sted eller beskrivelse..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-11 pr-10 h-12 rounded-xl border-border/50 bg-card text-[13px] focus:border-primary/40 focus:ring-primary/10 placeholder:text-muted-foreground/30"
             />
+            <AnimatePresence>
+              {search && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
-          <div className="flex gap-2 flex-wrap items-center">
+
+          {/* Filter pills */}
+          <div className="flex items-center gap-2 flex-wrap">
             {TYPE_FILTERS.map((f) => (
-              <Button
+              <button
                 key={f.value}
-                variant={typeFilter === f.value ? "default" : "outline"}
-                size="sm"
-                className="h-9"
                 onClick={() => setTypeFilter(f.value)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[12px] font-bold uppercase tracking-wide border transition-all duration-200",
+                  typeFilter === f.value
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                    : "border-border/50 text-muted-foreground/60 hover:border-border hover:text-foreground bg-transparent"
+                )}
               >
                 {f.label}
-              </Button>
+              </button>
             ))}
             {hasActiveFilter && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 text-muted-foreground"
-                onClick={() => {
-                  setSearch("");
-                  setTypeFilter("all");
-                }}
+              <button
+                onClick={() => { setSearch(""); setTypeFilter("all"); }}
+                className="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wide text-muted-foreground/40 hover:text-muted-foreground transition-colors"
               >
                 Nullstill
-              </Button>
+              </button>
             )}
           </div>
         </div>
 
         {/* Result count */}
-        {!publicLoading && !isError && (
-          <p className="text-xs text-muted-foreground">
+        {!publicLoading && !isError && hasActiveFilter && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-[11px] text-muted-foreground/40 font-medium"
+          >
             {filteredPublic.length === 0
-              ? "Ingen resultater"
+              ? "Ingen treff"
               : `${filteredPublic.length} ${filteredPublic.length === 1 ? "klubb" : "klubber"} funnet`}
-            {hasActiveFilter && " · filtrert"}
-          </p>
+          </motion.p>
         )}
 
-        {/* Content */}
+        {/* Cards / states */}
         {publicLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <ClubCardSkeleton />
-            <ClubCardSkeleton />
-            <ClubCardSkeleton />
-            <ClubCardSkeleton />
-            <ClubCardSkeleton />
-            <ClubCardSkeleton />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <ClubCardSkeleton key={i} />
+            ))}
           </div>
         ) : isError ? (
-          <div className="py-16 text-center">
-            <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <Globe className="w-6 h-6 text-muted-foreground" />
+          <div className="rounded-2xl border border-border/40 bg-card py-16 text-center">
+            <div className="w-12 h-12 bg-muted/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Globe className="w-6 h-6 text-muted-foreground/40" />
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Kunne ikke laste klubber.
+            <p className="text-[13px] text-muted-foreground/60 mb-5">
+              Kunne ikke laste klubber
             </p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <button
+              onClick={() => refetch()}
+              className="px-5 py-2 rounded-xl border border-border/50 text-[12px] font-bold uppercase tracking-wide text-foreground/60 hover:border-border hover:bg-muted/20 transition-all"
+            >
               Prøv igjen
-            </Button>
+            </button>
           </div>
         ) : filteredPublic.length === 0 ? (
-          <div className="py-16 text-center">
-            <div className="w-14 h-14 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-dashed border-border/40 bg-card/20 py-16 text-center"
+          >
+            <div className="w-12 h-12 bg-muted/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
               {search ? (
-                <Search className="w-6 h-6 text-muted-foreground" />
+                <Search className="w-5 h-5 text-muted-foreground/40" />
               ) : (
-                <Compass className="w-6 h-6 text-muted-foreground" />
+                <Compass className="w-5 h-5 text-muted-foreground/40" />
               )}
             </div>
-            <p className="text-sm font-medium text-muted-foreground">
-              {search
-                ? `Ingen klubber matcher «${search}»`
-                : "Ingen offentlige klubber ennå."}
+            <p className="text-[14px] font-bold text-foreground/50 mb-1.5">
+              {search ? `Ingen treff for «${search}»` : "Ingen offentlige klubber ennå"}
             </p>
-            <p className="text-xs text-muted-foreground/70 mt-1.5 max-w-xs mx-auto">
+            <p className="text-[12px] text-muted-foreground/40 max-w-xs mx-auto mb-7 leading-relaxed">
               {search
-                ? "Prøv et annet søkeord eller fjern filteret."
-                : "Bli den første til å opprette en."}
+                ? "Prøv et annet søkeord, eller endre filteret."
+                : "Bli den første til å opprette en klub for entusiaster."}
             </p>
-            <div className="flex gap-2 justify-center mt-5">
+            <div className="flex gap-3 justify-center">
               {search && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearch("");
-                    setTypeFilter("all");
-                  }}
+                <button
+                  onClick={() => { setSearch(""); setTypeFilter("all"); }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/50 text-[12px] font-bold uppercase tracking-wide text-muted-foreground/60 hover:border-border hover:bg-muted/20 transition-all"
                 >
+                  <X className="w-3.5 h-3.5" />
                   Fjern filter
-                </Button>
+                </button>
               )}
               <Link href="/clubs/new">
-                <Button size="sm" variant={search ? "ghost" : "default"} className="gap-2">
+                <button className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-bold uppercase tracking-wide shadow-md shadow-primary/15">
                   <Plus className="w-3.5 h-3.5" />
                   Opprett klubb
-                </Button>
+                </button>
               </Link>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredPublic.map((club) => (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredPublic.map((club, i) => (
               <ClubCard
                 key={club.id}
                 club={club}
                 membershipRole={null}
+                index={i}
                 action={
                   club.joinMode === "invite_only" ? (
                     <div
-                      className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground py-2 rounded-lg border border-border/50 bg-muted/30"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/30 bg-muted/20 text-[12px] font-bold uppercase tracking-wide text-muted-foreground/40"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
                     >
-                      <Lock className="w-3 h-3" />
+                      <Lock className="w-3.5 h-3.5" />
                       Krever invitasjon
                     </div>
                   ) : isSignedIn ? (
-                    <Button
-                      size="sm"
-                      className="w-full gap-2"
+                    <ActionBtn
+                      variant="primary"
                       disabled={joiningId === club.id}
                       onClick={(e) => {
                         e.preventDefault();
@@ -536,17 +666,12 @@ export default function ClubsList() {
                         <UserPlus className="w-3.5 h-3.5" />
                       )}
                       Bli med
-                    </Button>
+                    </ActionBtn>
                   ) : (
-                    <Link
-                      href="/sign-in"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Button size="sm" variant="outline" className="w-full gap-2">
-                        Logg inn for å bli med
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Button>
-                    </Link>
+                    <ActionBtn variant="secondary" href="/sign-in">
+                      Logg inn for å bli med
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </ActionBtn>
                   )
                 }
               />

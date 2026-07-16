@@ -1,0 +1,306 @@
+Act as a Principal Product Designer, Senior UX Architect and Community Product Designer.
+
+Project:
+DriveGarage
+
+This phase redesigns ONLY the Clubs page.
+
+The goal is NOT to add more features.
+
+The goal is to create a cleaner, simpler and more premium community experience.
+
+==================================================
+
+FRONTEND ONLY
+
+Do NOT modify:
+
+Backend
+
+Database
+
+Authentication
+
+Authorization
+
+RBAC
+
+Vipps
+
+Business Logic
+
+Routes
+
+API
+
+Permissions
+
+==================================================
+
+DO NOT REMOVE FUNCTIONALITY
+
+Keep every existing feature.
+
+Keep:
+
+Create Club
+
+Search
+
+Filters
+
+Private clubs
+
+Public clubs
+
+Role permissions
+
+Join functionality
+
+Invitations
+
+Everything must continue working.
+
+Only improve presentation and user experience.
+
+==================================================
+
+GOAL
+
+The Clubs page should answer two questions immediately:
+
+1.
+
+Which clubs am I a member of?
+
+2.
+
+Which public clubs can I join?
+
+Everything else is secondary.
+
+==================================================
+
+PAGE STRUCTURE
+
+Redesign the page into three clear sections.
+
+--------------------------------------------------
+
+MY CLUBS
+
+--------------------------------------------------
+
+Always shown first.
+
+This should be the primary focus.
+
+Show beautiful club cards.
+
+Each card should include:
+
+Club image
+
+Club name
+
+Member count
+
+Privacy badge
+
+Your role
+
+Latest activity (optional)
+
+Open Club button
+
+Create a clean horizontal grid.
+
+Do not overload each card.
+
+--------------------------------------------------
+
+DISCOVER CLUBS
+
+--------------------------------------------------
+
+Below My Clubs.
+
+Large search bar.
+
+Simple filters.
+
+Examples:
+
+All
+
+Cars
+
+Motorcycles
+
+Newest
+
+Most members
+
+Popular
+
+Public clubs should be displayed as premium cards.
+
+Each card should include:
+
+Cover image
+
+Club logo
+
+Name
+
+Short description
+
+Member count
+
+Join button
+
+Privacy indicator
+
+Do NOT overload the cards.
+
+--------------------------------------------------
+
+CREATE CLUB
+
+--------------------------------------------------
+
+The Create Club button should remain visible.
+
+It should feel like an important primary action.
+
+==================================================
+
+EMPTY STATES
+
+When users have no clubs:
+
+Create a beautiful onboarding section.
+
+Explain what clubs are.
+
+Explain why they should join one.
+
+Provide:
+
+Create Club
+
+Explore Clubs
+
+==================================================
+
+VISUAL STYLE
+
+Keep the page calm.
+
+Avoid information overload.
+
+Lots of whitespace.
+
+Beautiful cards.
+
+Large cover photos.
+
+Rounded corners.
+
+Soft shadows.
+
+Premium typography.
+
+Smooth hover effects.
+
+Think:
+
+Steam Library
+
+Apple Photos
+
+Notion Gallery
+
+Modern automotive community.
+
+==================================================
+
+SEARCH
+
+Improve search experience.
+
+Large search field.
+
+Live filtering.
+
+Clear empty results.
+
+==================================================
+
+FILTERS
+
+Keep filters minimal.
+
+Do not create complicated filtering.
+
+Only show the filters users actually need.
+
+==================================================
+
+RESPONSIVE
+
+Desktop
+
+Tablet
+
+Mobile
+
+==================================================
+
+MICRO INTERACTIONS
+
+Improve:
+
+Hover
+
+Loading
+
+Skeletons
+
+Join animation
+
+Card hover
+
+Transitions
+
+==================================================
+
+IMPORTANT
+
+This page should NOT feel like Facebook.
+
+It should NOT feel like Discord.
+
+It should feel like a premium automotive club directory.
+
+Simple.
+
+Elegant.
+
+Fast.
+
+==================================================
+
+OUTPUT
+
+Return only:
+
+Files changed
+
+Components redesigned
+
+UX decisions
+
+Build result
+
+Typecheck result
