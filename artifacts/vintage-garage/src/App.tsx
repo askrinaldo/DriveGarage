@@ -5,64 +5,74 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import { ThemeProvider } from "@/contexts/theme";
 import { AiChatWidget } from "@/components/ai-chat-widget";
-import NotFound from "@/pages/not-found";
 import { ClerkProvider, useAuth, useSession } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
 import { nbNO } from "@clerk/localizations";
-import { useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { setClerkTokenGetter } from "@workspace/api-client-react";
-
-import LandingPage from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
-import VehicleList from "@/pages/vehicle-list";
-import VehicleForm from "@/pages/vehicle-form";
-import VehicleDetail from "@/pages/vehicle-detail";
-import ServiceForm from "@/pages/service-form";
-import ReceiptForm from "@/pages/receipt-form";
-import TripForm from "@/pages/trip-form";
-import ClubsList from "@/pages/clubs-list";
-import ClubForm from "@/pages/club-form";
-import ClubDetail from "@/pages/club-detail";
-import ClubInvite from "@/pages/club-invite";
-import ClubGarage from "@/pages/club-garage";
-import ClubForum from "@/pages/club-forum";
-import ClubForumPost from "@/pages/club-forum-post";
-import ClubAuditLog from "@/pages/club-audit-log";
-import ClubDashboard from "@/pages/club-dashboard";
-import ClubEvents from "@/pages/club-events";
-import ClubEventForm from "@/pages/club-event-form";
-import ClubEventDetail from "@/pages/club-event-detail";
-import ClubMarketplace from "@/pages/club-marketplace";
-import VehicleReminders from "@/pages/vehicle-reminders";
-import VehiclePrint from "@/pages/vehicle-print";
-import VehicleAiAdvice from "@/pages/vehicle-ai-advice";
-import Login from "@/pages/login";
-import Register from "@/pages/register";
-import Admin from "@/pages/admin";
-import Help from "@/pages/help";
-import VehicleTransfer from "@/pages/vehicle-transfer";
-import MembershipCard from "@/pages/membership-card";
-import TenantSettings from "@/pages/tenant-settings";
-import TenantInvite from "@/pages/tenant-invite";
-import TenantNew from "@/pages/tenant-new";
-import Profile from "@/pages/profile";
-import SignInPage from "@/pages/sign-in";
-import SignUpPage from "@/pages/sign-up";
-import PublicGarage from "@/pages/public-garage";
-import PrivacyPage from "@/pages/privacy";
-import TermsPage from "@/pages/terms";
-import CookiesPage from "@/pages/cookies";
-import ContactPage from "@/pages/contact";
-import PricingPage from "@/pages/pricing";
-import Billing from "@/pages/billing";
+import { PageSkeleton } from "@/components/ui-states";
 import { CookieNotice } from "@/components/cookie-notice";
 
+// ── Lazy-loaded pages ─────────────────────────────────────────
+// Each becomes its own JS chunk; only downloaded when first navigated to.
+const LandingPage      = lazy(() => import("@/pages/landing"));
+const Dashboard        = lazy(() => import("@/pages/dashboard"));
+const VehicleList      = lazy(() => import("@/pages/vehicle-list"));
+const VehicleForm      = lazy(() => import("@/pages/vehicle-form"));
+const VehicleDetail    = lazy(() => import("@/pages/vehicle-detail"));
+const ServiceForm      = lazy(() => import("@/pages/service-form"));
+const ReceiptForm      = lazy(() => import("@/pages/receipt-form"));
+const TripForm         = lazy(() => import("@/pages/trip-form"));
+const ClubsList        = lazy(() => import("@/pages/clubs-list"));
+const ClubForm         = lazy(() => import("@/pages/club-form"));
+const ClubDetail       = lazy(() => import("@/pages/club-detail"));
+const ClubInvite       = lazy(() => import("@/pages/club-invite"));
+const ClubGarage       = lazy(() => import("@/pages/club-garage"));
+const ClubForum        = lazy(() => import("@/pages/club-forum"));
+const ClubForumPost    = lazy(() => import("@/pages/club-forum-post"));
+const ClubAuditLog     = lazy(() => import("@/pages/club-audit-log"));
+const ClubDashboard    = lazy(() => import("@/pages/club-dashboard"));
+const ClubEvents       = lazy(() => import("@/pages/club-events"));
+const ClubEventForm    = lazy(() => import("@/pages/club-event-form"));
+const ClubEventDetail  = lazy(() => import("@/pages/club-event-detail"));
+const ClubMarketplace  = lazy(() => import("@/pages/club-marketplace"));
+const VehicleReminders = lazy(() => import("@/pages/vehicle-reminders"));
+const VehiclePrint     = lazy(() => import("@/pages/vehicle-print"));
+const VehicleAiAdvice  = lazy(() => import("@/pages/vehicle-ai-advice"));
+const Login            = lazy(() => import("@/pages/login"));
+const Register         = lazy(() => import("@/pages/register"));
+const Admin            = lazy(() => import("@/pages/admin"));
+const Help             = lazy(() => import("@/pages/help"));
+const VehicleTransfer  = lazy(() => import("@/pages/vehicle-transfer"));
+const MembershipCard   = lazy(() => import("@/pages/membership-card"));
+const TenantSettings   = lazy(() => import("@/pages/tenant-settings"));
+const TenantInvite     = lazy(() => import("@/pages/tenant-invite"));
+const TenantNew        = lazy(() => import("@/pages/tenant-new"));
+const Profile          = lazy(() => import("@/pages/profile"));
+const SignInPage        = lazy(() => import("@/pages/sign-in"));
+const SignUpPage        = lazy(() => import("@/pages/sign-up"));
+const PublicGarage     = lazy(() => import("@/pages/public-garage"));
+const PrivacyPage      = lazy(() => import("@/pages/privacy"));
+const TermsPage        = lazy(() => import("@/pages/terms"));
+const CookiesPage      = lazy(() => import("@/pages/cookies"));
+const ContactPage      = lazy(() => import("@/pages/contact"));
+const PricingPage      = lazy(() => import("@/pages/pricing"));
+const Billing          = lazy(() => import("@/pages/billing"));
+const NotFound         = lazy(() => import("@/pages/not-found"));
+
+// ── React Query client ────────────────────────────────────────
+// staleTime: 60 s → cached data is considered fresh for 60 s, eliminating
+//   duplicate network requests when navigating back to a page.
+// gcTime: 10 min → keeps inactive cache entries in memory across navigations,
+//   so returning to a page restores data instantly.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 60_000,
+      gcTime: 10 * 60_000,
     },
   },
 });
@@ -85,7 +95,10 @@ function stripBase(path: string): string {
     : path;
 }
 
-const STANDALONE_ROUTES = ["/login", "/register", "/vehicle-transfer", "/", "/sign-in", "/sign-up", "/privacy", "/terms", "/cookies", "/contact", "/pricing"];
+const STANDALONE_ROUTES = [
+  "/login", "/register", "/vehicle-transfer", "/",
+  "/sign-in", "/sign-up", "/privacy", "/terms", "/cookies", "/contact", "/pricing",
+];
 
 function AppRoutes() {
   const [location] = useLocation();
@@ -94,71 +107,75 @@ function AppRoutes() {
   const isStandalone =
     location === "/" ||
     STANDALONE_ROUTES.filter((r) => r !== "/").some(
-      (r) => location === r || location.startsWith(r + "/")
+      (r) => location === r || location.startsWith(r + "/"),
     );
 
   if (isStandalone) {
     return (
-      <Switch>
-        <Route path="/sign-in/*?" component={SignInPage} />
-        <Route path="/sign-up/*?" component={SignUpPage} />
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
-        <Route path="/privacy" component={PrivacyPage} />
-        <Route path="/terms" component={TermsPage} />
-        <Route path="/cookies" component={CookiesPage} />
-        <Route path="/contact" component={ContactPage} />
-        <Route path="/pricing" component={PricingPage} />
-        <Route path="/">
-          {isLoaded && isSignedIn ? <Redirect to="/dashboard" /> : <LandingPage />}
-        </Route>
-      </Switch>
+      <Suspense fallback={<PageSkeleton />}>
+        <Switch>
+          <Route path="/sign-in/*?" component={SignInPage} />
+          <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
+          <Route path="/privacy" component={PrivacyPage} />
+          <Route path="/terms" component={TermsPage} />
+          <Route path="/cookies" component={CookiesPage} />
+          <Route path="/contact" component={ContactPage} />
+          <Route path="/pricing" component={PricingPage} />
+          <Route path="/">
+            {isLoaded && isSignedIn ? <Redirect to="/dashboard" /> : <LandingPage />}
+          </Route>
+        </Switch>
+      </Suspense>
     );
   }
 
   return (
     <Layout>
-      <Switch>
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/vehicles" component={VehicleList} />
-        <Route path="/vehicles/new" component={VehicleForm} />
-        <Route path="/vehicles/:id" component={VehicleDetail} />
-        <Route path="/vehicles/:id/edit" component={VehicleForm} />
-        <Route path="/vehicles/:id/service/new" component={ServiceForm} />
-        <Route path="/vehicles/:id/service/:serviceId/edit" component={ServiceForm} />
-        <Route path="/vehicles/:id/receipts/new" component={ReceiptForm} />
-        <Route path="/vehicles/:id/trips/new" component={TripForm} />
-        <Route path="/vehicles/:id/trips/:tripId/edit" component={TripForm} />
-        <Route path="/vehicles/:id/reminders" component={VehicleReminders} />
-        <Route path="/vehicles/:id/print" component={VehiclePrint} />
-        <Route path="/vehicles/:id/ai-advice" component={VehicleAiAdvice} />
-        <Route path="/clubs" component={ClubsList} />
-        <Route path="/clubs/invite/:code" component={ClubInvite} />
-        <Route path="/clubs/new" component={ClubForm} />
-        <Route path="/clubs/:id/garage" component={ClubGarage} />
-        <Route path="/clubs/:id/forum/:postId" component={ClubForumPost} />
-        <Route path="/clubs/:id/forum" component={ClubForum} />
-        <Route path="/clubs/:id/dashboard" component={ClubDashboard} />
-        <Route path="/clubs/:id/events/new" component={ClubEventForm} />
-        <Route path="/clubs/:id/events/:eventId/edit" component={ClubEventForm} />
-        <Route path="/clubs/:id/events/:eventId" component={ClubEventDetail} />
-        <Route path="/clubs/:id/events" component={ClubEvents} />
-        <Route path="/clubs/:id/marketplace" component={ClubMarketplace} />
-        <Route path="/clubs/:id/audit-log" component={ClubAuditLog} />
-        <Route path="/clubs/:id/edit" component={ClubForm} />
-        <Route path="/clubs/:id" component={ClubDetail} />
-        <Route path="/admin" component={Admin} />
-        <Route path="/membership-card" component={MembershipCard} />
-        <Route path="/org/settings" component={TenantSettings} />
-        <Route path="/tenant-invite/:code" component={TenantInvite} />
-        <Route path="/tenant-new" component={TenantNew} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/help" component={Help} />
-        <Route path="/billing" component={Billing} />
-        <Route path="/garage/:username" component={PublicGarage} />
-        <Route component={NotFound} />
-      </Switch>
+      <Suspense fallback={<PageSkeleton />}>
+        <Switch>
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/vehicles" component={VehicleList} />
+          <Route path="/vehicles/new" component={VehicleForm} />
+          <Route path="/vehicles/:id" component={VehicleDetail} />
+          <Route path="/vehicles/:id/edit" component={VehicleForm} />
+          <Route path="/vehicles/:id/service/new" component={ServiceForm} />
+          <Route path="/vehicles/:id/service/:serviceId/edit" component={ServiceForm} />
+          <Route path="/vehicles/:id/receipts/new" component={ReceiptForm} />
+          <Route path="/vehicles/:id/trips/new" component={TripForm} />
+          <Route path="/vehicles/:id/trips/:tripId/edit" component={TripForm} />
+          <Route path="/vehicles/:id/reminders" component={VehicleReminders} />
+          <Route path="/vehicles/:id/print" component={VehiclePrint} />
+          <Route path="/vehicles/:id/ai-advice" component={VehicleAiAdvice} />
+          <Route path="/clubs" component={ClubsList} />
+          <Route path="/clubs/invite/:code" component={ClubInvite} />
+          <Route path="/clubs/new" component={ClubForm} />
+          <Route path="/clubs/:id/garage" component={ClubGarage} />
+          <Route path="/clubs/:id/forum/:postId" component={ClubForumPost} />
+          <Route path="/clubs/:id/forum" component={ClubForum} />
+          <Route path="/clubs/:id/dashboard" component={ClubDashboard} />
+          <Route path="/clubs/:id/events/new" component={ClubEventForm} />
+          <Route path="/clubs/:id/events/:eventId/edit" component={ClubEventForm} />
+          <Route path="/clubs/:id/events/:eventId" component={ClubEventDetail} />
+          <Route path="/clubs/:id/events" component={ClubEvents} />
+          <Route path="/clubs/:id/marketplace" component={ClubMarketplace} />
+          <Route path="/clubs/:id/audit-log" component={ClubAuditLog} />
+          <Route path="/clubs/:id/edit" component={ClubForm} />
+          <Route path="/clubs/:id" component={ClubDetail} />
+          <Route path="/admin" component={Admin} />
+          <Route path="/membership-card" component={MembershipCard} />
+          <Route path="/org/settings" component={TenantSettings} />
+          <Route path="/tenant-invite/:code" component={TenantInvite} />
+          <Route path="/tenant-new" component={TenantNew} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/help" component={Help} />
+          <Route path="/billing" component={Billing} />
+          <Route path="/garage/:username" component={PublicGarage} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
     </Layout>
   );
 }

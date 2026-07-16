@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Car, Wrench, Banknote, Route, ArrowRight, Users,
@@ -16,7 +16,8 @@ import {
   useListClubs,
   getListClubsQueryKey,
 } from "@workspace/api-client-react";
-import { LoadingState, ErrorState } from "@/components/ui-states";
+import { keepPreviousData } from "@tanstack/react-query";
+import { DashboardSkeleton, ErrorState } from "@/components/ui-states";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
@@ -49,7 +50,7 @@ function useCountUp(target: number, duration = 1200, trigger: boolean) {
   return value;
 }
 
-function StatCard({
+const StatCard = memo(function StatCard({
   icon: Icon,
   label,
   value,
@@ -112,9 +113,9 @@ function StatCard({
     return <Link href={href}>{card}</Link>;
   }
   return card;
-}
+});
 
-function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: string; model: string; year: number; type: string; color?: string | null; mileage?: number | null; imageUrl?: string | null }; delay?: number }) {
+const VehicleCard = memo(function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: string; model: string; year: number; type: string; color?: string | null; mileage?: number | null; imageUrl?: string | null }; delay?: number }) {
   const locale = getCurrentLocale();
   const isMoto = vehicle.type === "motorcycle";
   return (
@@ -154,7 +155,7 @@ function VehicleCard({ vehicle, delay = 0 }: { vehicle: { id: number; make: stri
       </Link>
     </motion.div>
   );
-}
+});
 
 export default function Dashboard() {
   const { name, tenantName, isPersonalTenant } = useUserAuth();
@@ -162,23 +163,23 @@ export default function Dashboard() {
   const locale = getCurrentLocale();
 
   const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useGetDashboardStats({
-    query: { queryKey: getGetDashboardStatsQueryKey() },
+    query: { queryKey: getGetDashboardStatsQueryKey(), staleTime: 60_000, placeholderData: keepPreviousData },
   });
   const { data: activity, isLoading: activityLoading, isError: activityError, refetch: refetchActivity } = useGetRecentActivity({
-    query: { queryKey: getGetRecentActivityQueryKey() },
+    query: { queryKey: getGetRecentActivityQueryKey(), staleTime: 60_000, placeholderData: keepPreviousData },
   });
   const { data: vehicles, isLoading: vehiclesLoading } = useListVehicles({
-    query: { queryKey: getListVehiclesQueryKey() },
+    query: { queryKey: getListVehiclesQueryKey(), staleTime: 60_000, placeholderData: keepPreviousData },
   });
   const { data: clubs } = useListClubs(
     {},
     { query: { queryKey: getListClubsQueryKey({}) } }
   );
 
-  const isLoading = statsLoading || activityLoading || vehiclesLoading;
+  const initialLoading = (statsLoading && !stats) || (activityLoading && !activity) || (vehiclesLoading && !vehicles);
   const isError = statsError || activityError;
 
-  if (isLoading) return <LoadingState message={t("dashboard.loading")} />;
+  if (initialLoading) return <DashboardSkeleton />;
   if (isError) return <ErrorState onRetry={() => { refetchStats(); refetchActivity(); }} />;
 
   const firstName = name?.split(" ")[0] ?? t("dashboard.defaultName");

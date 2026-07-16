@@ -11,11 +11,11 @@ export function LoadingState({ message = "Laster..." }: { message?: string }) {
   );
 }
 
-export function ErrorState({ 
-  title = "Noe gikk galt", 
-  message = "Kunne ikke laste data.", 
-  onRetry 
-}: { 
+export function ErrorState({
+  title = "Noe gikk galt",
+  message = "Kunne ikke laste data.",
+  onRetry,
+}: {
   title?: string;
   message?: string;
   onRetry?: () => void;
@@ -40,9 +40,9 @@ export function EmptyState({
   icon: Icon = FileBox,
   title,
   description,
-  action
+  action,
 }: {
-  icon?: any;
+  icon?: React.ElementType;
   title: string;
   description: string;
   action?: ReactNode;
@@ -55,6 +55,95 @@ export function EmptyState({
       <h3 className="text-lg font-bold mb-2">{title}</h3>
       <p className="text-sm text-muted-foreground max-w-sm mb-6">{description}</p>
       {action}
+    </div>
+  );
+}
+
+/* ── Skeleton primitives ─────────────────────────────────────── */
+function Bone({ className = "" }: { className?: string }) {
+  return <div className={`bg-muted/50 rounded-xl ${className}`} />;
+}
+
+/**
+ * Shown by <Suspense> while a lazy route chunk is being downloaded.
+ * Renders inside the Layout content area.
+ */
+export function PageSkeleton() {
+  return (
+    <div className="p-2 space-y-5 animate-pulse max-w-6xl mx-auto">
+      <Bone className="h-8 w-1/3" />
+      <Bone className="h-4 w-1/2 opacity-60" />
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 mt-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Bone key={i} className="h-32" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Mirrors the Dashboard layout — shown on first load instead of a spinner.
+ * Subsequent refetches use keepPreviousData so the dashboard stays visible.
+ */
+export function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen space-y-8 pb-12 animate-pulse">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-2">
+        <div className="space-y-2.5">
+          <Bone className="h-3 w-20" />
+          <Bone className="h-9 w-56" />
+          <Bone className="h-3 w-44 opacity-60" />
+        </div>
+        <Bone className="h-10 w-36" />
+      </div>
+      {/* Trial banner */}
+      <Bone className="h-20 rounded-2xl" />
+      {/* 4 stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Bone key={i} className="h-28 rounded-2xl" />
+        ))}
+      </div>
+      {/* Main grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 space-y-4">
+          <Bone className="h-4 w-28" />
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Bone key={i} className="h-44 rounded-2xl" />
+            ))}
+          </div>
+          <Bone className="h-40 rounded-2xl" />
+        </div>
+        <div className="space-y-4">
+          <Bone className="h-4 w-28" />
+          <Bone className="h-60 rounded-2xl" />
+          <Bone className="h-28 rounded-2xl" />
+          <Bone className="h-36 rounded-2xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Mirrors the vehicle list page layout — 6 card placeholders */
+export function VehicleListSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <Bone className="h-8 w-44 rounded-xl" />
+          <Bone className="h-4 w-64 opacity-60 rounded-full" />
+        </div>
+        <Bone className="h-10 w-36 rounded-xl" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Bone key={i} className="h-40 rounded-xl border border-border/30" />
+        ))}
+      </div>
     </div>
   );
 }
