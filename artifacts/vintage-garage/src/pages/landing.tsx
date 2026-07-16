@@ -222,7 +222,7 @@ export default function LandingPage() {
           src="/hero-fjord.png"
           alt="1964 Volvo P1800 on a Norwegian mountain road"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: "50% 65%" }}
+          style={{ objectPosition: "50% 42%" }}
           draggable={false}
         />
         {/* Gradient — only at the very bottom, nothing above */}
