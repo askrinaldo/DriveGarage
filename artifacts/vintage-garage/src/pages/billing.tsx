@@ -126,8 +126,14 @@ function SubscriptionStatusCard() {
   const expiresAt         = sub?.expiresAt
     ? new Date(sub.expiresAt).toLocaleDateString("no-NO") : null;
   const vippsConfigured   = sub?.vippsConfigured ?? false;
-  const canStart          = vippsConfigured && status !== "active";
-  const canCancel         = ["active", "past_due"].includes(status ?? "");
+  // Hide "Aktiver via Vipps" while the user still has valid canceled-period access.
+  // Once the period expires they can re-subscribe.
+  const canceledWithPeriodAccess =
+    status === "canceled" &&
+    !!sub?.currentPeriodEndsAt &&
+    new Date(sub.currentPeriodEndsAt) > new Date();
+  const canStart  = vippsConfigured && status !== "active" && !canceledWithPeriodAccess;
+  const canCancel = ["active", "past_due"].includes(status ?? "");
 
   async function handleStartAgreement() {
     setStarting(true);

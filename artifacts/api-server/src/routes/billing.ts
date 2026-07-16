@@ -459,7 +459,10 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
       // ── Agreement-level events ─────────────────────────────────────────────
       const newStatus = mapWebhookEventToStatus(event.eventType);
       if (newStatus && newStatus !== "active") {
-        // "active" from agreement-activated is handled normally
+        // "active" from agreement-activated is handled normally.
+        // For "canceled" (agreement-stopped): always set cancelAtPeriodEnd=true so that
+        // the user retains access until currentPeriodEndsAt even if they cancelled directly
+        // in the Vipps app without going through the DriveGarage cancel flow.
         await updateSubscriptionStatus({
           subscriptionId:      sub.id,
           userId:              sub.userId,
@@ -467,6 +470,7 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
           vippsAgreementId:    agreementId,
           currentPeriodEndsAt: sub.currentPeriodEndsAt ?? undefined,
           canceledAt:          newStatus === "canceled" ? now : sub.canceledAt ?? undefined,
+          cancelAtPeriodEnd:   newStatus === "canceled" ? true : undefined,
         });
         req.log.info({ userId: sub.userId, agreementId, newStatus }, "Subscription status updated via webhook");
         statusChanged = true;
