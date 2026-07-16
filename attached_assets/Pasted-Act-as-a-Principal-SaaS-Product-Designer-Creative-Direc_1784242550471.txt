@@ -1,0 +1,580 @@
+Act as a Principal SaaS Product Designer, Creative Director, Conversion Rate Optimization Specialist, Senior UX Architect and Senior Frontend Engineer.
+
+Project:
+DriveGarage
+
+This phase redesigns ONLY the PUBLIC LANDING PAGE.
+
+IMPORTANT
+
+The attached image is ONLY inspiration.
+
+DO NOT recreate or copy it.
+
+Instead use it to understand:
+
+• visual hierarchy
+• spacing
+• typography
+• premium feeling
+• layout rhythm
+• section order
+• trust building
+• visual balance
+
+DriveGarage must keep its own identity.
+
+The final result should feel BETTER than the inspiration.
+
+------------------------------------------------------------
+
+STRICT RULES
+
+Do NOT modify:
+
+- backend
+- authentication
+- authorization
+- billing
+- Vipps
+- API
+- database
+- routing
+- permissions
+- business logic
+
+Frontend/UI only.
+
+All existing buttons and functionality must continue working.
+
+Do NOT remove functionality.
+
+------------------------------------------------------------
+
+GOAL
+
+The landing page should no longer feel AI-generated or template based.
+
+It should feel like a premium Norwegian SaaS product that immediately creates trust.
+
+The page should make users think:
+
+"This is exactly where I want to store my vehicle history."
+
+The experience should feel emotional without becoming cheesy.
+
+Think:
+
+Porsche
+
+Apple
+
+Tesla
+
+Notion
+
+Linear
+
+BMW Connected
+
+NOT:
+
+Generic SaaS templates.
+
+------------------------------------------------------------
+
+GENERAL DESIGN
+
+Completely redesign the landing page.
+
+You have permission to rebuild the layout from scratch.
+
+Keep the existing branding.
+
+Use the design language already implemented inside the authenticated application.
+
+Everything should feel like ONE product.
+
+Not a marketing page attached to another application.
+
+------------------------------------------------------------
+
+VISUAL STYLE
+
+Premium dark appearance
+
+Large spacing
+
+High contrast
+
+Beautiful typography
+
+Subtle gradients
+
+Large images
+
+Premium cards
+
+Smooth animations
+
+Excellent hierarchy
+
+Modern but timeless.
+
+------------------------------------------------------------
+
+PAGE STRUCTURE
+
+Redesign the ENTIRE landing page.
+
+Not only the hero.
+
+The complete flow should become:
+
+------------------------------------------------------------
+
+1.
+
+Navigation
+
+Premium transparent navbar.
+
+Logo
+
+Features
+
+How it works
+
+Pricing
+
+FAQ
+
+Contact
+
+Login
+
+Create account
+
+Language selector
+
+Smooth scrolling.
+
+------------------------------------------------------------
+
+2.
+
+Hero
+
+Create an emotional hero.
+
+Large heading.
+
+Strong message.
+
+Examples of direction:
+
+Every vehicle has a story.
+
+Keep your vehicle history forever.
+
+Everything about your vehicle.
+
+One place.
+
+One timeline.
+
+Large CTA:
+
+Kom i gang
+
+Secondary CTA:
+
+Se hvordan det fungerer
+
+Large background image.
+
+Dark overlay.
+
+Subtle motion.
+
+------------------------------------------------------------
+
+3.
+
+Trust section
+
+Immediately below hero.
+
+Animated statistics.
+
+Examples:
+
+Vehicles managed
+
+Documents stored
+
+Service records
+
+Photos
+
+Community members
+
+Years preserved
+
+These should build credibility.
+
+------------------------------------------------------------
+
+4.
+
+Application Showcase
+
+One of the most important sections.
+
+Use REAL screenshots from DriveGarage.
+
+Never generate fake UI.
+
+Show:
+
+Dashboard
+
+Garage
+
+Vehicle page
+
+Service history
+
+Documents
+
+Clubs
+
+Display screenshots beautifully.
+
+Large overlapping layouts.
+
+Alternating sections.
+
+------------------------------------------------------------
+
+5.
+
+Features
+
+Replace generic feature cards.
+
+Instead create beautiful alternating sections.
+
+Each section should contain:
+
+Screenshot
+
+Headline
+
+Description
+
+CTA
+
+Possible topics:
+
+Digital service history
+
+Vehicle timeline
+
+Document archive
+
+Insurance overview
+
+Photo history
+
+Mileage
+
+Value tracking
+
+Multiple vehicles
+
+Community clubs
+
+------------------------------------------------------------
+
+6.
+
+How it works
+
+Very visual.
+
+Only three steps.
+
+1
+
+Create your garage
+
+2
+
+Add vehicles
+
+3
+
+Build your history forever
+
+Minimal text.
+
+Premium illustrations.
+
+------------------------------------------------------------
+
+7.
+
+Why DriveGarage?
+
+Compare against today's reality.
+
+Without DriveGarage
+
+Folders
+
+Receipts
+
+Paperwork
+
+Photos everywhere
+
+Forgotten service
+
+Lost value
+
+With DriveGarage
+
+Everything collected
+
+Searchable
+
+Safe
+
+Organized
+
+Always available
+
+------------------------------------------------------------
+
+8.
+
+Community
+
+Explain clubs.
+
+Show beautiful preview cards.
+
+Classic cars
+
+Motorcycles
+
+Brand clubs
+
+Local clubs
+
+Events
+
+Friends
+
+Invite system.
+
+------------------------------------------------------------
+
+9.
+
+Pricing
+
+IMPORTANT
+
+Update pricing.
+
+One plan only.
+
+DriveGarage Premium
+
+50 NOK/month
+
+Paid with Vipps.
+
+No free plan.
+
+No trial.
+
+No Stripe.
+
+Explain clearly what users receive.
+
+Strong CTA.
+
+------------------------------------------------------------
+
+10.
+
+FAQ
+
+Modern accordion.
+
+Examples:
+
+Can I cancel anytime?
+
+Who owns my data?
+
+Can I export my data?
+
+Can I manage several vehicles?
+
+How secure is DriveGarage?
+
+------------------------------------------------------------
+
+11.
+
+Final CTA
+
+Large emotional section.
+
+Strong message.
+
+Example direction:
+
+Your vehicle deserves its own history.
+
+Create your DriveGarage today.
+
+------------------------------------------------------------
+
+12.
+
+Footer
+
+Completely redesign.
+
+Professional SaaS footer.
+
+Include:
+
+Navigation
+
+Features
+
+Pricing
+
+FAQ
+
+Privacy
+
+Terms
+
+Cookies
+
+Support
+
+Contact
+
+Social placeholders
+
+Copyright
+
+------------------------------------------------------------
+
+MICRO INTERACTIONS
+
+Improve everything.
+
+Hover states
+
+Scroll reveal
+
+Fade animations
+
+Image transitions
+
+Button interactions
+
+Section transitions
+
+Cards
+
+Statistics
+
+------------------------------------------------------------
+
+PERFORMANCE
+
+Optimize rendering.
+
+Lazy load images.
+
+Avoid layout shifts.
+
+Prioritize above-the-fold rendering.
+
+Keep Lighthouse performance high.
+
+------------------------------------------------------------
+
+RESPONSIVE
+
+Desktop
+
+Tablet
+
+Mobile
+
+Every section must feel intentionally designed.
+
+------------------------------------------------------------
+
+VERY IMPORTANT
+
+Do NOT stop after redesigning the hero.
+
+Redesign the ENTIRE landing page.
+
+If an existing section feels generic:
+
+Replace it with a better section.
+
+Do NOT simply recolor it.
+
+The objective is to create a landing page that could realistically compete with premium SaaS companies.
+
+------------------------------------------------------------
+
+SUCCESS CRITERIA
+
+A first-time visitor should immediately understand:
+
+• what DriveGarage is
+
+• why it is valuable
+
+• why they should trust it
+
+• why they should pay for it
+
+• how to get started
+
+The page should feel handcrafted by a professional product design team.
+
+------------------------------------------------------------
+
+OUTPUT
+
+Return ONLY:
+
+• Files changed
+
+• Components updated
+
+• UX improvements
+
+• Performance improvements
+
+• Accessibility improvements
+
+• Typecheck result
+
+• Build result
