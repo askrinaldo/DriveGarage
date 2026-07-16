@@ -673,147 +673,130 @@ function GarageView({ vehicles }: { vehicles: VehicleSummary[] }) {
    GARAGE ONBOARDING — zero vehicles
 ══════════════════════════════════════════════════════════════════ */
 function GarageOnboarding({ firstName }: { firstName: string }) {
-  const steps = [
-    "Registrer regnr., årsmodell og kilometerstand",
-    "Last opp bilde av kjøretøyet ditt",
-    "Start ditt digitale servicehefte",
-    "Bli med i en klubb for entusiaster",
-  ];
   const features = [
-    { icon: Wrench,   title: "Servicehefte",    desc: "Full vedlikeholdshistorikk med dato og kostnader" },
-    { icon: FileText, title: "Dokumentasjon",   desc: "Kvitteringer, fakturaer og forsikringsdokumenter" },
-    { icon: Users,    title: "Klubber",          desc: "Koble deg til norske bil- og motorsykkelklubber" },
+    {
+      icon: Wrench,
+      title: "Digitalt servicehefte",
+      desc: "Full vedlikeholdshistorikk med dato, kostnad og kategori — for biler og motorsykler.",
+    },
+    {
+      icon: FileText,
+      title: "Dokumenter & kvitteringer",
+      desc: "Last opp fakturaer, forsikringspapirer og sertifikater samlet på ett sted.",
+    },
+    {
+      icon: Users,
+      title: "Klubber & fellesskap",
+      desc: "Koble deg til norske bil- og motorsykkelklubber og møt likesinnede entusiaster.",
+    },
   ];
 
   return (
-    <div className="space-y-10 pb-12">
-      {/* Hero */}
-      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card">
-          <div className="relative h-64 md:h-72 flex flex-col items-center justify-center bg-gradient-to-br from-muted/20 via-background to-sidebar px-8 text-center">
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.025] pointer-events-none select-none">
-              <Car style={{ width: 500, height: 500 }} className="text-foreground" />
-            </div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full border border-primary/5 pointer-events-none" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full border border-primary/[0.03] pointer-events-none" />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-              className="relative z-10 space-y-5"
+    <div className="pb-12">
+      {/* ── Centered hero ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+        className="flex flex-col items-center justify-center text-center pt-10 pb-14 px-6"
+      >
+        {/* Icon */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+          className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-7 shadow-xl shadow-primary/5"
+        >
+          <Wrench className="w-10 h-10 text-primary" />
+        </motion.div>
+
+        {/* Label */}
+        <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-3">
+          Garasjen min
+        </p>
+
+        {/* Headline */}
+        <h1 className="text-4xl md:text-5xl font-black text-foreground uppercase tracking-tight leading-[1.05] mb-4">
+          Din digitale garasje
+        </h1>
+
+        {/* Subtitle */}
+        <p className="text-[15px] text-muted-foreground/60 max-w-md leading-relaxed mb-8">
+          Hei {firstName}! Legg til ditt første kjøretøy og begynn å bygge
+          en komplett digital historikk.
+        </p>
+
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <Link href="/vehicles/new">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[13px] font-black uppercase tracking-wider shadow-lg shadow-primary/20"
             >
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
-                <Wrench className="w-8 h-8 text-primary" />
-              </div>
-              <div>
-                <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-2">Garasjen min</p>
-                <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase tracking-tight leading-tight">
-                  Din digitale garasje<br />
-                  <span className="text-primary">venter på deg</span>
-                </h1>
-                <p className="text-sm text-muted-foreground/60 mt-3 max-w-sm mx-auto">
-                  Hei {firstName}! Legg til ditt første kjøretøy og begynn å bygge en komplett digital historikk.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
-                <Link href="/vehicles/new">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-black uppercase tracking-wider shadow-lg shadow-primary/20"
-                  >
-                    <Plus className="w-4 h-4" /> Legg til kjøretøy
-                  </motion.button>
-                </Link>
-                <Link href="/clubs">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl border border-border/60 hover:border-border bg-transparent hover:bg-muted/20 transition-colors text-[12px] font-bold uppercase tracking-wide text-foreground/60"
-                  >
-                    <Users className="w-4 h-4" /> Utforsk klubber
-                  </motion.button>
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-border/30 border-t border-border/30">
-            {features.map(({ icon: Icon, title, desc }, i) => (
-              <motion.div
-                key={title}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + i * 0.08, duration: 0.4 }}
-                className="px-4 py-4 flex items-start gap-2.5"
-              >
-                <Icon className="w-3.5 h-3.5 text-primary/50 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[10px] font-black text-foreground/60 uppercase tracking-wide">{title}</p>
-                  <p className="text-[10px] text-muted-foreground/40 mt-0.5 leading-snug hidden md:block">{desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+              <Plus className="w-4 h-4" />
+              Legg til kjøretøy
+            </motion.button>
+          </Link>
+          <Link href="/clubs">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl border border-border/60 hover:border-border bg-transparent hover:bg-muted/20 transition-colors text-[13px] font-bold uppercase tracking-wide text-foreground/60"
+            >
+              <Users className="w-4 h-4" />
+              Utforsk klubber
+            </motion.button>
+          </Link>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25, duration: 0.5 }}>
-          <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest mb-4">Kom i gang på 4 steg</h2>
-          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-            {steps.map((step, i) => (
-              <div key={step} className="flex items-center gap-4 px-5 py-4 border-b border-border/30 last:border-0">
-                <div className="w-6 h-6 rounded-full border-2 border-border/40 flex items-center justify-center shrink-0">
-                  <span className="text-[10px] font-black text-muted-foreground/40">{i + 1}</span>
-                </div>
-                <p className="text-[12.5px] font-semibold text-foreground/60">{step}</p>
-              </div>
-            ))}
-            <div className="px-5 py-4 bg-primary/[0.03]">
-              <Link href="/vehicles/new">
-                <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-bold uppercase tracking-wide">
-                  <Plus className="w-3.5 h-3.5" /> Start nå — legg til kjøretøy
-                </button>
-              </Link>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
-          <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest mb-4">Det du låser opp</h2>
-          <div className="space-y-2.5">
-            {[
-              "Fullstendig servicehistorikk med tidslinje",
-              "Kvitteringer og dokumentlagring",
-              "Kilometerstand og vedlikeholdsintervaller",
-              "Eksportér til PDF og del med mekanikere",
-              "Finn verdi og historikk på Finn.no",
-              "Bli med i norske entusiastklubber",
-            ].map((item, i) => (
-              <motion.div
-                key={item}
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 + i * 0.06, duration: 0.35 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border/40 bg-card"
-              >
-                <CheckCircle2 className="w-4 h-4 text-primary/60 shrink-0" />
-                <span className="text-[12.5px] font-semibold text-foreground/70">{item}</span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
+      {/* ── Feature cards ── */}
       <motion.div
-        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}
-        className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        {features.map(({ icon: Icon, title, desc }, i) => (
+          <motion.div
+            key={title}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 + i * 0.07, duration: 0.4 }}
+            className="rounded-2xl border border-border/40 bg-card p-6 flex flex-col gap-4"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center shrink-0">
+              <Icon className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[13px] font-black text-foreground/90 uppercase tracking-wide mb-1.5">{title}</p>
+              <p className="text-[13px] text-muted-foreground/55 leading-relaxed">{desc}</p>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* ── Bottom CTA strip ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.45, duration: 0.4 }}
+        className="mt-6 rounded-2xl border border-primary/15 bg-primary/5 px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4"
       >
         <div>
-          <p className="text-[13px] font-black text-foreground/80 uppercase tracking-tight">Klar til å starte?</p>
-          <p className="text-[11px] text-muted-foreground/60 mt-0.5">Det tar under 2 minutter å registrere ditt første kjøretøy.</p>
+          <p className="text-[13px] font-black text-foreground/80 uppercase tracking-tight">
+            Klar til å starte?
+          </p>
+          <p className="text-[12px] text-muted-foreground/55 mt-0.5">
+            Det tar under 2 minutter å registrere ditt første kjøretøy.
+          </p>
         </div>
         <Link href="/vehicles/new">
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-[12px] font-bold uppercase tracking-wide shrink-0 hover:scale-[1.02] active:scale-[0.98]">
-            <Plus className="w-4 h-4" /> Legg til kjøretøy <ArrowRight className="w-3.5 h-3.5" />
+          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 text-[12px] font-bold uppercase tracking-wide shrink-0 hover:scale-[1.02] active:scale-[0.98]">
+            <Plus className="w-4 h-4" />
+            Legg til kjøretøy
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </Link>
       </motion.div>
