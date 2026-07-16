@@ -45,7 +45,18 @@ function SubscriptionStatusCard() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [reconciling, setReconciling] = useState(false);
   const [reconcileMessage, setReconcileMessage] = useState<string | null>(null);
-  const reconcileAttempts = useRef(0);
+  const reconcileAttempts        = useRef(0);
+  const hasTriggeredReconcile    = useRef(false);
+
+  // On mount: if status is pending, force a fresh subscription check.
+  // GET /billing/subscription now reconciles against Vipps automatically,
+  // so this causes the billing page to show the active state without any user action.
+  useEffect(() => {
+    if (!hasTriggeredReconcile.current && sub?.status === "pending_payment_setup") {
+      hasTriggeredReconcile.current = true;
+      void invalidate();
+    }
+  }, [sub?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detect return from Vipps redirect and reconcile subscription status.
   // Vipps appends ?agreementId=agr_xxx to the merchantRedirectUrl.
@@ -117,17 +128,6 @@ function SubscriptionStatusCard() {
   const vippsConfigured   = sub?.vippsConfigured ?? false;
   const canStart          = vippsConfigured && status !== "active";
   const canCancel         = ["active", "past_due"].includes(status ?? "");
-
-  // On mount: if status is pending, force a fresh subscription check.
-  // GET /billing/subscription now reconciles against Vipps automatically,
-  // so this causes the billing page to show the active state without any user action.
-  const hasTriggeredReconcile = useRef(false);
-  useEffect(() => {
-    if (!hasTriggeredReconcile.current && sub?.status === "pending_payment_setup") {
-      hasTriggeredReconcile.current = true;
-      void invalidate();
-    }
-  }, [sub?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleStartAgreement() {
     setStarting(true);
