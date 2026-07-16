@@ -218,25 +218,33 @@ export default function LandingPage() {
       {/* ══ HERO ══ */}
       <section className="relative h-screen min-h-[680px] flex flex-col justify-end overflow-hidden">
         {/* Photo — let it breathe */}
+        {/* Photo: full width, natural 1:1 ratio, vertically centred to show car + mountains */}
         <img
           src="/hero-fjord.png"
           alt="1964 Volvo P1800 on a Norwegian mountain road"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: "50% 42%" }}
           draggable={false}
-        />
-        {/* Gradient — only at the very bottom, nothing above */}
-        <div
-          className="absolute inset-0"
           style={{
-            background: "linear-gradient(to top, rgba(8,8,8,1) 0%, rgba(8,8,8,0.7) 22%, rgba(8,8,8,0.15) 50%, rgba(0,0,0,0) 75%)",
+            position: "absolute",
+            left: 0,
+            width: "100%",
+            height: "auto",
+            top: "50%",
+            transform: "translateY(-43%)",
+            imageRendering: "auto",
           }}
         />
-        {/* Subtle left vignette */}
+        {/* Bottom gradient for text legibility — lighter than before */}
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(to right, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 50%)",
+            background: "linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.65) 18%, rgba(8,8,8,0.08) 45%, rgba(0,0,0,0) 68%)",
+          }}
+        />
+        {/* Left vignette — very subtle */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(to right, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 45%)",
           }}
         />
 
