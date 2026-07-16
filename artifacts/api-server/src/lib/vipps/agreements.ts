@@ -32,7 +32,7 @@ const BASE = "/recurring/v3/agreements";
  * The user must approve it in the Vipps app via vippsConfirmationUrl.
  * Poll GET /recurring/v3/agreements/{agreementId} for status — do not rely on redirect.
  *
- * Pricing: fixed 100 NOK/month (10 000 øre), LEGACY type, monthly interval.
+ * Pricing: fixed 50 NOK/month (5 000 øre), LEGACY type, monthly interval.
  * No initialCharge — first charge is scheduled after agreement becomes ACTIVE.
  */
 export async function createVippsAgreement(params: {
@@ -45,7 +45,7 @@ export async function createVippsAgreement(params: {
   const body: VippsCreateAgreementRequest = {
     pricing: {
       type:     "LEGACY",
-      amount:   10_000,   // 100 NOK in øre
+      amount:   5_000,    // 50 NOK in øre
       currency: "NOK",
     },
     interval: {
@@ -55,7 +55,7 @@ export async function createVippsAgreement(params: {
     merchantAgreementUrl: creds.returnUrl,   // "My page" — required for Norwegian merchants
     merchantRedirectUrl:  creds.returnUrl,   // redirect after approval/rejection
     productName:          "DriveGarage",
-    productDescription:   "Full tilgang til DriveGarage for 100 kr per måned.",
+    productDescription:   "Full tilgang til DriveGarage for 50 kr per måned.",
   };
 
   return vippsRequest<VippsCreateAgreementResponse>({

@@ -18,7 +18,7 @@ const FEATURES = [
 const FAQ = [
   {
     q: "Finnes det en gratis prøveperiode?",
-    a: "Nei. DriveGarage har én plan til 100 kr/mnd. Du godkjenner en Vipps-betalingsavtale ved oppstart — ingen betaling trekkes uten eksplisitt godkjenning i Vipps-appen.",
+    a: "Nei. DriveGarage har én plan til 50 kr/mnd. Du godkjenner en Vipps-betalingsavtale ved oppstart — ingen betaling trekkes uten eksplisitt godkjenning i Vipps-appen.",
   },
   {
     q: "Kan jeg kansellere når som helst?",
@@ -62,7 +62,7 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Full tilgang til DriveGarage for 100 kr per måned. Betaling via Vipps.
+            Full tilgang til DriveGarage for 50 kr per måned. Betaling via Vipps.
           </p>
         </div>
 
@@ -89,7 +89,7 @@ export default function PricingPage() {
               </div>
               <div className="text-right shrink-0">
                 <div className="flex items-baseline gap-1 justify-end">
-                  <span className="text-4xl font-black text-foreground">100</span>
+                  <span className="text-4xl font-black text-foreground">50</span>
                   <span className="text-lg font-semibold text-foreground">kr</span>
                   <span className="text-muted-foreground text-sm">/mnd</span>
                 </div>

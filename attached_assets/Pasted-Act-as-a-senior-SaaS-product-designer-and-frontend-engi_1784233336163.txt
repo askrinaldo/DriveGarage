@@ -1,0 +1,90 @@
+Act as a senior SaaS product designer and frontend engineer.
+
+Project: DriveGarage
+
+Goal:
+Update all public-facing subscription information to the final business model.
+
+Final model:
+- One DriveGarage subscription
+- 50 NOK per month
+- No free trial
+- No permanent free plan
+- Payment and subscription management through Vipps
+- No Stripe references
+- Do not say unlimited
+- Do not display storage, MB or GB limits
+
+Implement directly. Do not return a planning-only response.
+
+Tasks:
+
+1. Audit all frontend and translation files for outdated pricing or subscription wording:
+- 100 kr
+- 49 kr
+- 69 kr
+- 99 kr
+- 129 kr
+- free trial
+- 7 dager gratis
+- Standard
+- Premium
+- Gratis-plan
+- Vipps kommer snart
+- Stripe
+
+2. Update the landing page:
+- Clearly present DriveGarage as one subscription at 50 kr/mnd
+- Add a polished pricing/CTA section
+- Suggested wording:
+  “Full kontroll på kjøretøy, servicehistorikk og dokumentasjon – for 50 kr per måned.”
+  “Abonnementet administreres og betales trygt med Vipps.”
+- CTA:
+  “Kom i gang”
+- Do not claim that payment is active unless production billing enforcement is enabled.
+
+3. Update /pricing:
+- One plan only
+- DriveGarage
+- 50 kr/mnd
+- no trial
+- no Standard/Premium comparison
+- no free tier
+- no storage limits
+- no unlimited wording
+
+Include useful feature wording:
+- opptil 10 kjøretøy
+- servicehistorikk
+- kvitteringer og dokumenter
+- PDF-rapporter
+- tur- og kjørelengdelogg
+- klubber
+- AI-assistent innenfor fair-use
+
+4. Update /billing:
+- show 50 kr/mnd everywhere
+- active users see correct active/canceled state
+- users without subscription see “Aktiver med Vipps”
+- no outdated trial or tier copy
+- canceled users with valid period access must not see “Aktiver med Vipps”
+
+5. Update all Norwegian, English, Swedish and Danish translations so no obsolete price or plan remains.
+
+6. Update metadata, SEO text and FAQ content if they mention old pricing or trial.
+
+7. Verify:
+- landing page
+- pricing page
+- billing page
+- mobile layout
+- no old prices remain in user-visible frontend
+- no Stripe text remains
+- frontend typecheck/build passes
+
+Return:
+- files changed
+- old wording removed
+- final landing/pricing copy
+- screenshots if available
+- typecheck/build result

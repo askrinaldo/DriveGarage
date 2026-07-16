@@ -309,7 +309,7 @@ export default function LandingPage() {
         <section id="priser" className="py-32 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-950/15 to-transparent" />
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="text-center mb-20">
+            <div className="text-center mb-16">
               <div className="inline-block px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
                 {t("landing.pricing.badge")}
               </div>
@@ -317,47 +317,22 @@ export default function LandingPage() {
               <p className="text-[#8899bb] max-w-xl mx-auto text-lg">{t("landing.pricing.subtitle")}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-center">
-
-              {/* Free */}
-              <Card className="bg-white/[0.025] border-white/[0.08] backdrop-blur-md rounded-2xl">
-                <CardContent className="p-8">
-                  <p className="text-xs font-semibold text-[#8899bb] uppercase tracking-wider mb-2">{t("landing.pricing.free.label")}</p>
-                  <div className="text-4xl font-bold text-white mb-1">
-                    {t("landing.pricing.free.price")}<span className="text-base text-[#8899bb] font-normal">{t("landing.pricing.free.period")}</span>
-                  </div>
-                  <p className="text-xs text-[#8899bb] mb-8">{t("landing.pricing.free.forever")}</p>
-                  <ul className="space-y-3 mb-8 text-sm">
-                    {[t("landing.pricing.free.f1"), t("landing.pricing.free.f2"), t("landing.pricing.free.f3")].map((f) => (
-                      <li key={f} className="flex items-center gap-2.5 text-[#c5d0e8]">
-                        <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />{f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href="/sign-up">
-                    <Button variant="outline" className="w-full bg-white/[0.05] border-white/[0.10] text-white hover:bg-white/[0.10] rounded-xl">
-                      {t("landing.pricing.free.cta")}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-
-              {/* Premium */}
-              <Card className="bg-white/[0.04] border-indigo-500/40 backdrop-blur-xl relative rounded-2xl shadow-[0_0_60px_rgba(99,102,241,0.15)] scale-[1.03] z-10">
+            <div className="max-w-md mx-auto">
+              <Card className="bg-white/[0.04] border-indigo-500/40 backdrop-blur-xl relative rounded-2xl shadow-[0_0_60px_rgba(99,102,241,0.15)]">
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white text-xs font-semibold px-5 py-1.5 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.4)]">
-                  {t("landing.pricing.popular")}
+                  {t("landing.pricing.plan.badge")}
                 </div>
-                <CardContent className="p-8">
-                  <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">{t("landing.pricing.premium.label")}</p>
-                  <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-1">
-                    {t("landing.pricing.premium.price")}<span className="text-base text-[#8899bb] font-normal">{t("landing.pricing.premium.period")}</span>
+                <CardContent className="p-8 pt-10">
+                  <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">{t("landing.pricing.plan.label")}</p>
+                  <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-6">
+                    {t("landing.pricing.plan.price")}<span className="text-base text-[#8899bb] font-normal">{t("landing.pricing.plan.period")}</span>
                   </div>
-                  <p className="text-xs text-[#8899bb] mb-8">{t("landing.pricing.premium.yearly")}</p>
                   <ul className="space-y-3 mb-8 text-sm">
                     {[
-                      t("landing.pricing.premium.f1"), t("landing.pricing.premium.f2"),
-                      t("landing.pricing.premium.f3"), t("landing.pricing.premium.f4"),
-                      t("landing.pricing.premium.f5"),
+                      t("landing.pricing.plan.f1"), t("landing.pricing.plan.f2"),
+                      t("landing.pricing.plan.f3"), t("landing.pricing.plan.f4"),
+                      t("landing.pricing.plan.f5"), t("landing.pricing.plan.f6"),
+                      t("landing.pricing.plan.f7"),
                     ].map((f) => (
                       <li key={f} className="flex items-center gap-2.5 text-white">
                         <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />{f}
@@ -366,33 +341,7 @@ export default function LandingPage() {
                   </ul>
                   <Link href="/sign-up">
                     <Button className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white border-0 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.3)] h-11">
-                      {t("landing.pricing.premium.cta")}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-
-              {/* Standard */}
-              <Card className="bg-white/[0.025] border-white/[0.08] backdrop-blur-md rounded-2xl">
-                <CardContent className="p-8">
-                  <p className="text-xs font-semibold text-[#8899bb] uppercase tracking-wider mb-2">{t("landing.pricing.standard.label")}</p>
-                  <div className="text-4xl font-bold text-white mb-1">
-                    {t("landing.pricing.standard.price")}<span className="text-base text-[#8899bb] font-normal">{t("landing.pricing.standard.period")}</span>
-                  </div>
-                  <p className="text-xs text-[#8899bb] mb-8">{t("landing.pricing.standard.yearly")}</p>
-                  <ul className="space-y-3 mb-8 text-sm">
-                    {[
-                      t("landing.pricing.standard.f1"), t("landing.pricing.standard.f2"),
-                      t("landing.pricing.standard.f3"), t("landing.pricing.standard.f4"),
-                    ].map((f) => (
-                      <li key={f} className="flex items-center gap-2.5 text-[#c5d0e8]">
-                        <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />{f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href="/sign-up">
-                    <Button variant="outline" className="w-full bg-white/[0.05] border-white/[0.10] text-white hover:bg-white/[0.10] rounded-xl">
-                      {t("landing.pricing.standard.cta")}
+                      {t("landing.pricing.plan.cta")}
                     </Button>
                   </Link>
                 </CardContent>

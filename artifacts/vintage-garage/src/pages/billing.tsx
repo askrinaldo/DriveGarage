@@ -572,7 +572,7 @@ export default function Billing() {
       <div>
         <h2 className="text-lg font-bold text-foreground mb-1">{t("billing.choosePlan")}</h2>
         <p className="text-sm text-muted-foreground mb-5">
-          Full tilgang til DriveGarage for 100 kr per måned. Abonnementet administreres og betales med Vipps.
+          Full tilgang til DriveGarage for 50 kr per måned. Abonnementet administreres og betales med Vipps.
         </p>
 
         <div className="relative rounded-2xl border border-indigo-500/40 overflow-hidden">
@@ -591,7 +591,7 @@ export default function Billing() {
 
             <div className="mb-4">
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-foreground">100 kr</span>
+                <span className="text-3xl font-black text-foreground">50 kr</span>
                 <span className="text-muted-foreground text-sm">/mnd</span>
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">per bruker, per måned</p>
@@ -618,7 +618,7 @@ export default function Billing() {
           {[
             { step: "1", label: "Opprett konto og logg inn" },
             { step: "2", label: "Godkjenn Vipps-betalingsavtale" },
-            { step: "3", label: "Full tilgang for 100 kr/mnd" },
+            { step: "3", label: "Full tilgang for 50 kr/mnd" },
           ].map(({ step, label }) => (
             <div key={step} className="flex flex-col items-center text-center gap-2">
               <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-sm font-black shrink-0">

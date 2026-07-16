@@ -72,7 +72,7 @@ export default function PrivacyPage() {
         <p>
           Betalingsløsning er planlagt via <strong className="text-foreground">Vipps</strong>, men er ikke aktivert ennå.
           Ingen betalingsinformasjon samles inn eller behandles på nåværende tidspunkt.
-          Planlagt modell: 7 dagers gratis prøveperiode, deretter løpende betalingsavtale.
+          Planlagt modell: løpende betalingsavtale via Vipps for 50 kr per måned.
           Ingen betaling trekkes før brukeren tydelig har godkjent en betalingsavtale.
         </p>
         <p className="text-amber-300/80 text-xs">

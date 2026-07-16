@@ -22,7 +22,7 @@ export type { SubscriptionStatus };
 // ── Plan constants ────────────────────────────────────────────────────────────
 
 export const SUBSCRIPTION_PLAN    = "monthly_100" as const;
-export const PLAN_PRICE_NOK       = 100;
+export const PLAN_PRICE_NOK       = 50;
 export const PLAN_DISPLAY_NAME    = "DriveGarage";
 
 // ── Fair-use limits (internal — not marketed as storage limits) ───────────────

@@ -75,7 +75,7 @@ export default function TermsPage() {
         </p>
         <LegalList items={[
           "Betalingsløsning via Vipps — krever separat godkjenning fra brukeren",
-          "7 dagers gratis prøveperiode planlegges — ingen betalingsinformasjon innhentes i prøveperioden",
+          "Én plan: 50 kr per måned — ingen gratis prøveperiode",
           "Ingen betaling trekkes før brukeren tydelig har godkjent en betalingsavtale (Vipps-avtale)",
           "Priser oppgis inkl. MVA der det er aktuelt",
           "Oppsigelse kan gjøres når som helst; tilgang beholdes til periodens slutt",
