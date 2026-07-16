@@ -1,0 +1,387 @@
+Act as the Lead Product Designer and Creative Director for DriveGarage.
+
+We are redesigning ONLY the public landing page.
+
+This is the single most important page in the entire application.
+
+It must NOT feel AI generated.
+
+Forget every previous landing page you have created.
+
+Start over from scratch.
+
+------------------------------------------------------------
+
+IMPORTANT
+
+The attached image is our preferred visual direction.
+
+The websites listed below are ONLY references.
+
+DO NOT COPY THEM.
+
+Instead study them and understand WHY they feel premium.
+
+Use each website for inspiration only.
+
+(Insert website references here)
+
+Reference 1:
+...
+
+Reference 2:
+...
+
+Reference 3:
+...
+
+Reference 4:
+...
+
+------------------------------------------------------------
+
+DO NOT MODIFY
+
+Backend
+
+Authentication
+
+Billing
+
+Vipps
+
+API
+
+Database
+
+Permissions
+
+Business logic
+
+Routes
+
+Only redesign the frontend.
+
+------------------------------------------------------------
+
+OUR GOAL
+
+We do NOT want a generic SaaS website.
+
+We do NOT want an AI generated landing page.
+
+We want something that looks like it was designed by an experienced product design team.
+
+The landing page should immediately communicate:
+
+Premium.
+
+Trust.
+
+Emotion.
+
+Quality.
+
+------------------------------------------------------------
+
+THE BIGGEST PROBLEM TODAY
+
+The current landing page has too much visual noise.
+
+It feels generated instead of designed.
+
+There are too many effects.
+
+Too much text.
+
+Too many cards.
+
+Too many sections.
+
+Too much scrolling.
+
+Too many things competing for attention.
+
+Remove all unnecessary elements.
+
+Less is more.
+
+------------------------------------------------------------
+
+DESIGN PRINCIPLES
+
+Think:
+
+Apple
+
+Porsche
+
+Rivian
+
+Linear
+
+Notion
+
+Tesla
+
+Every pixel must have a purpose.
+
+If you are unsure whether something should be added...
+
+Do NOT add it.
+
+------------------------------------------------------------
+
+ABSOLUTELY DO NOT USE
+
+Large background typography
+
+Gradient text
+
+Random glowing effects
+
+Glassmorphism everywhere
+
+Floating decorative graphics
+
+Huge marketing paragraphs
+
+Generic SaaS feature cards
+
+Fancy effects without purpose
+
+Anything that feels "AI generated"
+
+------------------------------------------------------------
+
+ABOVE THE FOLD
+
+Keep it extremely clean.
+
+Navigation
+
+↓
+
+Hero image
+
+↓
+
+Headline
+
+↓
+
+One short description
+
+↓
+
+Two buttons
+
+↓
+
+Small trust indicators
+
+Nothing else.
+
+------------------------------------------------------------
+
+THE HERO
+
+The hero image is the most important visual element.
+
+Use the attached image as inspiration.
+
+Large cinematic image.
+
+Dark overlay.
+
+Beautiful composition.
+
+Strong typography.
+
+One emotional headline.
+
+Maximum two short supporting sentences.
+
+Primary button:
+
+Kom i gang
+
+Secondary button:
+
+Se hvordan det fungerer
+
+------------------------------------------------------------
+
+THE PAGE SHOULD SELL VISUALLY
+
+Images are more important than text.
+
+Use large imagery.
+
+Use real application screenshots.
+
+Do not write long explanations.
+
+People should understand DriveGarage by looking at the page.
+
+------------------------------------------------------------
+
+SECTIONS
+
+Keep the landing page relatively short.
+
+Only include sections that truly improve conversion.
+
+Recommended order:
+
+Hero
+
+↓
+
+Trust
+
+↓
+
+Application screenshots
+
+↓
+
+How it works (3 steps)
+
+↓
+
+Features (maximum 6)
+
+↓
+
+Pricing
+
+↓
+
+FAQ
+
+↓
+
+Footer
+
+Nothing unnecessary.
+
+------------------------------------------------------------
+
+PRICING
+
+Only one subscription.
+
+DriveGarage Premium
+
+50 NOK/month
+
+Vipps
+
+No free plan.
+
+No trial.
+
+------------------------------------------------------------
+
+SCREENSHOTS
+
+Use REAL screenshots from the application.
+
+Do NOT invent fake UI.
+
+Present them beautifully.
+
+Use alternating layouts.
+
+Large images.
+
+Minimal text.
+
+------------------------------------------------------------
+
+WHITE SPACE
+
+One of the biggest goals.
+
+Increase spacing.
+
+Reduce clutter.
+
+Allow sections to breathe.
+
+Premium products never feel cramped.
+
+------------------------------------------------------------
+
+TYPOGRAPHY
+
+Fewer font sizes.
+
+Clear hierarchy.
+
+Large headings.
+
+Readable paragraphs.
+
+Excellent spacing.
+
+------------------------------------------------------------
+
+ANIMATIONS
+
+Very subtle.
+
+Professional.
+
+Fast.
+
+No flashy animations.
+
+No gimmicks.
+
+------------------------------------------------------------
+
+MOBILE
+
+The landing page must feel equally premium on desktop, tablet and mobile.
+
+------------------------------------------------------------
+
+SUCCESS CRITERIA
+
+The landing page should feel like a real product company built it.
+
+Not a template.
+
+Not AI generated.
+
+Not a marketing experiment.
+
+A visitor should:
+
+Understand DriveGarage in under 10 seconds.
+
+Want to create an account within 30 seconds.
+
+Feel that the product is worth paying for.
+
+------------------------------------------------------------
+
+OUTPUT
+
+Return ONLY:
+
+• Files changed
+
+• Components updated
+
+• UX improvements
+
+• Performance improvements
+
+• Accessibility improvements
+
+• Typecheck result
+
+• Build result
