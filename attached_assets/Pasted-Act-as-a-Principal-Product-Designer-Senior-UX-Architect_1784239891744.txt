@@ -1,0 +1,296 @@
+Act as a Principal Product Designer, Senior UX Architect and SaaS Onboarding Specialist.
+
+Project:
+DriveGarage
+
+This is a dedicated UX refinement phase.
+
+The current layout is good.
+
+Do NOT redesign the layout again.
+
+Instead focus entirely on making the application feel alive and premium when a user has little or no data.
+
+==================================================
+
+THIS IS A FRONTEND ONLY TASK
+
+Do NOT modify:
+
+Backend
+
+Database
+
+Authentication
+
+Authorization
+
+RBAC
+
+Vipps
+
+Billing
+
+Business Logic
+
+Routes
+
+API
+
+Permissions
+
+==================================================
+
+DO NOT REMOVE ANY FEATURES
+
+Everything currently implemented must remain.
+
+Do not redesign the overall page layout.
+
+Do not move major sections.
+
+This phase is about improving user experience.
+
+==================================================
+
+GOAL
+
+A brand new DriveGarage user should never feel that the application is empty.
+
+Instead the application should immediately teach the user what to do next.
+
+The experience should feel intentional.
+
+Every empty state should feel like part of the product instead of missing data.
+
+==================================================
+
+CREATE A COMPLETE FIRST-TIME USER EXPERIENCE
+
+Redesign every empty state in the authenticated application.
+
+Instead of showing:
+
+"No vehicles"
+
+"No activity"
+
+"No documents"
+
+"No service history"
+
+Create engaging onboarding experiences.
+
+==================================================
+
+GARAGE PAGE
+
+When the user has zero vehicles:
+
+Create a premium onboarding hero.
+
+Show:
+
+Welcome message
+
+Illustration or subtle automotive graphic
+
+Short explanation
+
+Primary action:
+
+Add first vehicle
+
+Secondary action:
+
+Explore Clubs
+
+Learn more
+
+Instead of feeling empty, the page should feel exciting.
+
+==================================================
+
+STATISTICS
+
+Never show dead cards with only "0".
+
+Instead display contextual helper text.
+
+Examples:
+
+Vehicles
+
+"Your first vehicle starts your digital history."
+
+Service
+
+"Log your first service to begin your timeline."
+
+Mileage
+
+"Appears after your first mileage update."
+
+Documents
+
+"Upload invoices, receipts and certificates."
+
+==================================================
+
+SERVICE HISTORY
+
+Instead of an empty container:
+
+Create a beautiful onboarding timeline.
+
+Examples:
+
+○ Add your first service
+
+○ Upload your first receipt
+
+○ Register your first mileage
+
+○ Complete your digital service history
+
+These should disappear automatically as real data replaces them.
+
+==================================================
+
+CLUBS
+
+Instead of saying:
+
+"You are not a member."
+
+Show:
+
+Recommended public clubs.
+
+Trending clubs.
+
+Popular brands.
+
+Suggested communities.
+
+Include:
+
+member count
+
+cover image
+
+Join button
+
+Search button
+
+==================================================
+
+DOCUMENTS
+
+Instead of an empty list:
+
+Show placeholders explaining:
+
+Invoices
+
+Insurance
+
+Receipts
+
+Photos
+
+Certificates
+
+Users should immediately understand what belongs here.
+
+==================================================
+
+ACTIVITY
+
+Replace empty activity feeds with:
+
+Helpful onboarding messages.
+
+Examples of future activity.
+
+Explain what will appear here.
+
+==================================================
+
+QUICK START
+
+Create a beautiful onboarding checklist.
+
+Example:
+
+□ Add first vehicle
+
+□ Upload first document
+
+□ Register first service
+
+□ Join a club
+
+□ Complete profile
+
+As each task is completed the checklist updates automatically.
+
+==================================================
+
+MICRO INTERACTIONS
+
+Improve:
+
+Hover effects
+
+Loading animations
+
+Skeleton loaders
+
+Success animations
+
+Smooth transitions
+
+Progress indicators
+
+Subtle motion
+
+Everything should feel polished.
+
+==================================================
+
+DESIGN GOAL
+
+Think:
+
+Apple
+
+Linear
+
+Notion
+
+Porsche
+
+Tesla
+
+Stripe
+
+The application should guide users naturally instead of presenting empty boxes.
+
+Users should immediately understand the value of DriveGarage.
+
+==================================================
+
+OUTPUT
+
+Return only:
+
+Files changed
+
+Components improved
+
+UX decisions
+
+Build result
+
+Typecheck result

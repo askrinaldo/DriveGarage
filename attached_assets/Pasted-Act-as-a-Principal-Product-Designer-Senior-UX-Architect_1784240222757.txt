@@ -1,0 +1,244 @@
+Act as a Principal Product Designer, Senior UX Architect and Automotive SaaS Design Lead.
+
+Project:
+DriveGarage
+
+This is a UX refinement phase.
+
+Do NOT redesign the entire page again.
+
+Instead improve the way users browse and switch between vehicles inside "Garasjen min".
+
+==================================================
+
+THIS PAGE ONLY
+
+Garasjen min
+
+Do NOT redesign:
+
+Dashboard
+
+Vehicle Detail
+
+Landing Page
+
+Billing
+
+Clubs
+
+Settings
+
+==================================================
+
+FRONTEND ONLY
+
+Do NOT modify:
+
+Backend
+
+Database
+
+Authentication
+
+Authorization
+
+RBAC
+
+Vipps
+
+Business Logic
+
+Routes
+
+API
+
+==================================================
+
+DO NOT REMOVE FUNCTIONALITY
+
+Every existing feature must remain.
+
+You may redesign HOW vehicles are presented.
+
+==================================================
+
+GOAL
+
+"Garasjen min" should feel like a premium digital garage.
+
+Users with multiple vehicles should enjoy browsing them.
+
+Switching between vehicles should feel effortless.
+
+==================================================
+
+REMOVE THE FEELING OF
+
+One lonely vehicle on a page.
+
+Instead create a true garage experience.
+
+==================================================
+
+VEHICLE SELECTOR
+
+Replace the current vehicle selection with a premium browsing experience.
+
+You may use:
+
+• Horizontal vehicle cards
+
+• Carousel
+
+• Scrollable vehicle gallery
+
+• Snap scrolling
+
+• Animated selector
+
+• Large thumbnail previews
+
+Every vehicle should display:
+
+Photo
+
+Brand
+
+Model
+
+Year
+
+Registration
+
+Mileage
+
+Status
+
+The active vehicle should be visually highlighted.
+
+Changing vehicle should update the hero smoothly.
+
+==================================================
+
+HERO
+
+The selected vehicle becomes the hero.
+
+Large photography.
+
+Large typography.
+
+Vehicle status.
+
+Quick actions.
+
+Service indicators.
+
+Insurance.
+
+Mileage.
+
+==================================================
+
+MULTIPLE VEHICLES
+
+Users should immediately understand:
+
+"I own several vehicles."
+
+The garage should feel alive.
+
+Avoid dropdowns.
+
+Avoid plain lists.
+
+Prefer visual browsing.
+
+==================================================
+
+EMPTY GARAGE
+
+Keep the onboarding experience already implemented.
+
+If zero vehicles exist:
+
+Do not show selectors.
+
+Only show onboarding.
+
+==================================================
+
+MICRO INTERACTIONS
+
+Improve:
+
+Hover effects
+
+Selection animations
+
+Smooth transitions
+
+Hero image transitions
+
+Loading skeletons
+
+Responsive scrolling
+
+==================================================
+
+DESIGN STYLE
+
+Think:
+
+Apple Photos
+
+Tesla App
+
+Netflix profile selector
+
+Porsche Garage
+
+Modern automotive SaaS.
+
+Premium.
+
+Elegant.
+
+Fast.
+
+==================================================
+
+IMPORTANT
+
+Do NOT remove:
+
+Buttons
+
+Actions
+
+Quick actions
+
+Existing navigation
+
+Permissions
+
+Business functionality
+
+Only improve presentation and interaction.
+
+==================================================
+
+OUTPUT
+
+Return only:
+
+Files changed
+
+Components redesigned
+
+UX decisions
+
+Build result
+
+Typecheck result
