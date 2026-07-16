@@ -20,6 +20,7 @@ export interface SubscriptionInfo {
   provider: "vipps";
   vippsConfigured: boolean;
   enforcementEnabled: boolean;
+  currentPeriodStartsAt: string | null;
   currentPeriodEndsAt: string | null;
   canceledAt: string | null;
   cancelAtPeriodEnd: boolean;
@@ -92,10 +93,14 @@ async function fetchSubscription(): Promise<SubscriptionInfo> {
 
 export function useSubscription() {
   return useQuery({
-    queryKey:  SUBSCRIPTION_QK,
-    queryFn:   fetchSubscription,
-    staleTime: 60_000,
-    retry:     false,
+    queryKey:           SUBSCRIPTION_QK,
+    queryFn:            fetchSubscription,
+    staleTime:          30_000,
+    gcTime:             5 * 60_000,
+    refetchOnMount:     true,
+    refetchOnWindowFocus: false,
+    retry:              false,
+    placeholderData:    (prev) => prev,
   });
 }
 

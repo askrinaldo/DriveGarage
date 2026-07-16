@@ -74,6 +74,7 @@ export interface EffectiveSubscription {
   source: "subscriptions_table" | "users_table" | "exemption" | "super_admin";
   plan: string | null;
   vippsAgreementId: string | null;
+  currentPeriodStartsAt: Date | null;
   currentPeriodEndsAt: Date | null;
   canceledAt: Date | null;
   cancelAtPeriodEnd: boolean;
@@ -111,29 +112,31 @@ export async function getEffectiveSubscription(
 
   if (!userRow) {
     return {
-      status:              "expired",
-      source:              "users_table",
-      plan:                null,
-      vippsAgreementId:    null,
-      currentPeriodEndsAt: null,
-      canceledAt:          null,
-      cancelAtPeriodEnd:   false,
-      expiresAt:           null,
-      subscriptionId:      null,
+      status:                "expired",
+      source:                "users_table",
+      plan:                  null,
+      vippsAgreementId:      null,
+      currentPeriodStartsAt: null,
+      currentPeriodEndsAt:   null,
+      canceledAt:            null,
+      cancelAtPeriodEnd:     false,
+      expiresAt:             null,
+      subscriptionId:        null,
     };
   }
 
   if (userRow.role === "super_admin") {
     return {
-      status:              "exempt_internal",
-      source:              "super_admin",
-      plan:                SUBSCRIPTION_PLAN,
-      vippsAgreementId:    null,
-      currentPeriodEndsAt: null,
-      canceledAt:          null,
-      cancelAtPeriodEnd:   false,
-      expiresAt:           null,
-      subscriptionId:      null,
+      status:                "exempt_internal",
+      source:                "super_admin",
+      plan:                  SUBSCRIPTION_PLAN,
+      vippsAgreementId:      null,
+      currentPeriodStartsAt: null,
+      currentPeriodEndsAt:   null,
+      canceledAt:            null,
+      cancelAtPeriodEnd:     false,
+      expiresAt:             null,
+      subscriptionId:        null,
     };
   }
 
@@ -156,15 +159,16 @@ export async function getEffectiveSubscription(
 
   if (exemption) {
     return {
-      status:              "exempt_internal",
-      source:              "exemption",
-      plan:                SUBSCRIPTION_PLAN,
-      vippsAgreementId:    null,
-      currentPeriodEndsAt: null,
-      canceledAt:          null,
-      cancelAtPeriodEnd:   false,
-      expiresAt:           null,
-      subscriptionId:      null,
+      status:                "exempt_internal",
+      source:                "exemption",
+      plan:                  SUBSCRIPTION_PLAN,
+      vippsAgreementId:      null,
+      currentPeriodStartsAt: null,
+      currentPeriodEndsAt:   null,
+      canceledAt:            null,
+      cancelAtPeriodEnd:     false,
+      expiresAt:             null,
+      subscriptionId:        null,
     };
   }
 
@@ -178,29 +182,31 @@ export async function getEffectiveSubscription(
 
   if (sub) {
     return {
-      status:              normalizeStatus(sub.status),
-      source:              "subscriptions_table",
-      plan:                sub.planCode,
-      vippsAgreementId:    sub.vippsAgreementId,
-      currentPeriodEndsAt: sub.currentPeriodEndsAt,
-      canceledAt:          sub.canceledAt,
-      cancelAtPeriodEnd:   sub.cancelAtPeriodEnd,
-      expiresAt:           sub.expiresAt,
-      subscriptionId:      sub.id,
+      status:                normalizeStatus(sub.status),
+      source:                "subscriptions_table",
+      plan:                  sub.planCode,
+      vippsAgreementId:      sub.vippsAgreementId,
+      currentPeriodStartsAt: sub.currentPeriodStartsAt,
+      currentPeriodEndsAt:   sub.currentPeriodEndsAt,
+      canceledAt:            sub.canceledAt,
+      cancelAtPeriodEnd:     sub.cancelAtPeriodEnd,
+      expiresAt:             sub.expiresAt,
+      subscriptionId:        sub.id,
     };
   }
 
   // 4. Fallback to users table (legacy rows)
   return {
-    status:              normalizeStatus(userRow.subscriptionStatus),
-    source:              "users_table",
-    plan:                userRow.subscriptionPlan,
-    vippsAgreementId:    userRow.vippsAgreementId,
-    currentPeriodEndsAt: userRow.currentPeriodEndsAt,
-    canceledAt:          userRow.canceledAt,
-    cancelAtPeriodEnd:   false,
-    expiresAt:           userRow.expiresAt,
-    subscriptionId:      null,
+    status:                normalizeStatus(userRow.subscriptionStatus),
+    source:                "users_table",
+    plan:                  userRow.subscriptionPlan,
+    vippsAgreementId:      userRow.vippsAgreementId,
+    currentPeriodStartsAt: null,
+    currentPeriodEndsAt:   userRow.currentPeriodEndsAt,
+    canceledAt:            userRow.canceledAt,
+    cancelAtPeriodEnd:     false,
+    expiresAt:             userRow.expiresAt,
+    subscriptionId:        null,
   };
 }
 

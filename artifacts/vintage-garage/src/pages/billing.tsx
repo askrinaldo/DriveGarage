@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
@@ -34,19 +34,62 @@ function StatusBadge({ status }: { status: SubscriptionStatus | null }) {
   );
 }
 
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+function SubscriptionSkeleton() {
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-4 animate-pulse">
+      <div className="h-3 w-36 rounded bg-white/[0.06]" />
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          {[80, 56, 96, 72].map((w) => (
+            <div key={w} className="flex items-center justify-between">
+              <div className="h-3 rounded bg-white/[0.04]" style={{ width: `${w * 0.55}px` }} />
+              <div className="h-3 rounded bg-white/[0.06]" style={{ width: `${w}px` }} />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] h-24" />
+      </div>
+      <div className="h-8 w-32 rounded-lg bg-white/[0.06]" />
+    </div>
+  );
+}
+
+// ── Detail row ────────────────────────────────────────────────────────────────
+
+function DetailRow({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: React.ReactNode;
+  valueClass?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className={`text-xs font-semibold text-right ${valueClass ?? "text-foreground"}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 // ── Subscription status card ──────────────────────────────────────────────────
 
 function SubscriptionStatusCard() {
-  const { data: sub, isLoading } = useSubscription();
-  const invalidate               = useInvalidateSubscription();
-  const [starting, setStarting]  = useState(false);
-  const [canceling, setCanceling] = useState(false);
-  const [cancelConfirm, setCancelConfirm] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [reconciling, setReconciling] = useState(false);
+  const { data: sub, isLoading, isFetching } = useSubscription();
+  const invalidate                            = useInvalidateSubscription();
+  const [starting, setStarting]               = useState(false);
+  const [canceling, setCanceling]             = useState(false);
+  const [cancelConfirm, setCancelConfirm]     = useState(false);
+  const [actionError, setActionError]         = useState<string | null>(null);
+  const [reconciling, setReconciling]         = useState(false);
   const [reconcileMessage, setReconcileMessage] = useState<string | null>(null);
-  const reconcileAttempts        = useRef(0);
-  const hasTriggeredReconcile    = useRef(false);
+  const reconcileAttempts                     = useRef(0);
+  const hasTriggeredReconcile                 = useRef(false);
 
   // On mount: if status is pending, force a fresh subscription check.
   // GET /billing/subscription now reconciles against Vipps automatically,
@@ -61,14 +104,12 @@ function SubscriptionStatusCard() {
   // Detect return from Vipps redirect and reconcile subscription status.
   // Vipps appends ?agreementId=agr_xxx to the merchantRedirectUrl.
   useEffect(() => {
-    const params            = new URLSearchParams(window.location.search);
+    const params              = new URLSearchParams(window.location.search);
     const redirectAgreementId = params.get("agreementId");
     if (!redirectAgreementId) return;
 
-    // Capture as string so TypeScript knows it's non-null inside the poll closure
     const agreementIdStr: string = redirectAgreementId;
 
-    // Remove ?agreementId from URL without triggering a page reload
     const cleanUrl = window.location.pathname + window.location.hash;
     window.history.replaceState({}, "", cleanUrl);
 
@@ -76,7 +117,7 @@ function SubscriptionStatusCard() {
     setReconcileMessage("Aktiverer abonnement via Vipps…");
     reconcileAttempts.current = 0;
 
-    const MAX_ATTEMPTS = 15; // 30 s total (2 s interval)
+    const MAX_ATTEMPTS = 15;
 
     async function poll() {
       reconcileAttempts.current += 1;
@@ -85,7 +126,6 @@ function SubscriptionStatusCard() {
           `/api/billing/vipps/status?agreementId=${encodeURIComponent(agreementIdStr)}`,
           { method: "GET" },
         );
-
         if (result.status === "active") {
           await invalidate();
           setReconciling(false);
@@ -95,7 +135,6 @@ function SubscriptionStatusCard() {
       } catch {
         // Network / auth error — keep retrying
       }
-
       if (reconcileAttempts.current < MAX_ATTEMPTS) {
         setTimeout(poll, 2000);
       } else {
@@ -107,31 +146,41 @@ function SubscriptionStatusCard() {
     poll();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (isLoading || reconciling) {
+  // First-load skeleton — no placeholder data yet
+  if (isLoading && !sub) return <SubscriptionSkeleton />;
+
+  // Vipps redirect reconciliation
+  if (reconciling) {
     return (
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-2">
         <div className="flex items-center gap-2">
           <RefreshCw className="w-4 h-4 text-indigo-400 animate-spin" />
           <p className="text-xs text-muted-foreground">
-            {reconciling ? (reconcileMessage ?? "Aktiverer abonnement…") : "Laster abonnementsstatus…"}
+            {reconcileMessage ?? "Aktiverer abonnement…"}
           </p>
         </div>
       </div>
     );
   }
 
-  const status            = sub?.status ?? null;
-  const periodEnds        = sub?.currentPeriodEndsAt
-    ? new Date(sub.currentPeriodEndsAt).toLocaleDateString("no-NO") : null;
-  const expiresAt         = sub?.expiresAt
-    ? new Date(sub.expiresAt).toLocaleDateString("no-NO") : null;
-  const vippsConfigured   = sub?.vippsConfigured ?? false;
-  // Hide "Aktiver via Vipps" while the user still has valid canceled-period access.
-  // Once the period expires they can re-subscribe.
+  const status           = sub?.status ?? null;
+  const vippsConfigured  = sub?.vippsConfigured ?? false;
+
+  // Date helpers
+  const fmt = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleDateString("no-NO", { day: "numeric", month: "long", year: "numeric" }) : null;
+
+  const periodStart   = fmt(sub?.currentPeriodStartsAt);
+  const periodEnd     = fmt(sub?.currentPeriodEndsAt);
+  const canceledAt    = fmt(sub?.canceledAt);
+  const expiresAt     = fmt(sub?.expiresAt);
+
+  // Whether the user cancelled but still has access until period end
   const canceledWithPeriodAccess =
     status === "canceled" &&
     !!sub?.currentPeriodEndsAt &&
     new Date(sub.currentPeriodEndsAt) > new Date();
+
   const canStart  = vippsConfigured && status !== "active" && !canceledWithPeriodAccess;
   const canCancel = ["active", "past_due"].includes(status ?? "");
 
@@ -148,26 +197,19 @@ function SubscriptionStatusCard() {
         "/api/billing/vipps/start-agreement",
         { method: "POST" },
       );
-
-      // Server found and reconciled an existing active agreement — no Vipps redirect needed.
       if (result.recovered) {
         await invalidate();
         setStarting(false);
         return;
       }
-
-      // Normal flow: redirect user to Vipps to approve the new agreement.
       if (result.redirectUrl) {
         window.location.href = result.redirectUrl;
         return;
       }
-
-      // Unexpected response shape — surface a message
       setActionError("Uventet svar fra serveren. Prøv å laste siden på nytt.");
       setStarting(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Noe gikk galt. Prøv igjen.";
-      setActionError(msg);
+      setActionError(err instanceof Error ? err.message : "Noe gikk galt. Prøv igjen.");
       setStarting(false);
     }
   }
@@ -180,116 +222,168 @@ function SubscriptionStatusCard() {
       setCancelConfirm(false);
       await invalidate();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Noe gikk galt. Prøv igjen.";
-      setActionError(msg);
+      setActionError(err instanceof Error ? err.message : "Noe gikk galt. Prøv igjen.");
     } finally {
       setCanceling(false);
     }
   }
 
+  // ── Info pane content per status ────────────────────────────────────────────
+  const InfoPane = () => {
+    if (status === "active" || status === "exempt_internal") {
+      return (
+        <>
+          <CheckCircle2 className="w-7 h-7 text-green-400/70" />
+          <p className="text-xs text-muted-foreground leading-snug">
+            Abonnementet er aktivt. Du har full tilgang til alle funksjoner.
+          </p>
+        </>
+      );
+    }
+    if (status === "canceled") {
+      return (
+        <>
+          <XCircle className="w-7 h-7 text-amber-400/50" />
+          <p className="text-xs text-muted-foreground leading-snug">
+            Abonnementet er kansellert.{" "}
+            {canceledWithPeriodAccess
+              ? "Du har fortsatt tilgang til slutten av betalingsperioden."
+              : "Tilgangen er utløpt. Aktiver nytt abonnement for å fortsette."}
+            {" "}Ingen fremtidige betalinger trekkes. Data beholdes i minst 90 dager.
+          </p>
+        </>
+      );
+    }
+    if (status === "past_due") {
+      return (
+        <>
+          <AlertTriangle className="w-7 h-7 text-amber-400/70" />
+          <p className="text-xs text-muted-foreground leading-snug">
+            En betaling er forfalt. Åpne Vipps-appen og bekreft at betalingsavtalen er aktiv.
+            Tilgangen din er midlertidig beholdt mens vi prøver på nytt. Data slettes ikke automatisk.
+          </p>
+        </>
+      );
+    }
+    if (status === "payment_failed") {
+      return (
+        <>
+          <AlertTriangle className="w-7 h-7 text-red-400/70" />
+          <p className="text-xs text-muted-foreground leading-snug">
+            Betaling feilet etter gjentatte forsøk og avtalen er stoppet.
+            Start en ny Vipps-betalingsavtale for å gjenopprette tilgangen.
+          </p>
+        </>
+      );
+    }
+    if (status === "expired") {
+      return (
+        <>
+          <XCircle className="w-7 h-7 text-red-400/60" />
+          <p className="text-xs text-muted-foreground leading-snug">
+            Abonnementet har utløpt. Aktiver et nytt abonnement via Vipps for å gjenopprette
+            tilgangen. Data beholdes i minst 90 dager etter utløp.
+          </p>
+        </>
+      );
+    }
+    if (status === "pending_payment_setup") {
+      return (
+        <>
+          <CreditCard className="w-7 h-7 text-indigo-400/60" />
+          <p className="text-xs text-muted-foreground leading-snug">
+            {vippsConfigured
+              ? "Ingen betalingsavtale er registrert ennå. Klikk «Aktiver via Vipps» for å sette opp abonnementet."
+              : "Vipps Recurring klargjøres. Ingen betaling trekkes nå. Betalingsavtale godkjennes i Vipps-appen ved aktivering."}
+          </p>
+        </>
+      );
+    }
+    return null;
+  };
+
+  // ── Detail rows per status ──────────────────────────────────────────────────
+  const MetaRows = () => (
+    <div className="space-y-3">
+      <DetailRow label="Status" value={<StatusBadge status={status} />} />
+      <DetailRow label="Plan" value="DriveGarage" />
+      <DetailRow label="Pris" value="50 kr/mnd" />
+      <DetailRow label="Betaling via" value={<span className="text-indigo-300">Vipps</span>} />
+
+      {/* Active: billing period + next payment */}
+      {(status === "active" || status === "exempt_internal") && (
+        <>
+          {(periodStart && periodEnd) ? (
+            <DetailRow
+              label="Inneværende periode"
+              value={`${periodStart} – ${periodEnd}`}
+            />
+          ) : periodEnd ? (
+            <DetailRow label="Neste betaling" value={periodEnd} />
+          ) : null}
+        </>
+      )}
+
+      {/* Canceled: access-until + canceledAt + no more payments */}
+      {status === "canceled" && (
+        <>
+          {periodEnd && (
+            <DetailRow
+              label="Tilgang til"
+              value={periodEnd}
+              valueClass={canceledWithPeriodAccess ? "text-amber-400" : "text-muted-foreground"}
+            />
+          )}
+          {canceledAt && (
+            <DetailRow label="Kansellert" value={canceledAt} valueClass="text-muted-foreground" />
+          )}
+          <DetailRow
+            label="Fremtidige betalinger"
+            value="Ingen"
+            valueClass="text-green-400"
+          />
+        </>
+      )}
+
+      {/* Past due: period end if known */}
+      {status === "past_due" && periodEnd && (
+        <DetailRow label="Periode slutter" value={periodEnd} valueClass="text-amber-400" />
+      )}
+
+      {/* Payment failed: no fake dates */}
+      {status === "payment_failed" && (
+        <DetailRow label="Avtale" value="Stoppet" valueClass="text-red-400" />
+      )}
+
+      {/* Expired */}
+      {status === "expired" && expiresAt && (
+        <DetailRow label="Tilgang utløpt" value={expiresAt} valueClass="text-red-400" />
+      )}
+    </div>
+  );
+
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-4">
+    <div className={`rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-4 transition-opacity duration-200 ${isFetching && !reconciling ? "opacity-80" : "opacity-100"}`}>
       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
         Din abonnementsstatus
       </p>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Status</span>
-            <StatusBadge status={status} />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Plan</span>
-            <span className="text-xs font-semibold text-foreground">
-              {sub?.plan === "monthly_100" ? "100 kr/mnd" : "—"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Betalingsleverandør</span>
-            <span className="text-xs font-semibold text-indigo-300">Vipps</span>
-          </div>
-          {periodEnds && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                {sub?.cancelAtPeriodEnd ? "Tilgang til" : "Neste fornyelse"}
-              </span>
-              <span className="text-xs font-semibold text-foreground">{periodEnds}</span>
-            </div>
-          )}
-          {expiresAt && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Tilgang utløper</span>
-              <span className="text-xs font-semibold text-amber-400">{expiresAt}</span>
-            </div>
-          )}
-        </div>
+        <MetaRows />
 
         <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] p-4 text-center">
-          {(status === "active" || status === "exempt_internal") && (
-            <>
-              <CheckCircle2 className="w-7 h-7 text-green-400/60" />
-              <p className="text-xs text-muted-foreground leading-snug">
-                Abonnementet er aktivt. Full tilgang til alle funksjoner.
-              </p>
-            </>
-          )}
-          {status === "pending_payment_setup" && (
-            <>
-              <CreditCard className="w-7 h-7 text-amber-400/60" />
-              <p className="text-xs text-muted-foreground leading-snug">
-                {vippsConfigured
-                  ? "Abonnement ikke aktivert. Start Vipps-betalingsavtale for å få tilgang."
-                  : "Vipps-betaling klargjøres. Ingen betaling trekkes nå."}
-              </p>
-            </>
-          )}
-          {status === "past_due" && (
-            <>
-              <AlertTriangle className="w-7 h-7 text-amber-400/60" />
-              <p className="text-xs text-muted-foreground leading-snug">
-                Betaling forfalt. Sjekk Vipps-appen din. Data slettes ikke automatisk.
-              </p>
-            </>
-          )}
-          {status === "payment_failed" && (
-            <>
-              <AlertTriangle className="w-7 h-7 text-red-400/60" />
-              <p className="text-xs text-muted-foreground leading-snug">
-                Betaling feilet etter gjentatte forsøk. Aktiver ny Vipps-avtale.
-              </p>
-            </>
-          )}
-          {status === "canceled" && (
-            <>
-              <XCircle className="w-7 h-7 text-muted-foreground/60" />
-              <p className="text-xs text-muted-foreground leading-snug">
-                Kansellert. Tilgang beholdes til slutten av betalingsperioden.
-                Data beholdes i minst 90 dager.
-              </p>
-            </>
-          )}
-          {status === "expired" && (
-            <>
-              <XCircle className="w-7 h-7 text-red-400/60" />
-              <p className="text-xs text-muted-foreground leading-snug">
-                Utløpt. Aktiver abonnement for å gjenopprette tilgangen.
-                Data beholdes i minst 90 dager etter utløp.
-              </p>
-            </>
-          )}
+          <InfoPane />
         </div>
       </div>
 
       {reconcileMessage && (
-        <p className="text-xs text-amber-400 mt-2">{reconcileMessage}</p>
+        <p className="text-xs text-amber-400">{reconcileMessage}</p>
       )}
-
       {actionError && (
-        <p className="text-xs text-red-400 mt-2">{actionError}</p>
+        <p className="text-xs text-red-400">{actionError}</p>
       )}
 
-      <div className="flex flex-wrap gap-2 pt-2">
+      <div className="flex flex-wrap gap-2 pt-1">
         {canStart && (
           <Button
             size="sm"

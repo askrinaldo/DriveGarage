@@ -66,16 +66,17 @@ router.get("/billing/subscription", parseUserAuth, requireUser, async (req, res)
   }
 
   res.json({
-    status:               sub.status,
-    plan:                 sub.plan ?? SUBSCRIPTION_PLAN,
-    provider:             "vipps",
-    vippsConfigured:      isVippsConfigured(),
-    enforcementEnabled:   isBillingEnforcementEnabled(),
-    currentPeriodEndsAt:  sub.currentPeriodEndsAt?.toISOString() ?? null,
-    canceledAt:           sub.canceledAt?.toISOString() ?? null,
-    cancelAtPeriodEnd:    sub.cancelAtPeriodEnd,
-    expiresAt:            sub.expiresAt?.toISOString() ?? null,
-    subscriptionId:       sub.subscriptionId,
+    status:                sub.status,
+    plan:                  sub.plan ?? SUBSCRIPTION_PLAN,
+    provider:              "vipps",
+    vippsConfigured:       isVippsConfigured(),
+    enforcementEnabled:    isBillingEnforcementEnabled(),
+    currentPeriodStartsAt: sub.currentPeriodStartsAt?.toISOString() ?? null,
+    currentPeriodEndsAt:   sub.currentPeriodEndsAt?.toISOString() ?? null,
+    canceledAt:            sub.canceledAt?.toISOString() ?? null,
+    cancelAtPeriodEnd:     sub.cancelAtPeriodEnd,
+    expiresAt:             sub.expiresAt?.toISOString() ?? null,
+    subscriptionId:        sub.subscriptionId,
   });
 });
 
