@@ -1,0 +1,337 @@
+Act as a Principal Product Designer, Creative Director, Senior UX Architect and Senior Frontend Engineer.
+
+Project:
+DriveGarage
+
+The attached images are DESIGN INSPIRATION ONLY.
+
+DO NOT COPY THEM.
+
+DO NOT RECREATE THEIR LAYOUT.
+
+Instead analyse WHY they feel premium and use those principles to redesign DriveGarage into a premium automotive SaaS platform.
+
+==================================================
+THIS IS PHASE 1
+AUTHENTICATED APPLICATION REDESIGN
+==================================================
+
+This phase establishes the visual identity and layout of the logged-in application.
+
+You are NOT redesigning marketing pages.
+
+You are NOT redesigning the landing page.
+
+You are redesigning the authenticated experience.
+
+==================================================
+FRONTEND ONLY
+==================================================
+
+Do NOT modify:
+
+- Backend
+- API
+- Database
+- Authentication
+- Authorization
+- RBAC
+- Vipps
+- Billing logic
+- Subscription logic
+- Business logic
+- Routes
+- Middleware
+- Security
+- Existing API contracts
+
+Everything must continue working exactly as today.
+
+==================================================
+MOST IMPORTANT RULE
+==================================================
+
+DO NOT REMOVE ANY FUNCTIONALITY.
+
+DO NOT REMOVE:
+
+- Buttons
+- Menus
+- Actions
+- Widgets
+- Cards
+- Information
+- Navigation
+- Existing pages
+
+Every feature that exists today MUST still exist.
+
+However...
+
+YOU HAVE FULL PERMISSION TO COMPLETELY REDESIGN THE LAYOUT.
+
+You may:
+
+✓ Move components
+
+✓ Resize sections
+
+✓ Rebuild the dashboard
+
+✓ Change the hierarchy
+
+✓ Create a completely new composition
+
+✓ Create new containers
+
+✓ Create better grouping
+
+✓ Create new navigation layouts
+
+✓ Improve user flow
+
+Do NOT preserve the existing layout.
+
+Preserve the functionality.
+
+NOT the composition.
+
+Think of this as Dashboard Version 2.
+
+==================================================
+DESIGN GOAL
+==================================================
+
+When opening DriveGarage the user should immediately think:
+
+"This looks like an expensive premium automotive platform."
+
+The dashboard should feel handcrafted.
+
+Not AI generated.
+
+Not like an admin panel.
+
+Not like a CRUD application.
+
+==================================================
+PRIMARY DASHBOARD EXPERIENCE
+==================================================
+
+The dashboard should revolve around the user's vehicles.
+
+If vehicles exist:
+
+The primary vehicle becomes the visual hero.
+
+Large imagery.
+
+Vehicle status.
+
+Quick actions.
+
+Upcoming service.
+
+Latest activity.
+
+Documentation progress.
+
+Vehicle health.
+
+Garage statistics.
+
+If multiple vehicles exist:
+
+Create a beautiful horizontal vehicle gallery.
+
+Users should instantly switch between vehicles.
+
+Think:
+
+Apple Photos
+
+Netflix
+
+Tesla
+
+Porsche
+
+Beautiful horizontal browsing.
+
+If NO vehicles exist:
+
+Do NOT leave an empty dashboard.
+
+Instead create a premium onboarding experience.
+
+Guide the user naturally toward:
+
+• Adding the first vehicle
+
+• Exploring features
+
+• Joining clubs
+
+• Uploading documentation
+
+The empty state should still feel like a finished premium product.
+
+==================================================
+REDESIGN
+==================================================
+
+Completely redesign:
+
+Dashboard
+
+Sidebar
+
+Top navigation
+
+Global layout
+
+Cards
+
+Statistics
+
+Vehicle Hero
+
+Quick actions
+
+Recent activity
+
+Service reminders
+
+Club overview
+
+Search
+
+Forms
+
+Tables
+
+Buttons
+
+Dropdowns
+
+Dialogs
+
+Typography
+
+Spacing
+
+Animations
+
+Loading
+
+Empty states
+
+Responsive behaviour
+
+Desktop
+
+Tablet
+
+Mobile
+
+==================================================
+DESIGN LANGUAGE
+==================================================
+
+Take inspiration from:
+
+Apple
+
+Porsche
+
+Rivian
+
+Polestar
+
+Linear
+
+Notion
+
+Arc Browser
+
+Everything should feel:
+
+Elegant
+
+Minimal
+
+Premium
+
+Scandinavian
+
+Modern
+
+Timeless
+
+High quality
+
+Large typography.
+
+Large imagery.
+
+Excellent spacing.
+
+Soft shadows.
+
+Consistent radius.
+
+Consistent iconography.
+
+Beautiful animations.
+
+Strong visual hierarchy.
+
+High-end automotive feeling.
+
+==================================================
+DO NOT REDESIGN YET
+==================================================
+
+Leave these pages functionally untouched for now:
+
+- Landing page
+- Billing page
+- Vehicle detail page
+- Clubs
+- Marketplace
+- Settings
+- Help
+
+Those will each receive their own redesign later.
+
+However...
+
+The global design system you build now MUST become the foundation they will inherit later.
+
+==================================================
+SUCCESS CRITERIA
+==================================================
+
+This should NOT look like DriveGarage version 1.
+
+It should look like DriveGarage version 2.
+
+A user who has never seen the product before should immediately feel that this is a polished commercial SaaS platform.
+
+==================================================
+OUTPUT
+==================================================
+
+Return only:
+
+• Files changed
+
+• Components redesigned
+
+• Design decisions
+
+• Build result
+
+• Typecheck result
+
+Do not continue into future phases.
