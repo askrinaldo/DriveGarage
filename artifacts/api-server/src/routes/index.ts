@@ -14,6 +14,7 @@ import vehicleTransfersRouter from "./vehicleTransfers";
 import authRouter from "./auth";
 import userAuthRouter from "./userAuth";
 import tenantsRouter from "./tenants";
+import userProfileRouter from "./userProfile";
 
 // ─── Clubs domain ─────────────────────────────────────────────────────────────
 // TODO Phase 6: redesign clubs to use Clerk userId instead of string memberName.
@@ -24,19 +25,13 @@ import clubGarageRouter from "./clubGarage";
 import clubDashboardRouter from "./clubDashboard";
 import clubEventsRouter from "./clubEvents";
 import forumRouter from "./forum";
-import badgesRouter from "./badges";
 import marketplaceRouter from "./marketplace";
 
 // ─── AI / assistant domain ────────────────────────────────────────────────────
 import maintenanceAdviceRouter from "./maintenanceAdvice";
-import chatRouter from "./chat";
-import chatHistoryRouter from "./chatHistory";
-import financeInsightRouter from "./financeInsight";
 
 // ─── System / admin domain ────────────────────────────────────────────────────
 import adminRouter from "./admin";
-import supportRouter from "./support";
-import projectsRouter from "./projects";
 import billingRouter from "./billing"; // Vipps Recurring — subscription + webhook routes
 import accountRouter from "./account"; // Account self-service: deletion request / cancel-deletion
 
@@ -56,6 +51,7 @@ router.use(vehicleTransfersRouter);
 router.use(authRouter);
 router.use(userAuthRouter);
 router.use(tenantsRouter);
+router.use(userProfileRouter);
 
 // Clubs domain
 router.use(clubsRouter);
@@ -64,19 +60,13 @@ router.use(clubGarageRouter);
 router.use(clubDashboardRouter);
 router.use(clubEventsRouter);
 router.use(forumRouter);
-router.use(badgesRouter);
 router.use(marketplaceRouter);
 
 // AI / assistant domain
 router.use(maintenanceAdviceRouter);
-router.use(chatRouter);
-router.use(chatHistoryRouter);
-router.use(financeInsightRouter);
 
 // System / admin domain
 router.use(adminRouter);
-router.use(supportRouter);
-router.use(projectsRouter);
 router.use(billingRouter);
 router.use(accountRouter);
 
