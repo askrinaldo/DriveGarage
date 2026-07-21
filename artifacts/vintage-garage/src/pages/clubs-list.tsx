@@ -73,6 +73,7 @@ interface ClubLike {
   isPrivate: boolean;
   ownerName?: string;
   joinMode?: string;
+  userRole?: string | null;
 }
 
 /* ─── Role badge ────────────────────────────────────────────────── */
@@ -326,6 +327,9 @@ export default function ClubsList() {
   const myClubIds = new Set((myClubs ?? []).map((c) => c.id));
 
   function myRoleFor(club: ClubLike): "owner" | "admin" | "member" {
+    if (club.userRole === "owner") return "owner";
+    if (club.userRole === "admin") return "admin";
+    if (club.userRole === "member") return "member";
     const candidates = [myName, myEmail]
       .filter((c): c is string => !!c)
       .map((c) => c.toLowerCase());
