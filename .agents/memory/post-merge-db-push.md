@@ -1,11 +1,17 @@
 ---
 name: Post-merge DB push
-description: drizzle-kit push is interactive and hangs during post-merge; use push-force instead.
+description: drizzle-kit push is interactive and hangs during post-merge; use push-force + yes pipe.
 ---
 
 ## Rule
-Always use `pnpm --filter @workspace/db run push-force` in `scripts/post-merge.sh`, never `push`.
+`scripts/post-merge.sh` must use:
+```bash
+yes "" 2>/dev/null | pnpm --filter @workspace/db run push-force || true
+```
+Never use bare `push` or bare `push-force` without the `yes ""` pipe.
 
-**Why:** `drizzle-kit push` uses inquirer for confirmation prompts (e.g. "add unique constraint without truncating?"). During post-merge, stdin is closed (`/dev/null`), so the process hangs until the 20 s timeout kills it. The `push-force` script passes `--force` to drizzle-kit, which skips all interactive prompts.
+**Why:** Two separate interactive prompts can block the post-merge run:
+1. `drizzle-kit push` uses inquirer for data-loss confirmations ("are you sure?"). `--force` skips these.
+2. `drizzle-kit push --force` still asks a **rename-vs-create** selector for each new table ("Is X created or renamed from another table?"). With stdin closed (`/dev/null`) this prompt gets EOF and silently skips the table — the command exits 0 but the table is never created. `yes ""` pipes unlimited newlines so each selector auto-selects the default (create table).
 
-**How to apply:** Any time the post-merge script is edited or created, verify it says `push-force`, not `push`. The `push-force` npm script already exists in `lib/db/package.json`.
+**How to apply:** Any time post-merge.sh is edited, verify it includes the `yes "" |` pipe AND `|| true` (so a non-zero exit from `yes` when the pipe closes doesn't abort the script). If a new table is missing after a merge, the rename-detection prompt is the likely culprit — create it manually via SQL as a hotfix, then confirm post-merge.sh has the pipe.
