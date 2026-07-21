@@ -187,7 +187,23 @@ function ClerkProviderWithRoutes() {
     <ClerkProvider
       publishableKey={clerkPubKey}
       proxyUrl={clerkProxyUrl}
-      localization={nbNO}
+      localization={{
+          ...nbNO,
+          signIn: {
+            ...(nbNO.signIn as Record<string, unknown>),
+            start: {
+              ...((nbNO.signIn as Record<string, Record<string, unknown>>)?.start),
+              subtitle: "for å fortsette til DriveGarage",
+            },
+          },
+          signUp: {
+            ...(nbNO.signUp as Record<string, unknown>),
+            start: {
+              ...((nbNO.signUp as Record<string, Record<string, unknown>>)?.start),
+              subtitle: "for å fortsette til DriveGarage",
+            },
+          },
+        }}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       afterSignOutUrl={`${basePath}/`}
