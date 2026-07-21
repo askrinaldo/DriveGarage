@@ -14,6 +14,7 @@
 
 import crypto from "crypto";
 import { Router } from "express";
+import { z } from "zod/v4";
 import { eq, and } from "drizzle-orm";
 import { db, usersTable, subscriptionsTable, subscriptionEventsTable, billingChargesTable } from "@workspace/db";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
@@ -31,7 +32,12 @@ import { isVippsConfigured, isBillingEnforcementEnabled } from "../lib/vipps/con
 import { createVippsAgreement, getVippsAgreement, stopVippsAgreement, listVippsAgreements } from "../lib/vipps/agreements";
 import { verifyVippsWebhookHmac, parseVippsWebhookEvent, mapWebhookEventToStatus } from "../lib/vipps/webhooks";
 import { VippsNotConfiguredError, VippsDuplicateAgreementError, VippsWebhookAuthError, VippsApiError } from "../lib/vipps/errors";
+import { validate } from "../middleware/validate";
 import type { SubscriptionStatus } from "@workspace/db";
+
+// start-agreement and cancel carry no user-supplied body fields; an empty
+// object schema ensures any unexpected payload is stripped and never forwarded.
+const EmptyBodySchema = z.object({});
 
 const router = Router();
 
@@ -100,7 +106,7 @@ router.get("/billing/prices", (_req, res): void => {
 
 // ── POST /billing/vipps/start-agreement ───────────────────────────────────────
 
-router.post("/billing/vipps/start-agreement", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.post("/billing/vipps/start-agreement", parseUserAuth, requireUser, validate(EmptyBodySchema), async (req, res): Promise<void> => {
   const userId = req.userAuth!.userId;
 
   try {
@@ -266,7 +272,7 @@ router.get("/billing/vipps/status", parseUserAuth, requireUser, async (req, res)
 
 // ── POST /billing/vipps/cancel ────────────────────────────────────────────────
 
-router.post("/billing/vipps/cancel", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.post("/billing/vipps/cancel", parseUserAuth, requireUser, validate(EmptyBodySchema), async (req, res): Promise<void> => {
   const userId = req.userAuth!.userId;
   const sub    = await getEffectiveSubscription(userId);
 

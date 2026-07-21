@@ -1,20 +1,47 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
+import { z } from "zod/v4";
 import { db, tripLogsTable } from "@workspace/db";
 import {
-  CreateTripLogBody,
   CreateTripLogParams,
   ListTripLogsParams,
   GetTripLogParams,
   UpdateTripLogParams,
-  UpdateTripLogBody,
   DeleteTripLogParams,
 } from "@workspace/api-zod";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { assertVehicleOwnership } from "../lib/vehicleOwnership";
+import { validate } from "../middleware/validate";
 import { ERRORS } from "../lib/errors";
 
 const router: IRouter = Router();
+
+// Local zod/v4 body schemas — structurally equivalent to the generated api-zod
+// Zod-v3 schemas, but compatible with the validate() middleware (zod/v4 only).
+
+const CreateTripLogBodySchema = z.object({
+  tripDate:       z.coerce.date(),
+  fromLocation:   z.string().min(1, "Fra-sted er påkrevd"),
+  toLocation:     z.string().min(1, "Til-sted er påkrevd"),
+  distanceKm:     z.number().nullable().optional(),
+  mileageStart:   z.number().int().nullable().optional(),
+  mileageEnd:     z.number().int().nullable().optional(),
+  fuelUsedLiters: z.number().nullable().optional(),
+  notes:          z.string().nullable().optional(),
+  weather:        z.string().nullable().optional(),
+});
+
+const UpdateTripLogBodySchema = z.object({
+  tripDate:       z.coerce.date().optional(),
+  fromLocation:   z.string().min(1).optional(),
+  toLocation:     z.string().min(1).optional(),
+  distanceKm:     z.number().nullable().optional(),
+  mileageStart:   z.number().int().nullable().optional(),
+  mileageEnd:     z.number().int().nullable().optional(),
+  fuelUsedLiters: z.number().nullable().optional(),
+  notes:          z.string().nullable().optional(),
+  weather:        z.string().nullable().optional(),
+});
 
 router.get("/vehicles/:vehicleId/trip-logs", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = ListTripLogsParams.safeParse(req.params);
@@ -36,14 +63,9 @@ router.get("/vehicles/:vehicleId/trip-logs", parseUserAuth, requireUser, async (
   res.json(logs);
 });
 
-router.post("/vehicles/:vehicleId/trip-logs", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.post("/vehicles/:vehicleId/trip-logs", parseUserAuth, requireUser, validate(CreateTripLogBodySchema), async (req, res): Promise<void> => {
   const params = CreateTripLogParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
-    return;
-  }
-  const parsed = CreateTripLogBody.safeParse(req.body);
-  if (!parsed.success) {
     res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
@@ -53,13 +75,14 @@ router.post("/vehicles/:vehicleId/trip-logs", parseUserAuth, requireUser, async 
     res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
+  const body = req.body as z.infer<typeof CreateTripLogBodySchema>;
   const [log] = await db
     .insert(tripLogsTable)
     .values({
-      ...parsed.data,
-      vehicleId: params.data.vehicleId,
-      distanceKm: parsed.data.distanceKm != null ? String(parsed.data.distanceKm) : null,
-      fuelUsedLiters: parsed.data.fuelUsedLiters != null ? String(parsed.data.fuelUsedLiters) : null,
+      ...body,
+      vehicleId:      params.data.vehicleId,
+      distanceKm:     body.distanceKm != null ? String(body.distanceKm) : null,
+      fuelUsedLiters: body.fuelUsedLiters != null ? String(body.fuelUsedLiters) : null,
     })
     .returning();
   res.status(201).json(log);
@@ -88,14 +111,9 @@ router.get("/vehicles/:vehicleId/trip-logs/:id", parseUserAuth, requireUser, asy
   res.json(log);
 });
 
-router.patch("/vehicles/:vehicleId/trip-logs/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.patch("/vehicles/:vehicleId/trip-logs/:id", parseUserAuth, requireUser, validate(UpdateTripLogBodySchema), async (req, res): Promise<void> => {
   const params = UpdateTripLogParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
-    return;
-  }
-  const parsed = UpdateTripLogBody.safeParse(req.body);
-  if (!parsed.success) {
     res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
@@ -105,12 +123,13 @@ router.patch("/vehicles/:vehicleId/trip-logs/:id", parseUserAuth, requireUser, a
     res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
+  const body = req.body as z.infer<typeof UpdateTripLogBodySchema>;
   const [log] = await db
     .update(tripLogsTable)
     .set({
-      ...parsed.data,
-      distanceKm: parsed.data.distanceKm != null ? String(parsed.data.distanceKm) : null,
-      fuelUsedLiters: parsed.data.fuelUsedLiters != null ? String(parsed.data.fuelUsedLiters) : null,
+      ...body,
+      distanceKm:     body.distanceKm != null ? String(body.distanceKm) : null,
+      fuelUsedLiters: body.fuelUsedLiters != null ? String(body.fuelUsedLiters) : null,
     })
     .where(and(eq(tripLogsTable.id, params.data.id), eq(tripLogsTable.vehicleId, params.data.vehicleId)))
     .returning();

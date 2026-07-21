@@ -1,10 +1,41 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc } from "drizzle-orm";
+import { z } from "zod/v4";
 import { db, serviceRemindersTable, vehiclesTable } from "@workspace/db";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { assertVehicleOwnership } from "../lib/vehicleOwnership";
+import { validate } from "../middleware/validate";
 
 const router: IRouter = Router();
+
+const isoDateString = z
+  .string()
+  .refine((s) => !isNaN(new Date(s).getTime()), { message: "Ugyldig dato" });
+
+const CreateReminderSchema = z.object({
+  title:           z.string().trim().min(1, "Tittel er påkrevd").max(200),
+  description:     z.string().max(1000).optional(),
+  type:            z.enum(["mileage", "date", "both"]).optional(),
+  dueMileage:      z.number().int().nonnegative().optional(),
+  dueDate:         isoDateString.optional(),
+  intervalMonths:  z.number().int().nonnegative().optional(),
+  intervalMileage: z.number().int().nonnegative().optional(),
+  notifyBefore:    z.number().int().nonnegative().optional(),
+});
+
+const UpdateReminderSchema = z.object({
+  title:           z.string().trim().min(1, "Tittel er påkrevd").max(200).optional(),
+  description:     z.string().max(1000).optional(),
+  dueMileage:      z.number().int().nonnegative().optional(),
+  dueDate:         isoDateString.optional(),
+  isActive:        z.boolean().optional(),
+  intervalMonths:  z.number().int().nonnegative().optional(),
+  intervalMileage: z.number().int().nonnegative().optional(),
+});
+
+const CompleteReminderSchema = z.object({
+  mileage: z.number().int().nonnegative().optional(),
+});
 
 // ─── Get reminders for a vehicle ─────────────────────────────────────────────
 router.get(
@@ -63,6 +94,7 @@ router.post(
   "/vehicles/:vehicleId/reminders",
   parseUserAuth,
   requireUser,
+  validate(CreateReminderSchema),
   async (req, res): Promise<void> => {
     const vehicleId = parseInt(String(req.params.vehicleId), 10);
     const { tenantId, userId } = req.userAuth!;
@@ -73,37 +105,20 @@ router.post(
       return;
     }
 
-    const {
-      title, description, type, dueMileage, dueDate,
-      intervalMonths, intervalMileage, notifyBefore,
-    } = req.body as {
-      title: string;
-      description?: string;
-      type?: "mileage" | "date" | "both";
-      dueMileage?: number;
-      dueDate?: string;
-      intervalMonths?: number;
-      intervalMileage?: number;
-      notifyBefore?: number;
-    };
-
-    if (!title?.trim()) {
-      res.status(400).json({ error: "Tittel er påkrevd" });
-      return;
-    }
+    const body = req.body as z.infer<typeof CreateReminderSchema>;
 
     const [reminder] = await db
       .insert(serviceRemindersTable)
       .values({
         vehicleId,
-        title: title.trim(),
-        description: description?.trim() ?? null,
-        type: type ?? "date",
-        dueMileage: dueMileage ?? null,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        intervalMonths: intervalMonths ?? null,
-        intervalMileage: intervalMileage ?? null,
-        notifyBefore: notifyBefore ?? 30,
+        title:           body.title.trim(),
+        description:     body.description?.trim() ?? null,
+        type:            body.type ?? "date",
+        dueMileage:      body.dueMileage ?? null,
+        dueDate:         body.dueDate ? new Date(body.dueDate) : null,
+        intervalMonths:  body.intervalMonths ?? null,
+        intervalMileage: body.intervalMileage ?? null,
+        notifyBefore:    body.notifyBefore ?? 30,
       })
       .returning();
 
@@ -116,6 +131,7 @@ router.patch(
   "/vehicles/:vehicleId/reminders/:reminderId",
   parseUserAuth,
   requireUser,
+  validate(UpdateReminderSchema),
   async (req, res): Promise<void> => {
     const vehicleId = parseInt(String(req.params.vehicleId), 10);
     const reminderId = parseInt(String(req.params.reminderId), 10);
@@ -139,28 +155,19 @@ router.patch(
 
     if (!existing) { res.status(404).json({ error: "Påminnelse ikke funnet" }); return; }
 
-    const { title, description, dueMileage, dueDate, isActive, intervalMonths, intervalMileage } =
-      req.body as Partial<{
-        title: string;
-        description: string;
-        dueMileage: number;
-        dueDate: string;
-        isActive: boolean;
-        intervalMonths: number;
-        intervalMileage: number;
-      }>;
+    const body = req.body as z.infer<typeof UpdateReminderSchema>;
 
     const [updated] = await db
       .update(serviceRemindersTable)
       .set({
-        title: title?.trim() ?? existing.title,
-        description: description !== undefined ? description?.trim() ?? null : existing.description,
-        dueMileage: dueMileage ?? existing.dueMileage,
-        dueDate: dueDate ? new Date(dueDate) : existing.dueDate,
-        isActive: isActive !== undefined ? isActive : existing.isActive,
-        intervalMonths: intervalMonths ?? existing.intervalMonths,
-        intervalMileage: intervalMileage ?? existing.intervalMileage,
-        updatedAt: new Date(),
+        title:           body.title?.trim() ?? existing.title,
+        description:     body.description !== undefined ? body.description?.trim() ?? null : existing.description,
+        dueMileage:      body.dueMileage ?? existing.dueMileage,
+        dueDate:         body.dueDate ? new Date(body.dueDate) : existing.dueDate,
+        isActive:        body.isActive !== undefined ? body.isActive : existing.isActive,
+        intervalMonths:  body.intervalMonths ?? existing.intervalMonths,
+        intervalMileage: body.intervalMileage ?? existing.intervalMileage,
+        updatedAt:       new Date(),
       })
       .where(eq(serviceRemindersTable.id, reminderId))
       .returning();
@@ -174,6 +181,7 @@ router.post(
   "/vehicles/:vehicleId/reminders/:reminderId/complete",
   parseUserAuth,
   requireUser,
+  validate(CompleteReminderSchema),
   async (req, res): Promise<void> => {
     const vehicleId = parseInt(String(req.params.vehicleId), 10);
     const reminderId = parseInt(String(req.params.reminderId), 10);
@@ -185,7 +193,7 @@ router.post(
       return;
     }
 
-    const { mileage } = req.body as { mileage?: number };
+    const body = req.body as z.infer<typeof CompleteReminderSchema>;
 
     const [existing] = await db
       .select()
@@ -208,18 +216,18 @@ router.post(
     }
 
     const nextDueMileage =
-      existing.intervalMileage && mileage
-        ? mileage + existing.intervalMileage
+      existing.intervalMileage && body.mileage
+        ? body.mileage + existing.intervalMileage
         : existing.dueMileage;
 
     const [updated] = await db
       .update(serviceRemindersTable)
       .set({
-        lastCompleted: now,
-        lastCompletedMileage: mileage ?? null,
-        dueDate: nextDueDate ?? existing.dueDate,
-        dueMileage: nextDueMileage ?? null,
-        updatedAt: now,
+        lastCompleted:        now,
+        lastCompletedMileage: body.mileage ?? null,
+        dueDate:              nextDueDate ?? existing.dueDate,
+        dueMileage:           nextDueMileage ?? null,
+        updatedAt:            now,
       })
       .where(eq(serviceRemindersTable.id, reminderId))
       .returning();
