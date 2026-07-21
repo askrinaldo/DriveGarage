@@ -35,6 +35,16 @@ export async function clerkUserAuth(
     return;
   }
 
+  // parseAuth (club JWT middleware) may have set req.auth to a plain club payload
+  // object before Clerk's getAuth runs. Calling getAuth() on such a request would
+  // throw "req.auth is not a function" because Clerk expects its own getter.
+  // If req.auth is already a club JWT payload, skip the Clerk path entirely.
+  const candidate = req.auth as Partial<{ clubId: number; memberName: string }> | undefined;
+  if (candidate && typeof candidate.clubId === "number" && typeof candidate.memberName === "string") {
+    next();
+    return;
+  }
+
   const { userId: clerkUserId } = getAuth(req);
   if (!clerkUserId) {
     next();
