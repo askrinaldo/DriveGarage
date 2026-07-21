@@ -15,11 +15,16 @@ export const ERRORS = {
  *
  * 4xx AppErrors surface their message to the client in all environments.
  * 5xx AppErrors are treated as internal errors (message hidden in production).
+ *
+ * Optional `meta` is merged into the JSON response body alongside `error`.
+ * Use it for structured payloads that need extra fields (e.g. a fair-use
+ * limit response that includes `code`, `feature`, `limit`, and `upgradeUrl`).
  */
 export class AppError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    public readonly meta?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "AppError";

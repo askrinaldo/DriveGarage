@@ -175,7 +175,7 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
     ?? 500;
 
   // Always log the full error server-side so engineers can diagnose
-  logger.error({ err, method: req.method, url: req.url?.split("?")[0] }, "Unhandled error");
+  logger.error({ err, method: req.method, url: req.url?.split("?")[0], status }, "Unhandled error");
 
   // Database errors must never expose internals — applies in all environments.
   // This covers pg SQLSTATE errors, Node network errors (ECONNRESET etc.),
@@ -188,10 +188,13 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   // AppError = structured throws from route handlers with an explicit status code.
   // 4xx: the message is already safe and user-facing, surface it in all environments.
   // 5xx: hide implementation details in production.
+  // Optional meta fields (e.g. code, feature, limit) are merged into the body for 4xx.
   if (err instanceof AppError) {
     const isClientError = err.status >= 400 && err.status < 500;
+    const message = isClientError || !IS_PROD ? err.message : ERRORS.INTERNAL;
     res.status(err.status).json({
-      error: isClientError || !IS_PROD ? err.message : ERRORS.INTERNAL,
+      error: message,
+      ...(isClientError && err.meta ? err.meta : {}),
     });
     return;
   }
