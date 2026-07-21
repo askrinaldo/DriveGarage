@@ -38,7 +38,7 @@ function StatusBadge({ status }: { status: SubscriptionStatus | null }) {
 
 function SubscriptionSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-4 animate-pulse">
+    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] light:border-border light:bg-white p-6 space-y-4 animate-pulse">
       <div className="h-3 w-36 rounded bg-white/[0.06]" />
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-3">
@@ -49,7 +49,7 @@ function SubscriptionSkeleton() {
             </div>
           ))}
         </div>
-        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] h-24" />
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] light:border-border light:bg-card h-24" />
       </div>
       <div className="h-8 w-32 rounded-lg bg-white/[0.06]" />
     </div>
@@ -152,7 +152,7 @@ function SubscriptionStatusCard() {
   // Vipps redirect reconciliation
   if (reconciling) {
     return (
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-2">
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] light:border-border light:bg-white p-6 space-y-2">
         <div className="flex items-center gap-2">
           <RefreshCw className="w-4 h-4 text-indigo-400 animate-spin" />
           <p className="text-xs text-muted-foreground">
@@ -363,7 +363,7 @@ function SubscriptionStatusCard() {
   );
 
   return (
-    <div className={`rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 space-y-4 transition-opacity duration-200 ${isFetching && !reconciling ? "opacity-80" : "opacity-100"}`}>
+    <div className={`rounded-2xl border border-white/[0.08] bg-white/[0.02] light:border-border light:bg-white p-6 space-y-4 transition-opacity duration-200 ${isFetching && !reconciling ? "opacity-80" : "opacity-100"}`}>
       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
         Din abonnementsstatus
       </p>
@@ -371,7 +371,7 @@ function SubscriptionStatusCard() {
       <div className="grid sm:grid-cols-2 gap-4">
         <MetaRows />
 
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] p-4 text-center">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] light:border-border light:bg-card p-4 text-center">
           <InfoPane />
         </div>
       </div>
@@ -704,7 +704,7 @@ export default function Billing() {
       </div>
 
       {/* How it works */}
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] light:border-border light:bg-white p-6">
         <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-5">
           Slik fungerer betalingen
         </p>
@@ -725,7 +725,7 @@ export default function Billing() {
       </div>
 
       {/* Guarantees */}
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] light:border-border light:bg-white p-6">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-4 h-4 text-indigo-400" />
           <p className="text-sm font-bold text-foreground">{t("billing.safeToTry")}</p>

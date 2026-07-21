@@ -5,6 +5,7 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant light (&:is(html.light-mode *));
 
 @theme inline {
   --color-background: hsl(var(--background));

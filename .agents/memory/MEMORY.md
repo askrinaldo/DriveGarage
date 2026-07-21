@@ -16,3 +16,4 @@
 - [Vipps webhook HMAC](vipps-webhook-hmac.md) — HMAC-SHA256 (not Bearer). Secret from Vipps registration. Express must use express.raw() on webhook path for raw Buffer body.
 - [Vipps webhook field aliases](vipps-webhook-fields.md) — Test env sends `occurred` (not `timestamp`) and `agreementId` (not `reference`). Parser must accept both aliases. Prod DB is separate from dev.
 - [Vipps monthly charges](vipps-monthly-charges.md) — Merchant creates every charge manually. billing_charges table with UNIQUE(subscription_id, billing_period) prevents double-charge. Active agreement ≠ paid.
+- [Light/dark mode variant](light-dark-mode-variant.md) — dark: prefix is dead (no .dark ancestor). Use light: variant via @custom-variant light in index.css for html.light-mode theming.
