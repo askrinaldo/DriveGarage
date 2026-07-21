@@ -39,8 +39,6 @@ const ClubMarketplace  = lazy(() => import("@/pages/club-marketplace"));
 const VehicleReminders = lazy(() => import("@/pages/vehicle-reminders"));
 const VehiclePrint     = lazy(() => import("@/pages/vehicle-print"));
 const VehicleAiAdvice  = lazy(() => import("@/pages/vehicle-ai-advice"));
-const Login            = lazy(() => import("@/pages/login"));
-const Register         = lazy(() => import("@/pages/register"));
 const Admin            = lazy(() => import("@/pages/admin"));
 const Help             = lazy(() => import("@/pages/help"));
 const VehicleTransfer  = lazy(() => import("@/pages/vehicle-transfer"));
@@ -92,7 +90,7 @@ function stripBase(path: string): string {
 }
 
 const STANDALONE_ROUTES = [
-  "/login", "/register", "/vehicle-transfer", "/",
+  "/vehicle-transfer", "/",
   "/sign-in", "/sign-up", "/privacy", "/terms", "/cookies", "/contact", "/pricing",
 ];
 
@@ -112,8 +110,6 @@ function AppRoutes() {
         <Switch>
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
-          <Route path="/login" component={Login} />
-          <Route path="/register" component={Register} />
           <Route path="/vehicle-transfer/:token" component={VehicleTransfer} />
           <Route path="/privacy" component={PrivacyPage} />
           <Route path="/terms" component={TermsPage} />
