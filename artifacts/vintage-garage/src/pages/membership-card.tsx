@@ -167,7 +167,7 @@ export default function MembershipCard() {
 
   useEffect(() => {
     if (isAuthLoading) return;
-    if (!isAuthenticated) { navigate("/login"); return; }
+    if (!isAuthenticated) { navigate("/sign-in"); return; }
     void (async () => {
       const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/profile/me", { headers: authHeaders });

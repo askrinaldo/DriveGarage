@@ -224,7 +224,7 @@ export default function VehicleTransfer() {
                   Denne overføringen er til <strong>{transfer.toEmail}</strong>, men du er logget inn som <strong>{userEmail}</strong>.
                   Logg ut og bruk riktig konto.
                 </p>
-                <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => navigate("/login")}>
+                <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => navigate("/sign-in")}>
                   Logg inn med annen konto
                 </Button>
               </div>
@@ -241,14 +241,14 @@ export default function VehicleTransfer() {
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
-                  onClick={() => navigate(`/login?redirect=/vehicle-transfer/${token}`)}
+                  onClick={() => navigate(`/sign-in?redirect=/vehicle-transfer/${token}`)}
                 >
                   Logg inn
                 </Button>
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => navigate(`/register?redirect=/vehicle-transfer/${token}`)}
+                  onClick={() => navigate(`/sign-up?redirect=/vehicle-transfer/${token}`)}
                 >
                   Registrer deg
                 </Button>

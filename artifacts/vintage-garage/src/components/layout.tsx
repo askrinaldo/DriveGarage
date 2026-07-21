@@ -42,7 +42,7 @@ export function Layout({ children }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => { setMobileOpen(false); }, [location]);
-  function handleLogout() { logout(); navigate("/login"); }
+  function handleLogout() { logout(); navigate("/sign-in"); }
 
   const initials = name
     ? name.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase()
@@ -206,12 +206,12 @@ export function Layout({ children }: LayoutProps) {
           </DropdownMenu>
         ) : (
           <div className="space-y-1.5">
-            <Link href="/login">
+            <Link href="/sign-in">
               <div className="flex items-center justify-center px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer text-[12px] font-bold">
                 {t("auth.logIn")}
               </div>
             </Link>
-            <Link href="/register">
+            <Link href="/sign-up">
               <div className="flex items-center justify-center px-3 py-2 rounded-lg border border-sidebar-border hover:bg-sidebar-accent/30 transition-colors cursor-pointer text-[12px] font-medium text-sidebar-foreground/50">
                 {t("auth.register")}
               </div>

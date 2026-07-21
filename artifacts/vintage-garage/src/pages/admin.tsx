@@ -1835,7 +1835,7 @@ export default function Admin() {
 
   useEffect(() => {
     if (isAuthLoading) return;
-    if (!isAuthenticated) { navigate("/login"); return; }
+    if (!isAuthenticated) { navigate("/sign-in"); return; }
     if (!isSuperAdmin) { navigate("/"); return; }
     void load();
   }, [isAuthenticated, isAuthLoading, isSuperAdmin, load, navigate]);

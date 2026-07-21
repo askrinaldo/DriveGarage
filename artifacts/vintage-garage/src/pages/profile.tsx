@@ -47,7 +47,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (isAuthLoading) return;
-    if (!isAuthenticated) { navigate("/login"); return; }
+    if (!isAuthenticated) { navigate("/sign-in"); return; }
     void (async () => {
       const headers = await getAuthHeaders();
       const prof = await fetch("/api/profile/me", { headers })
@@ -209,7 +209,7 @@ export default function Profile() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/sign-in")}
                 className="text-xs text-muted-foreground hover:text-foreground/70 hover:bg-muted/30 h-7"
               >
                 {t("profile.changePassword")}
