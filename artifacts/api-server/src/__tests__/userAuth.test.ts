@@ -605,6 +605,102 @@ describe("PATCH /api/admin/users/:id", () => {
   });
 });
 
+describe("GET /api/admin/stats", () => {
+  let app: express.Express;
+
+  beforeAll(async () => {
+    app = await buildTestApp();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("401 without authentication token", async () => {
+    const res = await request(app).get("/api/admin/stats");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 when authenticated as regular user (not super_admin)", async () => {
+    mockDbSelect.mockImplementation(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "user" }]),
+      }),
+    }));
+    const token = await makeToken(1);
+
+    const res = await request(app)
+      .get("/api/admin/stats")
+      .set("x-user-token", token);
+
+    expect(res.status).toBe(403);
+  });
+});
+
+describe("GET /api/admin/users", () => {
+  let app: express.Express;
+
+  beforeAll(async () => {
+    app = await buildTestApp();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("401 without authentication token", async () => {
+    const res = await request(app).get("/api/admin/users");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 when authenticated as regular user (not super_admin)", async () => {
+    mockDbSelect.mockImplementation(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "user" }]),
+      }),
+    }));
+    const token = await makeToken(1);
+
+    const res = await request(app)
+      .get("/api/admin/users")
+      .set("x-user-token", token);
+
+    expect(res.status).toBe(403);
+  });
+});
+
+describe("GET /api/admin/clubs", () => {
+  let app: express.Express;
+
+  beforeAll(async () => {
+    app = await buildTestApp();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("401 without authentication token", async () => {
+    const res = await request(app).get("/api/admin/clubs");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 when authenticated as regular user (not super_admin)", async () => {
+    mockDbSelect.mockImplementation(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "user" }]),
+      }),
+    }));
+    const token = await makeToken(1);
+
+    const res = await request(app)
+      .get("/api/admin/clubs")
+      .set("x-user-token", token);
+
+    expect(res.status).toBe(403);
+  });
+});
+
 describe("PATCH /api/admin/clubs/:id/suspend", () => {
   let app: express.Express;
 
