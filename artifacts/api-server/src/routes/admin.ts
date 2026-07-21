@@ -114,13 +114,13 @@ router.get("/admin/billing-stats", parseUserAuth, requireSuperAdmin, async (req,
 router.get("/admin/mrr-history", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const result = await db.execute(sql`
     SELECT
-      TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YY') AS month,
-      DATE_TRUNC('month', created_at) AS month_date,
+      TO_CHAR(DATE_TRUNC('month', received_at), 'Mon YY') AS month,
+      DATE_TRUNC('month', received_at) AS month_date,
       COUNT(*) FILTER (WHERE event_type = 'recurring.agreement-activated.v1') AS new_subs,
       COUNT(*) FILTER (WHERE event_type IN ('recurring.agreement-stopped.v1','recurring.agreement-expired.v1')) AS churned
     FROM subscription_events
-    WHERE created_at >= NOW() - INTERVAL '12 months'
-    GROUP BY DATE_TRUNC('month', created_at)
+    WHERE received_at >= NOW() - INTERVAL '12 months'
+    GROUP BY DATE_TRUNC('month', received_at)
     ORDER BY month_date
   `);
 
