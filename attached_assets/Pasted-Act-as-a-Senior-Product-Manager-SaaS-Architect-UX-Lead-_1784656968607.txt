@@ -1,0 +1,205 @@
+Act as a Senior Product Manager, SaaS Architect, UX Lead, Backend Architect and Launch Readiness Reviewer.
+
+Project:
+DriveGarage
+
+Goal:
+Perform a complete product improvement audit of the entire project and convert the findings into clear Replit tasks.
+
+Do NOT begin implementing everything immediately.
+
+First inspect the full codebase and application experience, then create a prioritized task backlog.
+
+The goal is to make DriveGarage:
+
+- easier to understand
+- easier to use
+- faster
+- cleaner
+- more professional
+- easier to maintain
+- ready for a later security-hardening phase
+
+This review must cover both frontend and backend.
+
+==================================================
+SCOPE
+==================================================
+
+Review the entire product, including:
+
+- public landing page
+- sign-in and sign-up flow
+- authenticated layout
+- dashboard / Oversikt
+- Garasjen min
+- vehicle detail pages
+- service
+- documents
+- mileage / driving log
+- clubs and club detail
+- profile
+- subscription and billing
+- account deletion
+- admin functionality
+- navigation
+- mobile experience
+- empty states
+- loading states
+- error handling
+- API design
+- database model
+- duplicated or legacy functionality
+- unused code
+- performance
+- maintainability
+
+Do not focus on penetration testing or deep security hardening yet.
+
+Security findings may be recorded, but the primary goal of this phase is product quality, usability and technical cleanup.
+
+==================================================
+AUDIT QUESTIONS
+==================================================
+
+For every major page and feature, assess:
+
+1. Is the purpose immediately clear?
+2. Is anything duplicated?
+3. Is anything unnecessary?
+4. Is anything confusing?
+5. Is anything unfinished?
+6. Is anything visually inconsistent?
+7. Is any functionality hidden or hard to discover?
+8. Are there buttons or links that do not work?
+9. Are there empty states that feel dead?
+10. Are there long loading times or unnecessary API requests?
+11. Are frontend and backend responsibilities cleanly separated?
+12. Is there legacy code that should be removed?
+13. Are there routes or modules that no longer fit the final product?
+14. Could anything be simplified without losing value?
+15. Does the mobile experience work naturally?
+16. Does the product feel like one coherent application?
+
+==================================================
+PRODUCT SIMPLIFICATION
+==================================================
+
+Identify anything that should potentially be:
+
+- removed
+- hidden
+- postponed
+- merged
+- simplified
+- renamed
+- moved to a better location
+
+Pay particular attention to:
+
+- duplicated dashboard and garage content
+- legacy organization functionality
+- gamification
+- local support/ticket systems
+- chatbot code
+- duplicate auth systems
+- old Stripe remnants
+- unused admin tools
+- unfinished features
+- unnecessary navigation items
+- pages that add maintenance cost without clear user value
+
+Do not remove anything during the audit.
+
+Create a task or recommendation first.
+
+==================================================
+FRONTEND REVIEW
+==================================================
+
+Review:
+
+- information architecture
+- navigation
+- visual consistency
+- design system usage
+- page hierarchy
+- responsive behavior
+- mobile usability
+- forms
+- tables
+- dialogs
+- buttons
+- toasts
+- skeletons
+- empty states
+- accessibility
+- perceived performance
+- route transitions
+- duplicate renders
+- layout flicker
+- confusing labels
+- user onboarding
+
+Identify pages that still feel AI-generated, unfinished or inconsistent.
+
+==================================================
+BACKEND REVIEW
+==================================================
+
+Review:
+
+- route organization
+- duplicated handlers
+- dead endpoints
+- legacy modules
+- inconsistent response formats
+- missing validation
+- poor error messages
+- unnecessary external calls
+- slow queries
+- missing indexes
+- weak separation of concerns
+- old Stripe-related code
+- unused support/chat/organization/gamification backend code
+- subscription and billing maintainability
+- data ownership and deletion flows
+- logging and observability
+- technical debt that could block launch
+
+Do not perform destructive database changes.
+
+==================================================
+TASK CREATION
+==================================================
+
+Create tasks in Replit for all meaningful findings.
+
+Each task must contain:
+
+- clear title
+- problem statement
+- why it matters
+- affected files or areas
+- recommended solution
+- acceptance criteria
+- risk level
+- estimated size:
+  - XS
+  - S
+  - M
+  - L
+  - XL
+- category:
+  - UX
+  - Frontend
+  - Backend
+  - Performance
+  - Cleanup
+  - Billing
+  - Mobile
+  - Accessibility
+  - Product
+  - Security-later
+- priority:
+  - P0 bloc...
