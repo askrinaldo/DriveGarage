@@ -9,7 +9,7 @@ import {
 } from "./middleware/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { ERRORS } from "./lib/errors";
+import { ERRORS, AppError, isDatabaseError } from "./lib/errors";
 import { validateEnv } from "./lib/envValidation";
 import { parseAuth, resolveClubActorFromUser } from "./middleware/auth";
 import { parseUserAuth } from "./middleware/userAuth";
@@ -161,22 +161,51 @@ app.use("/api", router);
 
 // ─── Global error handler ────────────────────────────────────────────────────
 // Must be registered AFTER all routes.
-// In production: never leak stack traces or internal error messages.
+// Rules:
+//   • Database errors (pg/Drizzle) → always ERRORS.INTERNAL, even in dev,
+//     so table names, column names, and query fragments never reach the client.
+//   • AppError (structured throws from route handlers) → use the message as-is
+//     in dev; use ERRORS.INTERNAL in prod for 5xx, message for 4xx.
+//   • All other errors → dev gets message+stack for debugging; prod gets
+//     ERRORS.INTERNAL (5xx) or message (4xx).
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   const status = (err as { status?: number; statusCode?: number })?.status
     ?? (err as { status?: number; statusCode?: number })?.statusCode
     ?? 500;
 
-  // Always log the full error server-side
+  // Always log the full error server-side so engineers can diagnose
   logger.error({ err, method: req.method, url: req.url?.split("?")[0] }, "Unhandled error");
 
+  // Database errors must never expose internals — applies in all environments.
+  // This covers pg SQLSTATE errors, Node network errors (ECONNRESET etc.),
+  // named Drizzle/pg error classes, and wrapped errors in the cause chain.
+  if (isDatabaseError(err)) {
+    res.status(500).json({ error: ERRORS.INTERNAL });
+    return;
+  }
+
+  // AppError = structured throws from route handlers with an explicit status code.
+  // 4xx: the message is already safe and user-facing, surface it in all environments.
+  // 5xx: hide implementation details in production.
+  if (err instanceof AppError) {
+    const isClientError = err.status >= 400 && err.status < 500;
+    res.status(err.status).json({
+      error: isClientError || !IS_PROD ? err.message : ERRORS.INTERNAL,
+    });
+    return;
+  }
+
+  const message = (err as { message?: string })?.message ?? ERRORS.INTERNAL;
+  const isClientError = status >= 400 && status < 500;
+
   if (IS_PROD) {
-    // Never expose internal details in production — always return safe Norwegian fallback
-    res.status(status).json({ error: ERRORS.INTERNAL });
+    // In production: expose message only for 4xx (already user-facing); hide 5xx details
+    res.status(status).json({ error: isClientError ? message : ERRORS.INTERNAL });
   } else {
+    // In development: expose message + stack for non-DB application errors
     res.status(status).json({
-      error: (err as { message?: string })?.message ?? ERRORS.INTERNAL,
+      error: message,
       stack: (err as { stack?: string })?.stack,
     });
   }
