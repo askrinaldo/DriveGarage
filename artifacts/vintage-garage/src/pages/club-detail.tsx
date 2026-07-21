@@ -549,7 +549,7 @@ export default function ClubDetail() {
   );
 
   const gradient = bannerGradients[club.clubType] ?? "from-primary/60 via-primary/30 to-primary/10";
-  const accessible = !club.isPrivate || isMember;
+  const accessible = isMember;
 
   /* ── Main render ─────────────────────────────────────────────── */
   return (
