@@ -635,6 +635,63 @@ describe("GET /api/admin/stats", () => {
 
     expect(res.status).toBe(403);
   });
+
+  it("200 with all numeric stats fields for a super_admin", async () => {
+    // Call 1: requireSuperAdmin — from().where()
+    mockDbSelect.mockImplementationOnce(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "super_admin" }]),
+      }),
+    }));
+
+    // Calls 2–6: simple count queries awaited directly (users, vehicles, clubs, posts, comments)
+    // from() must itself be awaitable AND support .where() / .orderBy() for chaining routes
+    ([10, 5, 3, 20, 40] as const).forEach((n) => {
+      const result = [{ count: n }];
+      mockDbSelect.mockImplementationOnce(() => ({
+        from: () =>
+          Object.assign(Promise.resolve(result), {
+            where: () => Promise.resolve(result),
+            orderBy: () => Promise.resolve(result),
+          }),
+      }));
+    });
+
+    // Call 7: activeUsers count — from().where()
+    mockDbSelect.mockImplementationOnce(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ count: 8 }]),
+      }),
+    }));
+
+    // Call 8: admins count — from().where()
+    mockDbSelect.mockImplementationOnce(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ count: 2 }]),
+      }),
+    }));
+
+    const token = await makeAdminToken();
+    const res = await request(app)
+      .get("/api/admin/stats")
+      .set("x-user-token", token);
+
+    expect(res.status).toBe(200);
+    expect(typeof res.body.users).toBe("number");
+    expect(typeof res.body.vehicles).toBe("number");
+    expect(typeof res.body.clubs).toBe("number");
+    expect(typeof res.body.posts).toBe("number");
+    expect(typeof res.body.comments).toBe("number");
+    expect(typeof res.body.activeUsers).toBe("number");
+    expect(typeof res.body.admins).toBe("number");
+    expect(res.body.users).toBe(10);
+    expect(res.body.vehicles).toBe(5);
+    expect(res.body.clubs).toBe(3);
+    expect(res.body.posts).toBe(20);
+    expect(res.body.comments).toBe(40);
+    expect(res.body.activeUsers).toBe(8);
+    expect(res.body.admins).toBe(2);
+  });
 });
 
 describe("GET /api/admin/users", () => {
@@ -667,6 +724,38 @@ describe("GET /api/admin/users", () => {
 
     expect(res.status).toBe(403);
   });
+
+  it("200 with an array of user objects for a super_admin", async () => {
+    const mockUsers = [
+      { id: 1, name: "Alice", email: "alice@example.com", role: "user", isActive: true, createdAt: new Date().toISOString() },
+      { id: 2, name: "Bob",   email: "bob@example.com",   role: "super_admin", isActive: true, createdAt: new Date().toISOString() },
+    ];
+
+    // Call 1: requireSuperAdmin — from().where()
+    mockDbSelect.mockImplementationOnce(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "super_admin" }]),
+      }),
+    }));
+
+    // Call 2: list all users — from().orderBy()
+    mockDbSelect.mockImplementationOnce(() => ({
+      from: () => ({
+        orderBy: () => Promise.resolve(mockUsers),
+      }),
+    }));
+
+    const token = await makeAdminToken();
+    const res = await request(app)
+      .get("/api/admin/users")
+      .set("x-user-token", token);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(2);
+    expect(res.body[0]).toMatchObject({ id: 1, name: "Alice", role: "user" });
+    expect(res.body[1]).toMatchObject({ id: 2, name: "Bob", role: "super_admin" });
+  });
 });
 
 describe("GET /api/admin/clubs", () => {
@@ -698,6 +787,38 @@ describe("GET /api/admin/clubs", () => {
       .set("x-user-token", token);
 
     expect(res.status).toBe(403);
+  });
+
+  it("200 with an array of club objects for a super_admin", async () => {
+    const mockClubs = [
+      { id: 1, name: "Oslo Motorlag",   slug: "oslo-motorlag",   createdAt: new Date().toISOString() },
+      { id: 2, name: "Bergen Bilklubb", slug: "bergen-bilklubb", createdAt: new Date().toISOString() },
+    ];
+
+    // Call 1: requireSuperAdmin — from().where()
+    mockDbSelect.mockImplementationOnce(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "super_admin" }]),
+      }),
+    }));
+
+    // Call 2: list all clubs — from().orderBy()
+    mockDbSelect.mockImplementationOnce(() => ({
+      from: () => ({
+        orderBy: () => Promise.resolve(mockClubs),
+      }),
+    }));
+
+    const token = await makeAdminToken();
+    const res = await request(app)
+      .get("/api/admin/clubs")
+      .set("x-user-token", token);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(2);
+    expect(res.body[0]).toMatchObject({ id: 1, name: "Oslo Motorlag" });
+    expect(res.body[1]).toMatchObject({ id: 2, name: "Bergen Bilklubb" });
   });
 });
 
