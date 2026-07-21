@@ -12,23 +12,23 @@ const isoDateString = z.string().date();
 
 const CreateReminderSchema = z.object({
   title:           z.string().trim().min(1, "Tittel er påkrevd").max(200),
-  description:     z.string().max(1000).optional(),
+  description:     z.string().max(1000).nullable().optional(),
   type:            z.enum(["mileage", "date", "both"]).optional(),
-  dueMileage:      z.number().int().nonnegative().optional(),
-  dueDate:         isoDateString.optional(),
-  intervalMonths:  z.number().int().nonnegative().optional(),
-  intervalMileage: z.number().int().nonnegative().optional(),
+  dueMileage:      z.number().int().nonnegative().nullable().optional(),
+  dueDate:         isoDateString.nullable().optional(),
+  intervalMonths:  z.number().int().nonnegative().nullable().optional(),
+  intervalMileage: z.number().int().nonnegative().nullable().optional(),
   notifyBefore:    z.number().int().nonnegative().optional(),
 });
 
 const UpdateReminderSchema = z.object({
   title:           z.string().trim().min(1, "Tittel er påkrevd").max(200).optional(),
-  description:     z.string().max(1000).optional(),
-  dueMileage:      z.number().int().nonnegative().optional(),
-  dueDate:         isoDateString.optional(),
+  description:     z.string().max(1000).nullable().optional(),
+  dueMileage:      z.number().int().nonnegative().nullable().optional(),
+  dueDate:         isoDateString.nullable().optional(),
   isActive:        z.boolean().optional(),
-  intervalMonths:  z.number().int().nonnegative().optional(),
-  intervalMileage: z.number().int().nonnegative().optional(),
+  intervalMonths:  z.number().int().nonnegative().nullable().optional(),
+  intervalMileage: z.number().int().nonnegative().nullable().optional(),
 });
 
 const CompleteReminderSchema = z.object({
@@ -159,12 +159,12 @@ router.patch(
       .update(serviceRemindersTable)
       .set({
         title:           body.title?.trim() ?? existing.title,
-        description:     body.description !== undefined ? body.description?.trim() ?? null : existing.description,
-        dueMileage:      body.dueMileage ?? existing.dueMileage,
-        dueDate:         body.dueDate ? new Date(body.dueDate) : existing.dueDate,
+        description:     body.description !== undefined ? (body.description?.trim() ?? null) : existing.description,
+        dueMileage:      body.dueMileage !== undefined ? (body.dueMileage ?? null) : existing.dueMileage,
+        dueDate:         body.dueDate !== undefined ? (body.dueDate ? new Date(body.dueDate) : null) : existing.dueDate,
         isActive:        body.isActive !== undefined ? body.isActive : existing.isActive,
-        intervalMonths:  body.intervalMonths ?? existing.intervalMonths,
-        intervalMileage: body.intervalMileage ?? existing.intervalMileage,
+        intervalMonths:  body.intervalMonths !== undefined ? (body.intervalMonths ?? null) : existing.intervalMonths,
+        intervalMileage: body.intervalMileage !== undefined ? (body.intervalMileage ?? null) : existing.intervalMileage,
         updatedAt:       new Date(),
       })
       .where(eq(serviceRemindersTable.id, reminderId))

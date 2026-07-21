@@ -13,6 +13,21 @@ import crypto from "crypto";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { verifyVippsWebhookHmac, parseVippsWebhookEvent, mapWebhookEventToStatus } from "../lib/vipps/webhooks";
 import { VippsWebhookAuthError } from "../lib/vipps/errors";
+import { currentBillingPeriod } from "../lib/billing/monthlyCharges";
+
+// Prevent real pg.Pool creation when monthlyCharges is dynamically imported below.
+vi.mock("@workspace/db", () => {
+  const sym = (name: string) => ({ _name: name });
+  return {
+    db: { select: vi.fn(), insert: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    subscriptionsTable:   sym("subscriptions"),
+    billingChargesTable:  sym("billingCharges"),
+    usersTable:           sym("users"),
+    eq: vi.fn(() => true),
+    and: vi.fn(() => true),
+    sql: Object.assign(vi.fn(), { raw: vi.fn() }),
+  };
+});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -318,9 +333,8 @@ describe("mapWebhookEventToStatus", () => {
 
 // ─── Monthly charge idempotency logic tests ───────────────────────────────────
 
-describe("currentBillingPeriod", async () => {
-  it("returns YYYY-MM format matching current date", async () => {
-    const { currentBillingPeriod } = await import("../lib/billing/monthlyCharges");
+describe("currentBillingPeriod", () => {
+  it("returns YYYY-MM format matching current date", () => {
     const period = currentBillingPeriod();
     expect(period).toMatch(/^\d{4}-\d{2}$/);
 
