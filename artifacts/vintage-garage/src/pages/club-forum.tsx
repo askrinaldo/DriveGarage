@@ -241,7 +241,7 @@ export default function ClubForum() {
       setNewPostOpen(false);
       setPostForm({ category: "general", postType: "text", title: "", content: "", imageUrl: "", videoUrl: "" });
     } catch (err: unknown) {
-      const msg = (err as { data?: { error?: string } })?.data?.error;
+      const msg = (err as { data?: { message?: string } })?.data?.message;
       toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
     }
   }

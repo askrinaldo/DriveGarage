@@ -106,8 +106,8 @@ export default function ClubEventForm() {
       });
 
       if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        throw new Error(err.error ?? "Noe gikk galt");
+        const err = (await res.json()) as { message?: string };
+        throw new Error(err.message ?? "Noe gikk galt");
       }
 
       const event = (await res.json()) as { id: number };
