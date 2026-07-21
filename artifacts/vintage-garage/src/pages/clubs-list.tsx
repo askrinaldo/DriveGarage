@@ -10,11 +10,20 @@ import { useAuth } from "@clerk/react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Users, MapPin, Car, Bike, Lock, Search, Globe,
   Crown, UserPlus, Loader2, ArrowRight, Shield, User,
-  Compass, X,
+  Compass, X, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -276,13 +285,17 @@ function ActionBtn({
 
 export default function ClubsList() {
   const { isSignedIn } = useAuth();
-  const { name: myName, email: myEmail } = useUserAuth();
+  const { name: myName, email: myEmail, getAuthHeaders } = useUserAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [joiningId, setJoiningId] = useState<number | null>(null);
+  const [requestedIds, setRequestedIds] = useState<Set<number>>(new Set());
+  const [requestDialogClub, setRequestDialogClub] = useState<ClubLike | null>(null);
+  const [requestMessage, setRequestMessage] = useState("");
+  const [sendingRequest, setSendingRequest] = useState(false);
 
   /* ── Data fetching ── */
   const { data: myClubs, isLoading: myLoading } = useListClubs(
@@ -344,6 +357,36 @@ export default function ClubsList() {
       });
     } finally {
       setJoiningId(null);
+    }
+  }
+
+  async function handleSendRequest(club: ClubLike) {
+    setSendingRequest(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/clubs/${club.id}/join-request`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ message: requestMessage.trim() || null }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) {
+        const msg = data.error ?? "Noe gikk galt";
+        if (res.status === 409) setRequestedIds((p) => new Set([...p, club.id]));
+        throw new Error(msg);
+      }
+      setRequestedIds((p) => new Set([...p, club.id]));
+      setRequestDialogClub(null);
+      setRequestMessage("");
+      toast({
+        title: "Forespørsel sendt! ✉️",
+        description: `Administratorene for ${club.name} vil behandle forespørselen din.`,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Noe gikk galt";
+      toast({ title: msg, variant: "destructive" });
+    } finally {
+      setSendingRequest(false);
     }
   }
 
@@ -640,16 +683,36 @@ export default function ClubsList() {
                 index={i}
                 action={
                   club.joinMode === "invite_only" ? (
-                    <div
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/30 bg-muted/20 text-[12px] font-bold uppercase tracking-wide text-muted-foreground/40"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      Krever invitasjon
-                    </div>
+                    requestedIds.has(club.id) ? (
+                      <div
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/30 bg-muted/20 text-[12px] font-bold uppercase tracking-wide text-muted-foreground/40"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        Forespørsel sendt
+                      </div>
+                    ) : isSignedIn ? (
+                      <ActionBtn
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setRequestMessage("");
+                          setRequestDialogClub(club);
+                        }}
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        Be om medlemskap
+                      </ActionBtn>
+                    ) : (
+                      <ActionBtn
+                        variant="secondary"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate("/sign-in"); }}
+                      >
+                        Logg inn for å søke om medlemskap
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </ActionBtn>
+                    )
                   ) : isSignedIn ? (
                     <ActionBtn
                       variant="primary"
@@ -668,7 +731,10 @@ export default function ClubsList() {
                       Bli med
                     </ActionBtn>
                   ) : (
-                    <ActionBtn variant="secondary" href="/sign-in">
+                    <ActionBtn
+                      variant="secondary"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate("/sign-in"); }}
+                    >
                       Logg inn for å bli med
                       <ArrowRight className="w-3.5 h-3.5" />
                     </ActionBtn>
@@ -679,6 +745,49 @@ export default function ClubsList() {
           </div>
         )}
       </section>
+
+      {/* ── Join request dialog ── */}
+      <Dialog open={!!requestDialogClub} onOpenChange={(o) => !o && setRequestDialogClub(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              Be om medlemskap i {requestDialogClub?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <p className="text-[13px] text-muted-foreground/60 leading-relaxed">
+              Send en forespørsel til klubbens administratorer. De vil godkjenne eller avslå søknaden din.
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wide">
+                Melding (valgfritt)
+              </label>
+              <textarea
+                placeholder="Fortell litt om deg selv eller din interesse for klubben..."
+                value={requestMessage}
+                onChange={(e) => setRequestMessage(e.target.value)}
+                maxLength={300}
+                rows={3}
+                className="w-full resize-none rounded-xl border border-border/50 bg-muted/20 px-3.5 py-2.5 text-[13px] placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+              />
+              <p className="text-[10px] text-muted-foreground/30 text-right">{requestMessage.length}/300</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Avbryt</Button>
+            </DialogClose>
+            <Button
+              onClick={() => requestDialogClub && void handleSendRequest(requestDialogClub)}
+              disabled={sendingRequest}
+            >
+              {sendingRequest && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Send forespørsel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

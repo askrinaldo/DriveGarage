@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import {
   useGetClub,
@@ -214,8 +214,20 @@ export default function ClubDetail() {
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
   const [memberSearch, setMemberSearch] = useState("");
 
+  // Join request state (for non-members)
+  const [joinReqStatus, setJoinReqStatus] = useState<"none" | "pending" | "accepted" | "declined">("none");
+  const [joinReqOpen, setJoinReqOpen] = useState(false);
+  const [joinReqMessage, setJoinReqMessage] = useState("");
+  const [joinReqSending, setJoinReqSending] = useState(false);
+
+  // Admin join requests
+  type JoinReqItem = { id: number; memberName: string; message: string | null; status: string; createdAt: string };
+  const [joinRequests, setJoinRequests] = useState<JoinReqItem[]>([]);
+  const [joinReqLoading, setJoinReqLoading] = useState(false);
+  const [reviewingId, setReviewingId] = useState<number | null>(null);
+
   const { session } = useClubAuth(clubId);
-  const { name: myUserName, email: myUserEmail, isAuthLoading } = useUserAuth();
+  const { name: myUserName, email: myUserEmail, isAuthLoading, getAuthHeaders } = useUserAuth();
 
   const { data: club, isLoading, isError, refetch } = useGetClub(clubId, {
     query: { queryKey: getGetClubQueryKey(clubId) },
@@ -247,6 +259,39 @@ export default function ClubDetail() {
   const updateRoleMutation = useUpdateClubMember();
   const createInviteMutation = useCreateClubInvitation();
   const revokeInviteMutation = useRevokeClubInvitation();
+
+  // Fetch my join request status for invite_only clubs
+  useEffect(() => {
+    if (!club || isMember || club.joinMode !== "invite_only") return;
+    void (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/clubs/${clubId}/my-join-request`, { headers });
+        if (!res.ok) return;
+        const data = await res.json() as { status: string } | null;
+        if (data) setJoinReqStatus(data.status as "pending" | "accepted" | "declined");
+      } catch { /* silent */ }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [club?.id, isMember]);
+
+  // Fetch admin join requests
+  useEffect(() => {
+    if (!canAdmin) return;
+    setJoinReqLoading(true);
+    void (async () => {
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/clubs/${clubId}/join-requests`, { headers });
+        if (!res.ok) return;
+        const data = await res.json() as JoinReqItem[];
+        setJoinRequests(data);
+      } catch { /* silent */ } finally {
+        setJoinReqLoading(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canAdmin, clubId]);
 
   const invalidateClub = () => queryClient.invalidateQueries({ queryKey: getGetClubQueryKey(clubId) });
 
@@ -319,6 +364,67 @@ export default function ClubDetail() {
     await revokeInviteMutation.mutateAsync({ clubId, invitationId });
     toast({ title: "Invitasjon tilbakekalt" });
     refetchInvitations();
+  }
+
+  async function handleSendJoinRequest() {
+    setJoinReqSending(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/clubs/${clubId}/join-request`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ message: joinReqMessage.trim() || null }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) {
+        if (res.status === 409) setJoinReqStatus("pending");
+        throw new Error(data.error ?? "Noe gikk galt");
+      }
+      setJoinReqStatus("pending");
+      setJoinReqOpen(false);
+      setJoinReqMessage("");
+      toast({
+        title: "Forespørsel sendt! ✉️",
+        description: "Administratorene vil behandle forespørselen din.",
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Noe gikk galt";
+      toast({ title: msg, variant: "destructive" });
+    } finally {
+      setJoinReqSending(false);
+    }
+  }
+
+  async function handleReviewJoinRequest(requestId: number, action: "accept" | "decline") {
+    setReviewingId(requestId);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/clubs/${clubId}/join-requests/${requestId}`, {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Noe gikk galt");
+      setJoinRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId ? { ...r, status: action === "accept" ? "accepted" : "declined" } : r
+        )
+      );
+      toast({
+        title: action === "accept" ? "Forespørsel godkjent" : "Forespørsel avslått",
+        description:
+          action === "accept"
+            ? "Personen er nå lagt til som medlem."
+            : "Forespørselen ble avslått.",
+      });
+      if (action === "accept") invalidateClub();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Noe gikk galt";
+      toast({ title: msg, variant: "destructive" });
+    } finally {
+      setReviewingId(null);
+    }
   }
 
   async function copyToClipboard(text: string, code: string) {
@@ -405,6 +511,13 @@ export default function ClubDetail() {
                 )}
               </div>
 
+              <button
+                onClick={() => { setJoinReqMessage(""); setJoinReqOpen(true); }}
+                className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-[12px] font-black uppercase tracking-wider shadow-lg shadow-primary/20"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                Be om medlemskap
+              </button>
               <button
                 onClick={() => navigate("/clubs")}
                 className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-xl border border-border/50 hover:border-border hover:bg-muted/20 transition-all text-[12px] font-bold uppercase tracking-wide text-foreground/60"
@@ -636,10 +749,25 @@ export default function ClubDetail() {
         {/* Join for non-members */}
         {!isMember && !club.isPrivate && (
           club.joinMode === "invite_only" ? (
-            <div className="flex items-center gap-2 text-[12px] text-muted-foreground/50 font-bold uppercase tracking-wide">
-              <Lock className="w-3.5 h-3.5" />
-              Krever invitasjon
-            </div>
+            joinReqStatus === "pending" ? (
+              <div className="flex items-center gap-2 text-[12px] text-muted-foreground/50 font-bold uppercase tracking-wide">
+                <Clock className="w-3.5 h-3.5" />
+                Forespørsel sendt
+              </div>
+            ) : joinReqStatus === "declined" ? (
+              <div className="flex items-center gap-2 text-[12px] text-muted-foreground/50 font-bold uppercase tracking-wide">
+                <XCircle className="w-3.5 h-3.5 text-destructive/60" />
+                Forespørsel avslått
+              </div>
+            ) : (
+              <button
+                onClick={() => { setJoinReqMessage(""); setJoinReqOpen(true); }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-[12px] font-black uppercase tracking-wider shadow-lg shadow-primary/20 shrink-0"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                Be om medlemskap
+              </button>
+            )
           ) : (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -712,6 +840,17 @@ export default function ClubDetail() {
                 {activeInvitations.length > 0 && (
                   <span className="text-[10px] font-bold bg-amber-500/25 text-amber-300 rounded-full px-1.5 py-0.5 leading-none">
                     {activeInvitations.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            )}
+            {canAdmin && (
+              <TabsTrigger value="join-requests" className="gap-2 rounded-lg text-[12px] font-bold uppercase tracking-wide">
+                <UserCheck className="w-3.5 h-3.5" />
+                Forespørsler
+                {joinRequests.filter((r) => r.status === "pending").length > 0 && (
+                  <span className="text-[10px] font-bold bg-primary/25 text-primary rounded-full px-1.5 py-0.5 leading-none">
+                    {joinRequests.filter((r) => r.status === "pending").length}
                   </span>
                 )}
               </TabsTrigger>
@@ -1054,6 +1193,88 @@ export default function ClubDetail() {
               )}
             </TabsContent>
           )}
+
+          {/* ═══ Join requests tab (admin+) ═══ */}
+          {canAdmin && (
+            <TabsContent value="join-requests" className="space-y-4">
+              {joinReqLoading ? (
+                <div className="rounded-2xl border border-border/40 bg-card py-14 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground/40" />
+                </div>
+              ) : joinRequests.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/40 py-14 text-center">
+                  <div className="w-12 h-12 bg-muted/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <UserCheck className="w-6 h-6 text-muted-foreground/30" />
+                  </div>
+                  <p className="text-[13px] text-muted-foreground/50">Ingen innmeldingsforespørsler ennå.</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+                  <ul className="divide-y divide-border/25">
+                    {joinRequests.map((req) => {
+                      const avatarColor = getAvatarColor(req.memberName);
+                      const isPending = req.status === "pending";
+                      return (
+                        <motion.li
+                          key={req.id}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="px-5 py-4 flex items-start justify-between gap-4"
+                        >
+                          <div className="flex items-start gap-3.5 min-w-0">
+                            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5", avatarColor)}>
+                              {req.memberName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[13.5px] font-semibold leading-tight">{req.memberName}</p>
+                              {req.message && (
+                                <p className="text-[12px] text-muted-foreground/55 mt-1 leading-relaxed line-clamp-3">
+                                  {req.message}
+                                </p>
+                              )}
+                              <p className="text-[10px] text-muted-foreground/35 mt-1.5 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {formatDate(req.createdAt)}
+                                {" · "}
+                                <span className={cn(
+                                  "font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full",
+                                  req.status === "pending"  ? "bg-amber-500/15 text-amber-300" :
+                                  req.status === "accepted" ? "bg-emerald-500/15 text-emerald-300" :
+                                  "bg-muted/60 text-muted-foreground"
+                                )}>
+                                  {req.status === "pending" ? "Venter" : req.status === "accepted" ? "Godkjent" : "Avslått"}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                          {isPending && (
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => void handleReviewJoinRequest(req.id, "decline")}
+                                disabled={reviewingId === req.id}
+                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border/50 hover:border-destructive/50 hover:bg-destructive/10 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/60 hover:text-destructive transition-all disabled:opacity-50"
+                              >
+                                {reviewingId === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+                                Avslå
+                              </button>
+                              <button
+                                onClick={() => void handleReviewJoinRequest(req.id, "accept")}
+                                disabled={reviewingId === req.id}
+                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-[11px] font-bold uppercase tracking-wide transition-all disabled:opacity-50 shadow-sm shadow-primary/15"
+                              >
+                                {reviewingId === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                Godkjenn
+                              </button>
+                            </div>
+                          )}
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       </motion.div>
 
@@ -1096,6 +1317,46 @@ export default function ClubDetail() {
             <Button onClick={handleRoleUpdate} disabled={updateRoleMutation.isPending}>
               {updateRoleMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Lagre rolle
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Send join request dialog ── */}
+      <Dialog open={joinReqOpen} onOpenChange={(o) => !o && setJoinReqOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              Be om medlemskap i {club.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <p className="text-[13px] text-muted-foreground/60 leading-relaxed">
+              Send en forespørsel til klubbens administratorer. De vil godkjenne eller avslå søknaden din.
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wide">
+                Melding (valgfritt)
+              </Label>
+              <textarea
+                placeholder="Fortell litt om deg selv eller din interesse for klubben..."
+                value={joinReqMessage}
+                onChange={(e) => setJoinReqMessage(e.target.value)}
+                maxLength={300}
+                rows={3}
+                className="w-full resize-none rounded-xl border border-border/50 bg-muted/20 px-3.5 py-2.5 text-[13px] placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+              />
+              <p className="text-[10px] text-muted-foreground/30 text-right">{joinReqMessage.length}/300</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Avbryt</Button>
+            </DialogClose>
+            <Button onClick={() => void handleSendJoinRequest()} disabled={joinReqSending}>
+              {joinReqSending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Send forespørsel
             </Button>
           </DialogFooter>
         </DialogContent>

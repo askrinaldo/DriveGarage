@@ -5,6 +5,7 @@ export * from "./tripLogs";
 export * from "./clubs";
 export * from "./clubMembers";
 export * from "./clubInvitations";
+export * from "./clubJoinRequests";
 export * from "./clubGarage";
 export * from "./forumPosts";
 export * from "./forumComments";

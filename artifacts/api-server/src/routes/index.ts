@@ -21,6 +21,7 @@ import userProfileRouter from "./userProfile";
 // TODO Phase 2: merge club route files into routes/clubs/ subfolder.
 import clubsRouter from "./clubs";
 import clubInvitationsRouter from "./clubInvitations";
+import clubJoinRequestsRouter from "./clubJoinRequests";
 import clubGarageRouter from "./clubGarage";
 import clubDashboardRouter from "./clubDashboard";
 import clubEventsRouter from "./clubEvents";
@@ -56,6 +57,7 @@ router.use(userProfileRouter);
 // Clubs domain
 router.use(clubsRouter);
 router.use(clubInvitationsRouter);
+router.use(clubJoinRequestsRouter);
 router.use(clubGarageRouter);
 router.use(clubDashboardRouter);
 router.use(clubEventsRouter);
