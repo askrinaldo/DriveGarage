@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { z } from "zod/v4";
 import {
   db,
   forumPostsTable,
@@ -13,6 +14,13 @@ import { parseAuth, requireClubRole } from "../middleware/auth";
 import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
+
+// ─── Schemas ──────────────────────────────────────────────────────────────────
+const updateForumPostSchema = z.object({
+  title: z.string().trim().nullable().optional(),
+  content: z.string().min(1, "Innhold kan ikke være tomt").trim().optional(),
+  isPinned: z.number().int().min(0).max(1).optional(),
+});
 
 const ROLE_ORDER: Record<string, number> = { owner: 4, admin: 3, moderator: 2, member: 1 };
 
@@ -148,11 +156,12 @@ router.patch(
     const clubId = parseInt(String(req.params.clubId), 10);
     const postId = parseInt(String(req.params.postId), 10);
     const actor = req.auth!;
-    const { title, content, isPinned } = req.body as {
-      title?: string;
-      content?: string;
-      isPinned?: number;
-    };
+    const bodyParsed = updateForumPostSchema.safeParse(req.body);
+    if (!bodyParsed.success) {
+      res.status(400).json({ error: "Ugyldig input", details: bodyParsed.error.issues });
+      return;
+    }
+    const { title, content, isPinned } = bodyParsed.data;
 
     const [existing] = await db.select().from(forumPostsTable).where(eq(forumPostsTable.id, postId));
     if (!existing || existing.clubId !== clubId) {

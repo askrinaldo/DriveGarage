@@ -1,9 +1,22 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc, or, ilike } from "drizzle-orm";
+import { z } from "zod/v4";
 import { db, marketplaceListingsTable } from "@workspace/db";
 import { parseAuth, requireClubRole } from "../middleware/auth";
 
 const router: IRouter = Router();
+
+// ─── Schemas ──────────────────────────────────────────────────────────────────
+const updateListingSchema = z.object({
+  title: z.string().min(1, "Tittel er påkrevd").trim().optional(),
+  description: z.string().trim().nullable().optional(),
+  price: z.number().nonnegative().nullable().optional(),
+  condition: z.enum(["new", "excellent", "good", "fair", "parts_only"]).optional(),
+  status: z.enum(["active", "sold", "reserved", "removed"]).optional(),
+  imageUrl: z.string().trim().nullable().optional(),
+  contactInfo: z.string().trim().nullable().optional(),
+  isFree: z.boolean().optional(),
+});
 
 // ─── List listings (global or by club) ───────────────────────────────────────
 router.get("/marketplace", async (req, res): Promise<void> => {
@@ -183,17 +196,13 @@ router.patch(
       return;
     }
 
-    const { title, description, price, condition, status, imageUrl, contactInfo, isFree } =
-      req.body as Partial<{
-        title: string;
-        description: string;
-        price: number;
-        condition: "new" | "excellent" | "good" | "fair" | "parts_only";
-        status: "active" | "sold" | "reserved" | "removed";
-        imageUrl: string;
-        contactInfo: string;
-        isFree: boolean;
-      }>;
+    const bodyParsed = updateListingSchema.safeParse(req.body);
+    if (!bodyParsed.success) {
+      res.status(400).json({ error: "Ugyldig input", details: bodyParsed.error.issues });
+      return;
+    }
+
+    const { title, description, price, condition, status, imageUrl, contactInfo, isFree } = bodyParsed.data;
 
     const [updated] = await db
       .update(marketplaceListingsTable)

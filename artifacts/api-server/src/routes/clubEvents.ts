@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc, gte, asc, sql } from "drizzle-orm";
+import { z } from "zod/v4";
 import {
   db,
   clubEventsTable,
@@ -12,6 +13,20 @@ import { parseAuth, requireClubRole } from "../middleware/auth";
 import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
+
+// ─── Schemas ──────────────────────────────────────────────────────────────────
+const updateClubEventSchema = z.object({
+  title: z.string().min(1, "Tittel er påkrevd").trim().optional(),
+  description: z.string().trim().nullable().optional(),
+  location: z.string().trim().nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  startAt: z.string().optional(),
+  endAt: z.string().nullable().optional(),
+  maxAttendees: z.number().int().positive().nullable().optional(),
+  imageUrl: z.string().trim().nullable().optional(),
+  status: z.enum(["upcoming", "ongoing", "cancelled", "past"]).optional(),
+});
 
 // ─── List events ─────────────────────────────────────────────────────────────
 router.get("/clubs/:clubId/events", parseAuth, async (req, res): Promise<void> => {
@@ -221,21 +236,16 @@ router.patch(
       return;
     }
 
+    const bodyParsed = updateClubEventSchema.safeParse(req.body);
+    if (!bodyParsed.success) {
+      res.status(400).json({ error: "Ugyldig input", details: bodyParsed.error.issues });
+      return;
+    }
+
     const {
       title, description, location, latitude, longitude,
       startAt, endAt, maxAttendees, imageUrl, status,
-    } = req.body as Partial<{
-      title: string;
-      description: string;
-      location: string;
-      latitude: number;
-      longitude: number;
-      startAt: string;
-      endAt: string;
-      maxAttendees: number;
-      imageUrl: string;
-      status: "upcoming" | "ongoing" | "cancelled" | "past";
-    }>;
+    } = bodyParsed.data;
 
     const [updated] = await db
       .update(clubEventsTable)

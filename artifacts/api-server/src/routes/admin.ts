@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { eq, desc, count, sql, gte } from "drizzle-orm";
+import { z } from "zod/v4";
 import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable, subscriptionsTable, subscriptionEventsTable, billingChargesTable } from "@workspace/db";
 import { parseUserAuth, requireSuperAdmin } from "../middleware/userAuth";
 import { runMonthlyBillingJob, reconcileCharges, currentBillingPeriod } from "../lib/billing/monthlyCharges";
@@ -11,6 +12,17 @@ import {
   NoActiveExemptionError,
 } from "../lib/paymentExemptions";
 import { ERRORS } from "../lib/errors";
+
+// ─── Schemas ──────────────────────────────────────────────────────────────────
+const adminUserActionSchema = z.object({
+  isActive: z.boolean().optional(),
+  reason: z.string().optional(),
+});
+
+const adminSubscriptionSchema = z.object({
+  subscriptionTier: z.enum(["free", "standard", "premium"]),
+  reason: z.string().optional(),
+});
 
 const router = Router();
 
@@ -291,7 +303,13 @@ router.get("/admin/subscriptions", parseUserAuth, requireSuperAdmin, async (req,
 // ─── Admin action on user ─────────────────────────────────────────────────
 router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
-  const { isActive, reason } = req.body as { isActive?: boolean; reason?: string };
+
+  const parsed = adminUserActionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
+    return;
+  }
+  const { isActive, reason } = parsed.data;
 
   const [before] = await db
     .select({ id: usersTable.id, email: usersTable.email, isActive: usersTable.isActive })
@@ -325,7 +343,13 @@ router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, r
 // ─── Admin action on user subscription tier ───────────────────────────────
 router.patch("/admin/users/:id/subscription", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
-  const { subscriptionTier, reason } = req.body as { subscriptionTier: "free" | "standard" | "premium"; reason?: string };
+
+  const parsed = adminSubscriptionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Ugyldig input", details: parsed.error.issues });
+    return;
+  }
+  const { subscriptionTier, reason } = parsed.data;
 
   const [before] = await db
     .select({ id: usersTable.id, email: usersTable.email, subscriptionTier: usersTable.subscriptionTier })
