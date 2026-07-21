@@ -4,7 +4,7 @@ import { subscriptionCancellationMethod } from "@/config/compliance";
 
 export default function TermsPage() {
   return (
-    <LegalPageShell title="Vilkår for bruk" lastUpdated="[Dato settes ved lansering]">
+    <LegalPageShell title="Vilkår for bruk" lastUpdated="[Dato settes ved lansering]" showDraftBanner>
 
       <LegalSection title="1. Om tjenesten">
         <p>
@@ -47,7 +47,7 @@ export default function TermsPage() {
 
       <LegalSection title="4. Eierskap til data og innhold">
         <p>
-          <strong className="text-foreground">Du eier dine data.</strong> Kjøretøydata, serviceposter,
+          <strong className="text-white">Du eier dine data.</strong> Kjøretøydata, serviceposter,
           kvitteringer, turlogger og annet innhold du registrerer i DriveGarage tilhører deg.
         </p>
         <p>
@@ -67,7 +67,7 @@ export default function TermsPage() {
       <LegalSection title="5. Abonnement og betaling">
         <p>
           DriveGarage tilbyr gratisnivå og planlagte betalte abonnementer.
-          <strong className="text-foreground"> Betalingsmodulen er ikke aktivert ennå.</strong>{" "}
+          <strong className="text-white"> Betalingsmodulen er ikke aktivert ennå.</strong>{" "}
           Ingen betaling trekkes fra noen bruker på nåværende tidspunkt.
         </p>
         <p>
@@ -145,13 +145,13 @@ export default function TermsPage() {
       <LegalSection title="10. Kontakt">
         <p>
           Spørsmål om vilkårene kan rettes til:{" "}
-          <a href="mailto:drivegarage@evolvit.no" className="underline hover:text-foreground">
+          <a href="mailto:drivegarage@evolvit.no" className="underline hover:text-white">
             drivegarage@evolvit.no
           </a>
         </p>
         <p>
           Se vår{" "}
-          <Link href="/contact" className="underline hover:text-foreground">kontaktside</Link>{" "}
+          <Link href="/contact" className="underline hover:text-white">kontaktside</Link>{" "}
           for ytterligere kontaktinformasjon.
         </p>
       </LegalSection>
