@@ -1,0 +1,204 @@
+Act as a senior frontend engineer and product architect.
+
+We are simplifying DriveGarage before public launch.
+
+The goal is to remove features that create unnecessary maintenance and support overhead.
+
+IMPORTANT
+
+- Do NOT modify authentication.
+- Do NOT modify subscriptions.
+- Do NOT modify vehicles.
+- Do NOT modify billing.
+- Do NOT remove any core vehicle management functionality.
+- Only remove the features listed below.
+- Clean up unused frontend code after removal.
+
+--------------------------------------------------
+1. REMOVE ORGANIZATIONS
+--------------------------------------------------
+
+Remove the Organization feature completely from the frontend.
+
+This includes:
+
+- Remove "Ny organisasjon" from the user dropdown.
+- Remove organization pages.
+- Remove organization navigation.
+- Remove organization profile references.
+- Remove organization shortcuts.
+- Remove organization settings.
+
+If backend endpoints still exist they may remain unused, but nothing related to organizations should be visible in the UI.
+
+--------------------------------------------------
+2. REMOVE GAMIFICATION
+--------------------------------------------------
+
+Remove the entire achievements / badges / points system.
+
+Remove:
+
+- Merker opptjent
+- Badge cards
+- Badge counters
+- Achievement progress
+- XP
+- Levels
+- Points
+- Streaks
+- Reward widgets
+- Empty badge placeholders
+
+Rebalance the profile layout afterwards so there are no empty spaces.
+
+--------------------------------------------------
+3. REMOVE LOCAL SUPPORT SYSTEM
+--------------------------------------------------
+
+DriveGarage will NOT contain an internal support center.
+
+Remove:
+
+- Support pages
+- Support ticket creation
+- Ticket management
+- Local feedback forms
+- Feature request forms
+- Bug report forms
+- Internal contact pages (if they create tickets)
+
+Instead:
+
+Every support-related action should simply open the user's default mail client.
+
+Use:
+
+drivegarage@evolvit.no
+
+For:
+
+- Support requests
+- Bug reports
+- Feature requests
+- General questions
+- Contact
+
+Use clear subject lines, for example:
+
+Support:
+Subject:
+DriveGarage Support
+
+Feature request:
+Subject:
+DriveGarage Feature Request
+
+Bug:
+Subject:
+DriveGarage Bug Report
+
+Do NOT store tickets locally.
+
+Do NOT create a support database.
+
+Do NOT create backend endpoints for support.
+
+--------------------------------------------------
+4. REMOVE CHATBOT
+--------------------------------------------------
+
+Remove the floating chatbot completely.
+
+Remove:
+
+- Floating chat button
+- Chat window
+- AI support assistant
+- Live chat
+- Chat integrations
+- Chat widgets
+
+Completely remove all frontend code related to the chatbot.
+
+Do not leave empty placeholders.
+
+--------------------------------------------------
+5. CLEAN PROFILE PAGE
+--------------------------------------------------
+
+After these removals the profile page should only contain:
+
+- User information
+- Account settings
+- Connected login providers
+- Subscription
+- Privacy
+- Notifications (if applicable)
+
+Nothing else.
+
+--------------------------------------------------
+6. CLEAN CODEBASE
+--------------------------------------------------
+
+Remove unused:
+
+Components
+
+Imports
+
+Hooks
+
+State
+
+Routes
+
+Context
+
+Navigation entries
+
+Feature flags
+
+CSS
+
+related to:
+
+Organizations
+
+Gamification
+
+Badges
+
+Points
+
+Achievements
+
+Support Center
+
+Support Tickets
+
+Chatbot
+
+Only remove code that becomes unused.
+
+Do NOT touch backend logic unrelated to these features.
+
+--------------------------------------------------
+GOAL
+
+DriveGarage should launch as a clean premium vehicle management platform.
+
+The product should focus on:
+
+- Vehicles
+- Service history
+- Documents
+- Mileage
+- Clubs
+- Membership
+- Subscription
+
+Everything else should be removed if it does not provide direct value to the core experience.
+
+The interface should become cleaner, faster, easier to maintain and significantly more professional.

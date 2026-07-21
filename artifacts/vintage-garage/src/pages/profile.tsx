@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
-  User, Mail, Shield, Car, Wrench, Trophy, Star,
-  Calendar, Edit2, Check, X, Crown, Zap, TrendingUp,
-  Award, Lock, ChevronRight
+  User, Mail, Shield, Car, Wrench,
+  Calendar, Edit2, Check, X, Crown, TrendingUp, Lock,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
@@ -23,41 +22,10 @@ interface ProfileData {
   stats: { vehicleCount: number; serviceCount: number; score: number };
 }
 
-interface Badge {
-  id: number;
-  slug: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: string;
-  points: number;
-}
-
-interface Achievement {
-  id: number;
-  badgeSlug: string;
-  earnedAt: string;
-}
-
-interface AchievementsData {
-  memberName: string;
-  achievements: Achievement[];
-  allBadges: Badge[];
-  totalPoints: number;
-}
-
 const TIER_CONFIG = {
-  free:     { gradient: "from-slate-500 to-slate-600",   ring: "ring-slate-500/30",  text: "text-slate-300" },
-  standard: { gradient: "from-blue-500 to-indigo-600",   ring: "ring-blue-500/30",   text: "text-blue-300"  },
-  premium:  { gradient: "from-amber-400 to-orange-500",  ring: "ring-amber-400/30",  text: "text-amber-300" },
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  milestone:   "from-indigo-500 to-cyan-500",
-  maintenance: "from-amber-500 to-orange-400",
-  activity:    "from-emerald-500 to-teal-400",
-  social:      "from-violet-500 to-purple-400",
-  special:     "from-rose-500 to-pink-400",
+  free:     { gradient: "from-slate-500 to-slate-600",   ring: "ring-slate-500/30",  text: "text-slate-300",  label: "Gratis"   },
+  standard: { gradient: "from-blue-500 to-indigo-600",   ring: "ring-blue-500/30",   text: "text-blue-300",   label: "Standard" },
+  premium:  { gradient: "from-amber-400 to-orange-500",  ring: "ring-amber-400/30",  text: "text-amber-300",  label: "Premium"  },
 };
 
 function getInitials(name: string) {
@@ -76,33 +44,22 @@ export default function Profile() {
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [achievements, setAchievements] = useState<AchievementsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
   const [savingName, setSavingName] = useState(false);
 
-  const TIER_LABELS: Record<string, string> = {
-    free: t("profile.tierFree"),
-    standard: t("profile.tierStandard"),
-    premium: t("profile.tierPremium"),
-  };
-
   useEffect(() => {
     if (isAuthLoading) return;
     if (!isAuthenticated) { navigate("/login"); return; }
     void (async () => {
       const headers = await getAuthHeaders();
-      const [prof] = await Promise.all([
-        fetch("/api/profile/me", { headers }).then(r => r.ok ? r.json() as Promise<ProfileData> : null),
-      ]);
+      const prof = await fetch("/api/profile/me", { headers })
+        .then(r => r.ok ? r.json() as Promise<ProfileData> : null);
       if (prof) {
         setProfile(prof);
         setNewName(prof.name);
-        void fetch(`/api/badges/users/${encodeURIComponent(prof.name)}/achievements`)
-          .then(r => r.ok ? r.json() as Promise<AchievementsData> : null)
-          .then(a => { if (a) setAchievements(a); });
       }
       setLoading(false);
     })();
@@ -131,13 +88,9 @@ export default function Profile() {
   if (!profile) return null;
 
   const tier = TIER_CONFIG[profile.subscriptionTier] ?? TIER_CONFIG.free;
-  const tierLabel = TIER_LABELS[profile.subscriptionTier] ?? t("profile.tierFree");
-  const earnedSlugs = new Set((achievements?.achievements ?? []).map(a => a.badgeSlug));
-  const earnedBadges = achievements?.allBadges.filter(b => earnedSlugs.has(b.slug)) ?? [];
-  const lockedBadges = achievements?.allBadges.filter(b => !earnedSlugs.has(b.slug)) ?? [];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+    <div className="max-w-3xl mx-auto space-y-6 pb-12">
 
       {/* Header */}
       <motion.div
@@ -146,24 +99,24 @@ export default function Profile() {
         transition={{ duration: 0.4 }}
       >
         <div className="flex items-center gap-2 mb-1">
-          <User className="w-4 h-4 text-indigo-400" />
-          <span className="text-xs font-bold text-indigo-400/80 uppercase tracking-widest">{t("profile.sectionLabel")}</span>
+          <User className="w-4 h-4 text-primary/70" />
+          <span className="text-[11px] font-bold text-primary/70 uppercase tracking-widest">{t("profile.sectionLabel")}</span>
         </div>
-        <h1 className="text-3xl font-black text-foreground tracking-tight">{t("profile.title")}</h1>
-        <p className="text-muted-foreground text-sm mt-1">{t("profile.subtitle")}</p>
+        <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">{t("profile.title")}</h1>
+        <p className="text-muted-foreground/60 text-[13px] mt-1">{t("profile.subtitle")}</p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* Identity card */}
+        {/* ── Identity card ── */}
         <motion.div
           initial={{ opacity: 0, x: -16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.05, duration: 0.45 }}
           className="lg:col-span-1 space-y-4"
         >
-          {/* Avatar + info */}
           <div className="rounded-2xl border border-border/50 bg-card p-6 text-center space-y-4">
+            {/* Avatar */}
             <div className="relative inline-flex">
               <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${tier.gradient} flex items-center justify-center text-foreground text-2xl font-black shadow-lg ring-4 ${tier.ring}`}>
                 {getInitials(profile.name)}
@@ -206,8 +159,8 @@ export default function Profile() {
 
             {/* Tier badge */}
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r ${tier.gradient} shadow-sm`}>
-              <Star className="w-3 h-3 text-foreground" />
-              <span className="text-xs font-bold text-foreground">{tierLabel}</span>
+              <Crown className="w-3 h-3 text-foreground" />
+              <span className="text-xs font-bold text-foreground">{tier.label}</span>
             </div>
 
             <div className="text-[11px] text-muted-foreground/60 flex items-center justify-center gap-1.5">
@@ -216,12 +169,11 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Quick stats */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* Vehicle + service stats */}
+          <div className="grid grid-cols-2 gap-2">
             {[
-              { icon: Car, label: t("profile.vehicles"), value: profile.stats.vehicleCount, gradient: "from-indigo-500 to-cyan-500" },
+              { icon: Car,    label: t("profile.vehicles"), value: profile.stats.vehicleCount, gradient: "from-indigo-500 to-cyan-500"  },
               { icon: Wrench, label: t("profile.services"), value: profile.stats.serviceCount, gradient: "from-amber-500 to-orange-400" },
-              { icon: Zap, label: t("profile.points"), value: profile.stats.score + (achievements?.totalPoints ?? 0), gradient: "from-emerald-500 to-teal-400" },
             ].map((s, i) => (
               <motion.div
                 key={s.label}
@@ -238,86 +190,22 @@ export default function Profile() {
               </motion.div>
             ))}
           </div>
-
         </motion.div>
 
-        {/* Badges + security */}
+        {/* ── Account settings ── */}
         <motion.div
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.45 }}
           className="lg:col-span-2 space-y-4"
         >
-          {/* Earned badges */}
-          <div className="rounded-2xl border border-border/50 bg-card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-foreground/60 uppercase tracking-widest flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-400" /> {t("profile.earnedBadges")}
-              </h3>
-              <span className="text-xs font-bold text-muted-foreground/70">{earnedBadges.length} / {(achievements?.allBadges.length ?? 0)}</span>
-            </div>
-            {earnedBadges.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground/60 text-sm">
-                <div className="text-3xl mb-2">🎯</div>
-                {t("profile.noBadges")}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {earnedBadges.map((badge, i) => (
-                  <motion.div
-                    key={badge.slug}
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 + i * 0.05 }}
-                    className={`flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-gradient-to-br ${CATEGORY_COLORS[badge.category] ?? "from-indigo-500 to-cyan-500"} bg-opacity-10 relative overflow-hidden group hover:border-border transition-colors`}
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${CATEGORY_COLORS[badge.category] ?? "from-indigo-500 to-cyan-500"} opacity-[0.06]`} />
-                    <div className="text-2xl shrink-0">{badge.icon}</div>
-                    <div className="min-w-0 relative">
-                      <p className="text-xs font-bold text-foreground leading-snug">{badge.name}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug truncate">{badge.description}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Zap className="w-2.5 h-2.5 text-amber-400/70" />
-                        <span className="text-[10px] text-amber-400/70 font-bold">+{badge.points} {t("profile.points").toLowerCase()}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Locked badges */}
-          {lockedBadges.length > 0 && (
-            <div className="rounded-2xl border border-border/50 bg-card p-5">
-              <h3 className="text-sm font-bold text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-4">
-                <Lock className="w-3.5 h-3.5" /> {t("profile.lockedBadges")}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {lockedBadges.map((badge, i) => (
-                  <motion.div
-                    key={badge.slug}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 + i * 0.03 }}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.04] bg-white/[0.02] opacity-50"
-                  >
-                    <div className="text-2xl shrink-0 grayscale">{badge.icon}</div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-muted-foreground">{badge.name}</p>
-                      <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-snug truncate">{badge.description}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Security & account */}
           <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-1">
+            <h3 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-1">
               <Shield className="w-4 h-4 text-cyan-400" /> {t("profile.security")}
             </h3>
+
             <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 flex items-center justify-center shrink-0">
                 <Mail className="w-4 h-4 text-indigo-300" />
@@ -327,6 +215,7 @@ export default function Profile() {
                 <p className="text-sm text-foreground/80 truncate">{profile.email}</p>
               </div>
             </div>
+
             <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/30 to-purple-500/30 flex items-center justify-center shrink-0">
                 <Lock className="w-4 h-4 text-violet-300" />
@@ -344,16 +233,73 @@ export default function Profile() {
                 {t("profile.changePassword")}
               </Button>
             </div>
+
             <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-4 h-4 text-amber-300" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-foreground/60">{t("profile.subscriptionLabel")}</p>
-                <p className={`text-sm font-bold ${tier.text}`}>{tierLabel}</p>
+                <p className={`text-sm font-bold ${tier.text}`}>{tier.label}</p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate("/billing")}
+                className="text-xs text-muted-foreground hover:text-foreground/70 hover:bg-muted/30 h-7"
+              >
+                Administrer
+              </Button>
+            </div>
+          </div>
+
+          {/* Connected providers note */}
+          <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
+            <h3 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-1">
+              <User className="w-4 h-4 text-primary/70" /> Påloggingsmetoder
+            </h3>
+            <p className="text-[12px] text-muted-foreground/55 leading-relaxed">
+              Tilkoblede påloggingsmetoder (e-post, Google, Apple) administreres via din Clerk-konto.
+              Du kan legge til eller fjerne metoder i kontoinnstillingene dine.
+            </p>
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0">
+                <Shield className="w-4 h-4 text-primary/60" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground/60">Konto administrert av</p>
+                <p className="text-sm text-foreground/70">Clerk Authentication</p>
               </div>
             </div>
           </div>
+
+          {/* Privacy */}
+          <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
+            <h3 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-1">
+              <Shield className="w-4 h-4 text-emerald-400/70" /> Personvern
+            </h3>
+            <p className="text-[12px] text-muted-foreground/55 leading-relaxed">
+              DriveGarage lagrer kun data som er nødvendig for å levere tjenesten.
+              Vi selger aldri data til tredjepart.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => navigate("/privacy")} className="text-xs h-7">
+                Personvernerklæring
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => navigate("/terms")} className="text-xs h-7">
+                Vilkår for bruk
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => window.open("mailto:drivegarage@evolvit.no?subject=Personvern%20-%20Datainnsyn%2FSletting", "_blank")}
+                className="text-xs h-7"
+              >
+                Slett mine data
+              </Button>
+            </div>
+          </div>
+
         </motion.div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown,
-  User, ChevronDown, HelpCircle, CreditCard,
-  IdCard, Building2, ChevronRight, Settings, Menu,
+  User, HelpCircle, CreditCard,
+  IdCard, Settings, Menu,
   Scale, FileText, Mail, Palette, Globe, Sun, Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,18 +19,11 @@ import { useTranslation } from "react-i18next";
 import { FlagSwitcher } from "@/components/language-switcher";
 
 interface LayoutProps { children: React.ReactNode }
-interface TenantEntry { tenantId: number; tenantName: string; role: string; isPersonal: boolean }
-
-function authHeader(token: string | null): Record<string, string> {
-  if (!token) return {};
-  return { "x-user-token": token };
-}
 
 export function Layout({ children }: LayoutProps) {
   const [location, navigate] = useLocation();
   const {
     isAuthenticated, isSuperAdmin, name, logout,
-    token, tenantId, tenantName, isPersonalTenant, switchTenant,
   } = useUserAuth();
   const { t } = useTranslation();
   const { mode, setMode } = useTheme();
@@ -46,29 +39,11 @@ export function Layout({ children }: LayoutProps) {
     { href: "/help",            label: t("nav.help"),           icon: HelpCircle      },
   ];
 
-  const [tenants, setTenants] = useState<TenantEntry[]>([]);
-  const [switchingTenant, setSwitchingTenant] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated || !token) return;
-    void (async () => {
-      const res = await fetch("/api/tenants/mine", { headers: authHeader(token) });
-      if (res.ok) setTenants(await res.json() as TenantEntry[]);
-    })();
-  }, [isAuthenticated, token, tenantId]);
 
   useEffect(() => { setMobileOpen(false); }, [location]);
   function handleLogout() { logout(); navigate("/login"); }
-  async function handleSwitchTenant(id: number) {
-    if (id === tenantId) return;
-    setSwitchingTenant(true);
-    await switchTenant(id);
-    setSwitchingTenant(false);
-    navigate("/vehicles");
-  }
 
-  const hasMultipleTenants = tenants.length > 1;
   const initials = name
     ? name.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase()
     : "?";
@@ -154,27 +129,6 @@ export function Layout({ children }: LayoutProps) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top" className="w-60 mb-1">
-              {/* Tenant */}
-              {hasMultipleTenants && (
-                <>
-                  <div className="px-2 py-1.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t("tenant.switchGarage")}</p>
-                  </div>
-                  {tenants.map((tenant) => (
-                    <DropdownMenuItem
-                      key={tenant.tenantId}
-                      onClick={() => void handleSwitchTenant(tenant.tenantId)}
-                      className={cn("gap-2", tenant.tenantId === tenantId && "text-primary")}
-                      disabled={switchingTenant}
-                    >
-                      <Building2 className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{tenant.tenantName}</span>
-                      {tenant.tenantId === tenantId && <ChevronRight className="w-3 h-3 ml-auto" />}
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                </>
-              )}
               <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2">
                 <User className="w-4 h-4" />
                 {t("auth.myProfile")}
@@ -182,14 +136,6 @@ export function Layout({ children }: LayoutProps) {
               <DropdownMenuItem onClick={() => navigate("/vehicles/new")} className="gap-2">
                 <Plus className="w-4 h-4" />
                 {t("vehicle.addVehicle")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/org/settings")} className="gap-2">
-                <Settings className="w-4 h-4" />
-                {t("tenant.settings")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/tenant-new")} className="gap-2">
-                <Building2 className="w-4 h-4" />
-                {t("tenant.newOrganization")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/billing")} className="gap-2">
                 <CreditCard className="w-4 h-4" />

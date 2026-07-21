@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import { ThemeProvider } from "@/contexts/theme";
-import { AiChatWidget } from "@/components/ai-chat-widget";
 import { ClerkProvider, useAuth, useSession } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
@@ -46,9 +45,6 @@ const Admin            = lazy(() => import("@/pages/admin"));
 const Help             = lazy(() => import("@/pages/help"));
 const VehicleTransfer  = lazy(() => import("@/pages/vehicle-transfer"));
 const MembershipCard   = lazy(() => import("@/pages/membership-card"));
-const TenantSettings   = lazy(() => import("@/pages/tenant-settings"));
-const TenantInvite     = lazy(() => import("@/pages/tenant-invite"));
-const TenantNew        = lazy(() => import("@/pages/tenant-new"));
 const Profile          = lazy(() => import("@/pages/profile"));
 const SignInPage        = lazy(() => import("@/pages/sign-in"));
 const SignUpPage        = lazy(() => import("@/pages/sign-up"));
@@ -166,9 +162,6 @@ function AppRoutes() {
           <Route path="/clubs/:id" component={ClubDetail} />
           <Route path="/admin" component={Admin} />
           <Route path="/membership-card" component={MembershipCard} />
-          <Route path="/org/settings" component={TenantSettings} />
-          <Route path="/tenant-invite/:code" component={TenantInvite} />
-          <Route path="/tenant-new" component={TenantNew} />
           <Route path="/profile" component={Profile} />
           <Route path="/help" component={Help} />
           <Route path="/billing" component={Billing} />
@@ -233,7 +226,6 @@ function ClerkProviderWithRoutes() {
     >
       <ClerkTokenInjector />
       <AppRoutes />
-      <AiChatWidget />
       <CookieNotice />
     </ClerkProvider>
   );
