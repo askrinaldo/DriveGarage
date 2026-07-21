@@ -775,12 +775,6 @@ export default function Billing() {
       {/* Account deletion */}
       {isAuthenticated && <AccountDeletionSection />}
 
-      <p className="text-center text-xs text-muted-foreground pb-4">
-        Se fullstendig prisoversikt på{" "}
-        <Link href="/pricing" className="underline hover:text-foreground transition-colors">
-          prisingsiden
-        </Link>
-      </p>
 
     </div>
   );
