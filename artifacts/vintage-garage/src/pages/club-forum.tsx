@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,7 +16,8 @@ import {
   type ForumPost,
 } from "@workspace/api-client-react";
 import { useClubSocket } from "@/hooks/use-club-socket";
-import { useClubAuth } from "@/hooks/use-club-auth";
+import { useClubAuth, type ClubRole } from "@/hooks/use-club-auth";
+import { useUserAuth } from "@/hooks/use-user-auth";
 import { LoadingState, ErrorState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,7 +130,7 @@ export default function ClubForum() {
   const queryClient = useQueryClient();
 
   const { session, login, logout, hasRole, isAuthenticated } = useClubAuth(clubId);
-  const myName = session?.memberName ?? "";
+  const { name: myUserName, email: myUserEmail, isAuthLoading } = useUserAuth();
 
   const [tempName, setTempName] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -150,16 +151,40 @@ export default function ClubForum() {
 
   const [showNotifications, setShowNotifications] = useState(false);
 
+  const { data: club, isLoading: isClubLoading } = useGetClub(clubId, {
+    query: { queryKey: getGetClubQueryKey(clubId) },
+  });
+
+  // Check if the Clerk-signed-in user is already a club member (matched by name or email).
+  // When true, we skip the club-JWT login screen entirely — the backend already accepts
+  // the Clerk Bearer token via the global resolveClubActorFromUser middleware.
+  const clerkMembership = useMemo(() => {
+    if (isAuthenticated || !club?.members) return null; // club JWT takes precedence
+    const candidates = [myUserName, myUserEmail]
+      .filter((c): c is string => !!c)
+      .map((c) => c.toLowerCase());
+    if (candidates.length === 0) return null;
+    return (club.members as Array<{ memberName: string; role: string }>).find(
+      (m) => candidates.includes(m.memberName.toLowerCase())
+    ) ?? null;
+  }, [isAuthenticated, club?.members, myUserName, myUserEmail]);
+
+  const isClerkMember = !!clerkMembership;
+  const isFullyAuthenticated = isAuthenticated || isClerkMember;
+
+  // Effective identity — falls back to Clerk membership when no club JWT is present
+  const effectiveMyName = session?.memberName ?? clerkMembership?.memberName ?? "";
+  const effectiveRole = (session?.role ?? clerkMembership?.role ?? "member") as ClubRole;
+  const ROLE_RANK: Record<string, number> = { owner: 4, admin: 3, moderator: 2, member: 1 };
+  const effectiveHasRole = (minRole: ClubRole): boolean =>
+    (session ? hasRole(minRole) : (ROLE_RANK[effectiveRole] ?? 0) >= (ROLE_RANK[minRole] ?? 0));
+
   const forumParams = {
     ...(activeCategory !== "all" ? { category: activeCategory } : {}),
-    ...(myName ? { memberName: myName } : {}),
+    ...(effectiveMyName ? { memberName: effectiveMyName } : {}),
     page,
     pageSize: PAGE_SIZE,
   };
-
-  const { data: club } = useGetClub(clubId, {
-    query: { queryKey: getGetClubQueryKey(clubId) },
-  });
 
   const {
     data: forumData,
@@ -169,17 +194,17 @@ export default function ClubForum() {
   } = useListForumPosts(clubId, forumParams, {
     query: {
       queryKey: getListForumPostsQueryKey(clubId, forumParams),
-      enabled: isAuthenticated,
+      enabled: isFullyAuthenticated,
     },
   });
 
   const { data: notifications } = useListForumNotifications(
     clubId,
-    { memberName: myName },
+    { memberName: effectiveMyName },
     {
       query: {
-        queryKey: getListForumNotificationsQueryKey(clubId, { memberName: myName }),
-        enabled: isAuthenticated,
+        queryKey: getListForumNotificationsQueryKey(clubId, { memberName: effectiveMyName }),
+        enabled: isFullyAuthenticated,
       },
     }
   );
@@ -228,7 +253,7 @@ export default function ClubForum() {
       await createMutation.mutateAsync({
         clubId,
         data: {
-          memberName: myName,
+          memberName: effectiveMyName,
           category: postForm.category,
           postType: postForm.postType,
           title: postForm.title || undefined,
@@ -247,8 +272,8 @@ export default function ClubForum() {
   }
 
   async function handleLike(post: ForumPost) {
-    if (!isAuthenticated) { toast({ title: "Logg inn for å like", variant: "destructive" }); return; }
-    await likeMutation.mutateAsync({ clubId, postId: post.id, data: { memberName: myName } });
+    if (!isFullyAuthenticated) { toast({ title: "Logg inn for å like", variant: "destructive" }); return; }
+    await likeMutation.mutateAsync({ clubId, postId: post.id, data: { memberName: effectiveMyName } });
     invalidateForum();
   }
 
@@ -259,13 +284,13 @@ export default function ClubForum() {
   }
 
   async function handlePin(post: ForumPost) {
-    if (!hasRole("moderator")) { toast({ title: "Krever moderatortilgang", variant: "destructive" }); return; }
+    if (!effectiveHasRole("moderator")) { toast({ title: "Krever moderatortilgang", variant: "destructive" }); return; }
     await pinMutation.mutateAsync({ clubId, postId: post.id, data: { isPinned: post.isPinned ? 0 : 1 } });
     invalidateForum();
   }
 
   async function handleMarkRead() {
-    await markReadMutation.mutateAsync({ clubId, data: { memberName: myName } });
+    await markReadMutation.mutateAsync({ clubId, data: { memberName: effectiveMyName } });
     invalidateNotif();
     setShowNotifications(false);
   }
@@ -274,7 +299,12 @@ export default function ClubForum() {
   const totalPages = forumData?.totalPages ?? 1;
 
   // ─── Login screen ──────────────────────────────────────────────────────────
-  if (!isAuthenticated) {
+  // Show a spinner while we're still determining if the Clerk user is a member
+  if (!isFullyAuthenticated && (isAuthLoading || isClubLoading)) {
+    return <LoadingState message="Laster forum..." />;
+  }
+
+  if (!isFullyAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="w-full max-w-md">
@@ -355,7 +385,7 @@ export default function ClubForum() {
         {/* Role badge in sidebar */}
         <div className="pt-4 px-2">
           <div className="text-xs text-muted-foreground/60 uppercase tracking-wide mb-1">Din rolle</div>
-          <RoleBadge role={session!.role} />
+          <RoleBadge role={effectiveRole} />
         </div>
       </aside>
 
@@ -448,17 +478,19 @@ export default function ClubForum() {
         {/* Session info bar */}
         <div className="flex items-center gap-3 text-sm text-muted-foreground border border-border/40 rounded-lg px-3 py-2 bg-muted/20">
           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-            {myName[0]?.toUpperCase()}
+            {effectiveMyName[0]?.toUpperCase()}
           </div>
-          <span className="font-medium text-foreground">{myName}</span>
-          <RoleBadge role={session!.role} size="sm" />
-          <button
-            className="ml-auto flex items-center gap-1 text-xs opacity-60 hover:opacity-100 hover:text-destructive transition-colors"
-            onClick={() => { logout(); }}
-          >
-            <LogOut className="w-3 h-3" />
-            Logg ut
-          </button>
+          <span className="font-medium text-foreground">{effectiveMyName}</span>
+          <RoleBadge role={effectiveRole} size="sm" />
+          {session && (
+            <button
+              className="ml-auto flex items-center gap-1 text-xs opacity-60 hover:opacity-100 hover:text-destructive transition-colors"
+              onClick={() => { logout(); }}
+            >
+              <LogOut className="w-3 h-3" />
+              Logg ut
+            </button>
+          )}
         </div>
 
         {/* Posts */}
@@ -482,8 +514,8 @@ export default function ClubForum() {
               <PostCard
                 key={post.id}
                 post={post}
-                myName={myName}
-                isModerator={hasRole("moderator")}
+                myName={effectiveMyName}
+                isModerator={effectiveHasRole("moderator")}
                 clubId={clubId}
                 onLike={() => handleLike(post)}
                 onDelete={() => handleDelete(post.id)}

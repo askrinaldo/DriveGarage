@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,7 +12,9 @@ import {
   type ForumComment,
 } from "@workspace/api-client-react";
 import { useClubSocket } from "@/hooks/use-club-socket";
-import { useClubAuth } from "@/hooks/use-club-auth";
+import { useClubAuth, type ClubRole } from "@/hooks/use-club-auth";
+import { useUserAuth } from "@/hooks/use-user-auth";
+import { useGetClub, getGetClubQueryKey } from "@workspace/api-client-react";
 import { LoadingState, ErrorState } from "@/components/ui-states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -82,7 +84,30 @@ export default function ClubForumPost() {
   const queryClient = useQueryClient();
 
   const { session, hasRole, isAuthenticated } = useClubAuth(clubId);
-  const myName = session?.memberName ?? "";
+  const { name: myUserName, email: myUserEmail } = useUserAuth();
+
+  const { data: club } = useGetClub(clubId, { query: { queryKey: getGetClubQueryKey(clubId) } });
+
+  // Determine if the Clerk user is already a club member (same logic as club-forum.tsx)
+  const clerkMembership = useMemo(() => {
+    if (isAuthenticated || !club?.members) return null;
+    const candidates = [myUserName, myUserEmail]
+      .filter((c): c is string => !!c)
+      .map((c) => c.toLowerCase());
+    if (candidates.length === 0) return null;
+    return (club.members as Array<{ memberName: string; role: string }>).find(
+      (m) => candidates.includes(m.memberName.toLowerCase())
+    ) ?? null;
+  }, [isAuthenticated, club?.members, myUserName, myUserEmail]);
+
+  const isClerkMember = !!clerkMembership;
+  const isFullyAuthenticated = isAuthenticated || isClerkMember;
+
+  const effectiveMyName = session?.memberName ?? clerkMembership?.memberName ?? "";
+  const effectiveRole = (session?.role ?? clerkMembership?.role ?? "member") as ClubRole;
+  const ROLE_RANK: Record<string, number> = { owner: 4, admin: 3, moderator: 2, member: 1 };
+  const effectiveHasRole = (minRole: ClubRole): boolean =>
+    (session ? hasRole(minRole) : (ROLE_RANK[effectiveRole] ?? 0) >= (ROLE_RANK[minRole] ?? 0));
 
   const [commentText, setCommentText] = useState("");
 
@@ -94,10 +119,10 @@ export default function ClubForumPost() {
   } = useGetForumPost(
     clubId,
     postId,
-    { memberName: myName || undefined },
+    { memberName: effectiveMyName || undefined },
     {
       query: {
-        queryKey: getGetForumPostQueryKey(clubId, postId, { memberName: myName || undefined }),
+        queryKey: getGetForumPostQueryKey(clubId, postId, { memberName: effectiveMyName || undefined }),
       },
     }
   );
@@ -127,7 +152,7 @@ export default function ClubForumPost() {
 
   async function handleComment() {
     if (!commentText.trim()) return;
-    if (!isAuthenticated) {
+    if (!isFullyAuthenticated) {
       toast({ title: "Logg inn for å kommentere", variant: "destructive" });
       return;
     }
@@ -135,7 +160,7 @@ export default function ClubForumPost() {
       await createCommentMutation.mutateAsync({
         clubId,
         postId,
-        data: { memberName: myName, content: commentText.trim() },
+        data: { memberName: effectiveMyName, content: commentText.trim() },
       });
       setCommentText("");
       invalidatePost();
@@ -151,17 +176,17 @@ export default function ClubForumPost() {
   }
 
   async function handleLike() {
-    if (!isAuthenticated) {
+    if (!isFullyAuthenticated) {
       toast({ title: "Logg inn for å like", variant: "destructive" });
       return;
     }
-    await likeMutation.mutateAsync({ clubId, postId, data: { memberName: myName } });
+    await likeMutation.mutateAsync({ clubId, postId, data: { memberName: effectiveMyName } });
     invalidatePost();
   }
 
   async function handlePin() {
     if (!post) return;
-    if (!hasRole("moderator")) {
+    if (!effectiveHasRole("moderator")) {
       toast({ title: "Krever moderatortilgang", variant: "destructive" });
       return;
     }
@@ -178,8 +203,8 @@ export default function ClubForumPost() {
   if (isLoading) return <LoadingState message="Laster innlegg..." />;
   if (isError || !post) return <ErrorState onRetry={refetch} />;
 
-  const isAuthor = myName && post.memberName.toLowerCase() === myName.toLowerCase();
-  const isModerator = hasRole("moderator");
+  const isAuthor = effectiveMyName && post.memberName.toLowerCase() === effectiveMyName.toLowerCase();
+  const isModerator = effectiveHasRole("moderator");
   const canDelete = isAuthor || isModerator;
   const canPin = isModerator;
   const comments = (post.comments ?? []) as ForumComment[];
@@ -314,7 +339,7 @@ export default function ClubForumPost() {
         </h2>
 
         {comments.map((comment) => {
-          const isCommentAuthor = myName && comment.memberName.toLowerCase() === myName.toLowerCase();
+          const isCommentAuthor = effectiveMyName && comment.memberName.toLowerCase() === effectiveMyName.toLowerCase();
           const canDeleteComment = isCommentAuthor || isModerator;
           return (
             <div key={comment.id} className="flex gap-3 group">
@@ -369,10 +394,10 @@ export default function ClubForumPost() {
       </div>
 
       {/* Comment form */}
-      {isAuthenticated ? (
+      {isFullyAuthenticated ? (
         <div className="flex gap-3">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-xs font-bold text-primary mt-1">
-            {myName[0]?.toUpperCase()}
+            {effectiveMyName[0]?.toUpperCase()}
           </div>
           <div className="flex-1 space-y-2">
             <Textarea

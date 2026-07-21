@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation, Link } from "wouter";
+import { useAuth, useSession } from "@clerk/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useClubAuth } from "@/hooks/use-club-auth";
 import { getErrorMessage } from "@workspace/api-client-react";
+import { useUserAuth } from "@/hooks/use-user-auth";
 
 interface Params { id: string; eventId: string }
 
@@ -121,8 +123,23 @@ export default function ClubEventDetail() {
   const eventId = parseInt(params.eventId, 10);
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { getToken, memberName, role, isAuthenticated } = useClubAuth(clubId);
-  const token = getToken();
+  const { getToken: getClubToken, memberName: clubMemberName, role, isAuthenticated } = useClubAuth(clubId);
+  const { isSignedIn } = useAuth();
+  const { session: clerkSession } = useSession();
+  const { name: clerkUserName } = useUserAuth();
+
+  // Prefer club JWT identity; fall back to Clerk user name for member detection
+  const effectiveMemberName = clubMemberName ?? clerkUserName ?? "";
+  // Authenticated if club JWT exists OR Clerk session is active (backend handles member check)
+  const isFullyAuthenticated = isAuthenticated || !!isSignedIn;
+
+  // Returns club JWT if available, otherwise Clerk Bearer token
+  const getEffectiveToken = useCallback(async (): Promise<string | null> => {
+    const clubToken = getClubToken();
+    if (clubToken) return clubToken;
+    if (clerkSession) return await clerkSession.getToken();
+    return null;
+  }, [getClubToken, clerkSession]);
 
   const [event, setEvent] = useState<ClubEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,26 +149,33 @@ export default function ClubEventDetail() {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<"going" | "maybe" | "not_going" | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(false);
-    fetch(`/api/clubs/${clubId}/events/${eventId}`)
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.json() as Promise<ClubEvent>;
-      })
-      .then((d) => { setEvent(d); setLoading(false); })
-      .catch(() => { setError(true); setLoading(false); });
-  }, [clubId, eventId]);
+    const authToken = await getEffectiveToken();
+    try {
+      const r = await fetch(`/api/clubs/${clubId}/events/${eventId}`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
+      if (!r.ok) throw new Error();
+      const d = await r.json() as ClubEvent;
+      setEvent(d);
+      setLoading(false);
+    } catch {
+      setError(true);
+      setLoading(false);
+    }
+  }, [clubId, eventId, getEffectiveToken]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const myRsvp = event?.rsvps.find(
-    (r) => r.memberName.toLowerCase() === memberName?.toLowerCase()
+    (r) => effectiveMemberName && r.memberName.toLowerCase() === effectiveMemberName.toLowerCase()
   );
 
   async function handleRsvp(status: "going" | "maybe" | "not_going") {
-    if (!isAuthenticated || !token) {
+    const authToken = await getEffectiveToken();
+    if (!isFullyAuthenticated || !authToken) {
       toast({ title: "Logg inn for å melde deg på", variant: "destructive" });
       return;
     }
@@ -161,7 +185,7 @@ export default function ClubEventDetail() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ status, note: rsvpNote.trim() || null }),
       });
@@ -188,11 +212,12 @@ export default function ClubEventDetail() {
   }
 
   async function handleDelete() {
-    if (!token) return;
+    const authToken = await getEffectiveToken();
+    if (!authToken) return;
     try {
       await fetch(`/api/clubs/${clubId}/events/${eventId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
       toast({ title: "Arrangement slettet" });
       navigate(`/clubs/${clubId}/events`);
@@ -202,18 +227,19 @@ export default function ClubEventDetail() {
   }
 
   async function handleCancel() {
-    if (!token) return;
+    const authToken = await getEffectiveToken();
+    if (!authToken) return;
     try {
       await fetch(`/api/clubs/${clubId}/events/${eventId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ status: "cancelled" }),
       });
       toast({ title: "Arrangement avlyst" });
-      load();
+      void load();
     } catch {
       toast({ title: "Noe gikk galt", variant: "destructive" });
     }
@@ -225,8 +251,8 @@ export default function ClubEventDetail() {
   const start = new Date(event.startAt);
   const end = event.endAt ? new Date(event.endAt) : null;
   const isMod = ["owner", "admin", "moderator"].includes(role ?? "");
-  const canEdit = isAuthenticated && (event.createdBy === memberName || isMod);
-  const canRsvp = isAuthenticated && event.status !== "cancelled" && event.status !== "past";
+  const canEdit = isFullyAuthenticated && (event.createdBy === effectiveMemberName || isMod);
+  const canRsvp = isFullyAuthenticated && event.status !== "cancelled" && event.status !== "past";
   const isFull = event.maxAttendees != null && event.rsvpCounts.going >= event.maxAttendees;
 
   const goingList = event.rsvps.filter((r) => r.status === "going");
@@ -548,7 +574,7 @@ export default function ClubEventDetail() {
                 </div>
               )}
 
-              {!isAuthenticated && (
+              {!isFullyAuthenticated && (
                 <p className="text-xs text-muted-foreground text-center">
                   <Link href={`/clubs/${clubId}/forum`} className="text-primary underline">
                     Logg inn

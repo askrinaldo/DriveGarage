@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "@clerk/react";
 import { useParams, useLocation, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +180,7 @@ export default function ClubEvents() {
   const [, navigate] = useLocation();
 
   const { session, getToken } = useClubAuth(clubId);
+  const { session: clerkSession } = useSession();
   const { data: club } = useGetClub(clubId, { query: { queryKey: getGetClubQueryKey(clubId) } });
 
   const [events, setEvents] = useState<ClubEvent[]>([]);
@@ -189,31 +191,31 @@ export default function ClubEvents() {
   const [filter, setFilter] = useState<"all" | "upcoming" | "past">("upcoming");
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(false);
     setLocked(false);
-    const token = getToken();
-    fetch(`/api/clubs/${clubId}/events`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((r) => {
-        if (r.status === 403) { setLocked(true); setLoading(false); return null; }
-        if (!r.ok) throw new Error();
-        return r.json() as Promise<ClubEvent[]>;
-      })
-      .then((d) => {
-        if (d == null) return;
-        setEvents(d);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
+    // Prefer club JWT; fall back to Clerk Bearer token so members logged in via
+    // Clerk don't hit a 403 on private club events (backend accepts both via
+    // the global resolveClubActorFromUser middleware).
+    const clubToken = getToken();
+    const authToken = clubToken ?? (clerkSession ? await clerkSession.getToken() : null);
+    try {
+      const r = await fetch(`/api/clubs/${clubId}/events`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       });
-  }, [clubId, getToken]);
+      if (r.status === 403) { setLocked(true); setLoading(false); return; }
+      if (!r.ok) throw new Error();
+      const d = await r.json() as ClubEvent[];
+      setEvents(d);
+      setLoading(false);
+    } catch {
+      setError(true);
+      setLoading(false);
+    }
+  }, [clubId, getToken, clerkSession]);
 
-  useEffect(() => { load(); }, [load, session]);
+  useEffect(() => { void load(); }, [load, session, clerkSession]);
 
   const now = new Date();
   const filtered = events.filter((e) => {
