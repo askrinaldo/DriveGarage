@@ -2,7 +2,7 @@
  * Auth-guard regression tests for the DriveGarage frontend.
  *
  * These tests confirm that:
- *  1. Protected pages (/profile, /admin, /membership-card) redirect
+ *  1. Protected pages (/profile, /admin, /membership-card, /billing) redirect
  *     unauthenticated users to /sign-in.
  *  2. The sidebar in layout.tsx points unauthenticated users to
  *     /sign-in (login) and /sign-up (register).
@@ -30,6 +30,7 @@ describe("unauthenticated redirect guards", () => {
     { name: "/profile",         file: "pages/profile.tsx"         },
     { name: "/admin",           file: "pages/admin.tsx"           },
     { name: "/membership-card", file: "pages/membership-card.tsx" },
+    { name: "/billing",         file: "pages/billing.tsx"         },
   ];
 
   for (const { name, file } of protectedPages) {

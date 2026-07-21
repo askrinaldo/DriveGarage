@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   CheckCircle2, Zap, Shield, CreditCard,
   Info, AlertTriangle, XCircle,
@@ -612,7 +612,13 @@ function AccountDeletionSection() {
 
 export default function Billing() {
   const { t }             = useTranslation();
-  const { isAuthenticated } = useUserAuth();
+  const [, navigate]      = useLocation();
+  const { isAuthenticated, isAuthLoading } = useUserAuth();
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!isAuthenticated) { navigate("/sign-in"); return; }
+  }, [isAuthenticated, isAuthLoading, navigate]);
   const { data: sub }     = useSubscription();
 
   const vippsConfigured  = sub?.vippsConfigured ?? false;
