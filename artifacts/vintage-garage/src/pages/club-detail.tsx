@@ -297,6 +297,7 @@ export default function ClubDetail() {
 
   async function handleDelete() {
     await deleteMutation.mutateAsync({ id: clubId });
+    await queryClient.invalidateQueries({ queryKey: getListClubsQueryKey() });
     toast({ title: "Klubb slettet" });
     navigate("/clubs");
   }
