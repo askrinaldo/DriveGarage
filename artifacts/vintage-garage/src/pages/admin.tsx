@@ -1536,9 +1536,6 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   "CHARGE_REFUNDED":         "Refundert",
 };
 
-function eventTypeLabel(raw: string): string {
-  return EVENT_TYPE_LABELS[raw] ?? raw;
-}
 
 const PROCESSING_STATUS_CFG: Record<string, { label: string; className: string }> = {
   processed: { label: "Behandlet",  className: "text-emerald-300 bg-emerald-500/15 border-emerald-500/25" },
@@ -1634,7 +1631,9 @@ function PaymentsSection({ getHeaders }: { getHeaders: GetHeaders }) {
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge variant="outline" className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 border-indigo-500/20">
-                        {eventTypeLabel(ev.eventType)}
+                        {EVENT_TYPE_LABELS[ev.eventType]
+                          ? `${EVENT_TYPE_LABELS[ev.eventType]} (${ev.eventType})`
+                          : ev.eventType}
                       </Badge>
                     </td>
                     <td className="px-5 py-3.5 text-xs text-white/50 font-mono">
