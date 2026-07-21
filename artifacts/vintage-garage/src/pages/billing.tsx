@@ -39,19 +39,19 @@ function StatusBadge({ status }: { status: SubscriptionStatus | null }) {
 function SubscriptionSkeleton() {
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] light:border-border light:bg-white p-6 space-y-4 animate-pulse">
-      <div className="h-3 w-36 rounded bg-white/[0.06]" />
+      <div className="h-3 w-36 rounded bg-white/[0.06] light:bg-muted" />
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-3">
           {[80, 56, 96, 72].map((w) => (
             <div key={w} className="flex items-center justify-between">
-              <div className="h-3 rounded bg-white/[0.04]" style={{ width: `${w * 0.55}px` }} />
-              <div className="h-3 rounded bg-white/[0.06]" style={{ width: `${w}px` }} />
+              <div className="h-3 rounded bg-white/[0.04] light:bg-muted/70" style={{ width: `${w * 0.55}px` }} />
+              <div className="h-3 rounded bg-white/[0.06] light:bg-muted" style={{ width: `${w}px` }} />
             </div>
           ))}
         </div>
-        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] light:border-border light:bg-card h-24" />
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] light:border-border light:bg-muted/40 h-24" />
       </div>
-      <div className="h-8 w-32 rounded-lg bg-white/[0.06]" />
+      <div className="h-8 w-32 rounded-lg bg-white/[0.06] light:bg-muted" />
     </div>
   );
 }
