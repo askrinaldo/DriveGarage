@@ -12,6 +12,7 @@ export const forumLikesTable = pgTable(
   (t) => [
     unique("forum_likes_post_member").on(t.postId, t.memberName),
     index("idx_forum_likes_post_id").on(t.postId),
+    index("idx_forum_likes_member_name").on(t.memberName),
   ]
 );
 
