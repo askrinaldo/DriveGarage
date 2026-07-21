@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
 import { vehiclesTable } from "./vehicles";
 
 export const vehicleOwnershipHistoryTable = pgTable("vehicle_ownership_history", {
@@ -12,7 +12,9 @@ export const vehicleOwnershipHistoryTable = pgTable("vehicle_ownership_history",
   consentToShow: boolean("consent_to_show").notNull().default(true),
   transferId: integer("transfer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  index("idx_vehicle_ownership_history_vehicle_id").on(t.vehicleId),
+]);
 
 export type VehicleOwnershipHistory = typeof vehicleOwnershipHistoryTable.$inferSelect;
 export type NewVehicleOwnershipHistory = typeof vehicleOwnershipHistoryTable.$inferInsert;

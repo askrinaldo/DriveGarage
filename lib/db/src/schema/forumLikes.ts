@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, unique, index } from "drizzle-orm/pg-core";
 import { forumPostsTable } from "./forumPosts";
 
 export const forumLikesTable = pgTable(
@@ -9,7 +9,10 @@ export const forumLikesTable = pgTable(
     memberName: text("member_name").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique("forum_likes_post_member").on(t.postId, t.memberName)]
+  (t) => [
+    unique("forum_likes_post_member").on(t.postId, t.memberName),
+    index("idx_forum_likes_post_id").on(t.postId),
+  ]
 );
 
 export type ForumLike = typeof forumLikesTable.$inferSelect;

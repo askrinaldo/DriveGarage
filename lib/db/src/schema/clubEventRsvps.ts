@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, timestamp, pgEnum, index } from "drizzle-orm/pg-core";
 import { clubEventsTable } from "./clubEvents";
 
 export const rsvpStatusEnum = pgEnum("rsvp_status", ["going", "maybe", "not_going"]);
@@ -11,6 +11,8 @@ export const clubEventRsvpsTable = pgTable("club_event_rsvps", {
   note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  index("idx_club_event_rsvps_event_id").on(t.eventId),
+]);
 
 export type ClubEventRsvp = typeof clubEventRsvpsTable.$inferSelect;
