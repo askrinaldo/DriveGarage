@@ -12,6 +12,7 @@ import {
   getGetClubQueryKey,
   getListClubInvitationsQueryKey,
   getListClubsQueryKey,
+  getErrorMessage,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoadingState, ErrorState } from "@/components/ui-states";
@@ -309,8 +310,7 @@ export default function ClubDetail() {
       invalidateClub();
       queryClient.invalidateQueries({ queryKey: getListClubsQueryKey({ scope: "mine" }) });
     } catch (err: unknown) {
-      const msg = (err as { data?: { error?: string } })?.data?.error;
-      toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
+      toast({ title: getErrorMessage(err), variant: "destructive" });
     }
   }
 
@@ -321,8 +321,7 @@ export default function ClubDetail() {
       invalidateClub();
       queryClient.invalidateQueries({ queryKey: getListClubsQueryKey({ scope: "mine" }) });
     } catch (err: unknown) {
-      const msg = (err as { data?: { error?: string } })?.data?.error;
-      toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
+      toast({ title: getErrorMessage(err), variant: "destructive" });
     }
   }
 
@@ -356,8 +355,7 @@ export default function ClubDetail() {
         toast({ title: "Invitasjon sendt", description: `E-post sendt til ${inviteEmail}` });
       }
     } catch (err: unknown) {
-      const msg = (err as { data?: { error?: string } })?.data?.error;
-      toast({ title: msg ?? "Noe gikk galt", variant: "destructive" });
+      toast({ title: getErrorMessage(err), variant: "destructive" });
     }
   }
 
@@ -389,8 +387,7 @@ export default function ClubDetail() {
         description: "Administratorene vil behandle forespørselen din.",
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Noe gikk galt";
-      toast({ title: msg, variant: "destructive" });
+      toast({ title: getErrorMessage(err), variant: "destructive" });
     } finally {
       setJoinReqSending(false);
     }
@@ -421,8 +418,7 @@ export default function ClubDetail() {
       });
       if (action === "accept") invalidateClub();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Noe gikk galt";
-      toast({ title: msg, variant: "destructive" });
+      toast({ title: getErrorMessage(err), variant: "destructive" });
     } finally {
       setReviewingId(null);
     }

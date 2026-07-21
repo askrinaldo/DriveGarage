@@ -4,6 +4,7 @@ import {
   useListClubs,
   useJoinClub,
   getListClubsQueryKey,
+  getErrorMessage,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
@@ -354,9 +355,8 @@ export default function ClubsList() {
       });
       navigate(`/clubs/${club.id}`);
     } catch (err: unknown) {
-      const msg = (err as { data?: { error?: string } })?.data?.error;
       toast({
-        title: msg ?? "Kunne ikke bli med i klubben",
+        title: getErrorMessage(err),
         variant: "destructive",
       });
     } finally {
@@ -387,8 +387,7 @@ export default function ClubsList() {
         description: `Administratorene for ${club.name} vil behandle forespørselen din.`,
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Noe gikk galt";
-      toast({ title: msg, variant: "destructive" });
+      toast({ title: getErrorMessage(err), variant: "destructive" });
     } finally {
       setSendingRequest(false);
     }

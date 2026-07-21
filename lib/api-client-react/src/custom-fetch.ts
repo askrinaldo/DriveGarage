@@ -346,6 +346,57 @@ async function parseSuccessBody(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Network error detection
+// ---------------------------------------------------------------------------
+
+const NETWORK_ERROR_NB = "Ingen nettverkstilkobling. Sjekk internett og prøv igjen.";
+
+/**
+ * Returns true when `err` is a browser/runtime network failure (the device is
+ * offline or the server is unreachable) rather than an HTTP error response.
+ *
+ * Each browser surfaces the same underlying condition under a different message:
+ * - Chrome / Firefox: "Failed to fetch"
+ * - Safari:           "Load failed"
+ * - React Native:     "Network request failed"
+ */
+export function isNetworkError(err: unknown): err is TypeError {
+  if (!(err instanceof TypeError)) return false;
+  const msg = err.message.toLowerCase();
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("load failed") ||
+    msg.includes("network request failed")
+  );
+}
+
+/**
+ * Extract a user-visible, Norwegian error message from any value that may be
+ * thrown by a mutation `onError` callback.
+ *
+ * Priority:
+ *   1. Network errors (offline / unreachable)  → fixed Norwegian offline string
+ *   2. ApiError                                → backend `error` / `detail` field, or err.message
+ *   3. Any other Error                         → err.message
+ *   4. Anything else                           → generic Norwegian fallback
+ */
+export function getErrorMessage(err: unknown): string {
+  if (isNetworkError(err)) return NETWORK_ERROR_NB;
+
+  if (err instanceof ApiError) {
+    const data = err.data as Record<string, unknown> | null;
+    const field =
+      (typeof data?.error === "string" && data.error) ||
+      (typeof data?.detail === "string" && data.detail);
+    return field || err.message || NETWORK_ERROR_NB;
+  }
+
+  if (err instanceof Error && err.message) return err.message;
+
+  return "Noe gikk galt";
+}
+
 export async function customFetch<T = unknown>(
   input: RequestInfo | URL,
   options: CustomFetchOptions = {},

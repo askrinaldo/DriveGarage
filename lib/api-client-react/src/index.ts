@@ -6,5 +6,7 @@ export {
   setExtraHeadersGetter,
   setClerkTokenGetter,
   customFetch,
+  isNetworkError,
+  getErrorMessage,
 } from "./custom-fetch";
 export type { AuthTokenGetter, ExtraHeadersGetter } from "./custom-fetch";

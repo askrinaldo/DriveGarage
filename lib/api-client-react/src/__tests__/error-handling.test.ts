@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { ApiError, customFetch } from "../custom-fetch.js";
+import { ApiError, customFetch, isNetworkError, getErrorMessage } from "../custom-fetch.js";
 
 // Mirror the backend ERRORS constants so tests stay in sync with errors.ts
 const ERRORS = {
@@ -215,5 +215,107 @@ describe("customFetch", () => {
 
     const result = await customFetch<typeof payload>("/api/vehicles/1");
     expect(result).toEqual(payload);
+  });
+
+  it("throws a TypeError when the device is offline (fetch rejects with Failed to fetch)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
+    );
+
+    await expect(customFetch("/api/vehicles")).rejects.toSatisfy(
+      (err: unknown) => err instanceof TypeError && (err as TypeError).message === "Failed to fetch",
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isNetworkError — identifies offline / unreachable TypeError variants
+// ---------------------------------------------------------------------------
+
+describe("isNetworkError", () => {
+  it("returns true for Chrome/Firefox 'Failed to fetch' TypeError", () => {
+    expect(isNetworkError(new TypeError("Failed to fetch"))).toBe(true);
+  });
+
+  it("returns true for Safari 'Load failed' TypeError", () => {
+    expect(isNetworkError(new TypeError("Load failed"))).toBe(true);
+  });
+
+  it("returns true for React Native 'Network request failed' TypeError", () => {
+    expect(isNetworkError(new TypeError("Network request failed"))).toBe(true);
+  });
+
+  it("returns false for ApiError (HTTP error, not a network failure)", () => {
+    const response = makeJsonResponse(503, { error: "Serverfeil" });
+    const err = new ApiError(response, { error: "Serverfeil" }, { method: "GET", url: "/api/vehicles" });
+    expect(isNetworkError(err)).toBe(false);
+  });
+
+  it("returns false for a generic TypeError unrelated to networking", () => {
+    expect(isNetworkError(new TypeError("Cannot read properties of undefined"))).toBe(false);
+  });
+
+  it("returns false for a plain Error", () => {
+    expect(isNetworkError(new Error("Failed to fetch"))).toBe(false);
+  });
+
+  it("returns false for non-Error values", () => {
+    expect(isNetworkError(null)).toBe(false);
+    expect(isNetworkError("Failed to fetch")).toBe(false);
+    expect(isNetworkError(undefined)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getErrorMessage — returns Norwegian strings for all error branches
+// ---------------------------------------------------------------------------
+
+const NETWORK_MESSAGE = "Ingen nettverkstilkobling. Sjekk internett og prøv igjen.";
+
+describe("getErrorMessage", () => {
+  it("returns the Norwegian offline message for 'Failed to fetch' TypeError", () => {
+    expect(getErrorMessage(new TypeError("Failed to fetch"))).toBe(NETWORK_MESSAGE);
+  });
+
+  it("returns the Norwegian offline message for Safari 'Load failed' TypeError", () => {
+    expect(getErrorMessage(new TypeError("Load failed"))).toBe(NETWORK_MESSAGE);
+  });
+
+  it("returns the Norwegian offline message for React Native 'Network request failed' TypeError", () => {
+    expect(getErrorMessage(new TypeError("Network request failed"))).toBe(NETWORK_MESSAGE);
+  });
+
+  it("returns the backend error field from ApiError.data", () => {
+    const body = { error: ERRORS.NOT_FOUND };
+    const response = makeJsonResponse(404, body);
+    const err = new ApiError(response, body, { method: "GET", url: "/api/vehicles/999" });
+
+    expect(getErrorMessage(err)).toBe(ERRORS.NOT_FOUND);
+  });
+
+  it("returns the backend detail field from ApiError.data when error is absent", () => {
+    const body = { detail: "Ressursen eksisterer ikke" };
+    const response = makeJsonResponse(404, body);
+    const err = new ApiError(response, body, { method: "GET", url: "/api/vehicles/999" });
+
+    expect(getErrorMessage(err)).toBe("Ressursen eksisterer ikke");
+  });
+
+  it("falls back to err.message on ApiError when data has no error or detail field", () => {
+    const response = makeJsonResponse(500, null);
+    const err = new ApiError(response, null, { method: "GET", url: "/api/vehicles" });
+
+    expect(getErrorMessage(err)).toContain("HTTP 500");
+  });
+
+  it("returns the message of a generic Error", () => {
+    expect(getErrorMessage(new Error("Noe gikk galt"))).toBe("Noe gikk galt");
+  });
+
+  it("returns 'Noe gikk galt' for non-Error values", () => {
+    expect(getErrorMessage(null)).toBe("Noe gikk galt");
+    expect(getErrorMessage(undefined)).toBe("Noe gikk galt");
+    expect(getErrorMessage({ code: 42 })).toBe("Noe gikk galt");
   });
 });

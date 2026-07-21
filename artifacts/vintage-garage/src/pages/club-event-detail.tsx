@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useClubAuth } from "@/hooks/use-club-auth";
+import { getErrorMessage } from "@workspace/api-client-react";
 
 interface Params { id: string; eventId: string }
 
@@ -180,7 +181,7 @@ export default function ClubEventDetail() {
       setPendingStatus(null);
       load();
     } catch (err: unknown) {
-      toast({ title: (err as Error).message, variant: "destructive" });
+      toast({ title: getErrorMessage(err), variant: "destructive" });
     } finally {
       setRsvpLoading(false);
     }
