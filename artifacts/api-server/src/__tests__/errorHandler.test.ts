@@ -32,7 +32,7 @@
  *    11. AppError(404, custom Norwegian string) → custom string verbatim
  */
 
-import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
 
@@ -296,5 +296,79 @@ describe("Global error handler — AppError 4xx → message passed through", () 
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe(customMsg);
+  });
+});
+
+// ─── Production-mode tests ─────────────────────────────────────────────────────
+// These tests reload app.ts with NODE_ENV=production so that IS_PROD=true.
+// Verifies that the production branch of the error handler correctly:
+//   • Hides raw AppError(5xx) messages behind ERRORS.INTERNAL
+//   • Hides raw generic Error messages and stack traces for 5xx
+//   • Still surfaces AppError(4xx) messages unchanged
+//
+// vi.resetModules() clears the module registry so app.ts re-evaluates IS_PROD
+// with the new NODE_ENV. All vi.mock() registrations are hoisted and remain
+// active for the re-imported module graph.
+
+describe("Global error handler — production mode (IS_PROD=true)", () => {
+  let prodApp: Express;
+  let savedNodeEnv: string | undefined;
+
+  beforeAll(async () => {
+    savedNodeEnv = process.env["NODE_ENV"];
+    process.env["NODE_ENV"] = "production";
+    vi.resetModules();
+    const { default: freshApp } = await import("../app");
+    prodApp = freshApp;
+  });
+
+  afterAll(() => {
+    if (savedNodeEnv === undefined) {
+      delete process.env["NODE_ENV"];
+    } else {
+      process.env["NODE_ENV"] = savedNodeEnv;
+    }
+    vi.resetModules();
+  });
+
+  beforeEach(() => {
+    _throwFn = null;
+  });
+
+  it("AppError(500) returns ERRORS.INTERNAL in production — raw message is hidden", async () => {
+    const { AppError } = await import("../lib/errors");
+    const rawMessage = "Something blew up in the route handler";
+    _throwFn = () => {
+      throw new AppError(500, rawMessage);
+    };
+    const res = await request(prodApp).get("/api/test-error");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("En intern feil oppstod. Prøv igjen.");
+    expect(JSON.stringify(res.body)).not.toContain(rawMessage);
+  });
+
+  it("generic Error (500) returns ERRORS.INTERNAL in production — raw message and stack are hidden", async () => {
+    const rawMessage = "Raw internal error that must not reach the client";
+    _throwFn = () => {
+      throw new Error(rawMessage);
+    };
+    const res = await request(prodApp).get("/api/test-error");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("En intern feil oppstod. Prøv igjen.");
+    expect(JSON.stringify(res.body)).not.toContain(rawMessage);
+    expect(res.body).not.toHaveProperty("stack");
+  });
+
+  it("AppError(400) still passes message through in production", async () => {
+    const { AppError, ERRORS } = await import("../lib/errors");
+    _throwFn = () => {
+      throw new AppError(400, ERRORS.BAD_REQUEST);
+    };
+    const res = await request(prodApp).get("/api/test-error");
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Ugyldig forespørsel");
   });
 });
