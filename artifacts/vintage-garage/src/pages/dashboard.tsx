@@ -18,6 +18,7 @@ import {
 } from "@workspace/api-client-react";
 import { keepPreviousData } from "@tanstack/react-query";
 import { DashboardSkeleton, ErrorState } from "@/components/ui-states";
+import { useAuth } from "@clerk/react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { useTranslation } from "react-i18next";
 import { getCurrentLocale } from "@/i18n";
@@ -521,6 +522,7 @@ function ActivityItem({ item, locale }: {
 
 /* ── Main Dashboard ───────────────────────────────────────────── */
 export default function Dashboard() {
+  const { isSignedIn } = useAuth();
   const { name, tenantName, isPersonalTenant } = useUserAuth();
   const { t } = useTranslation();
   const locale = getCurrentLocale();
@@ -535,8 +537,8 @@ export default function Dashboard() {
     query: { queryKey: getListVehiclesQueryKey(), staleTime: 60_000, placeholderData: keepPreviousData },
   });
   const { data: clubs } = useListClubs(
-    {},
-    { query: { queryKey: getListClubsQueryKey({}) } }
+    { scope: "mine" },
+    { query: { queryKey: getListClubsQueryKey({ scope: "mine" }), enabled: !!isSignedIn } }
   );
   const { data: subscription } = useSubscription();
 
