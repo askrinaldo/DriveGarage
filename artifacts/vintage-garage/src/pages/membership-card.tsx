@@ -204,8 +204,12 @@ export default function MembershipCard() {
   if (loading) return <LoadingState message={t("memberCard.loading")} />;
   if (!profile) return null;
 
-  const tier = TIER_CONFIG[profile.subscriptionTier];
-  const tierLabel = t(`memberCard.tier${profile.subscriptionTier.charAt(0).toUpperCase() + profile.subscriptionTier.slice(1)}`);
+  const subscriptionTier: "free" | "standard" | "premium" =
+    profile.subscriptionTier in TIER_CONFIG
+      ? profile.subscriptionTier
+      : "free";
+  const tier = TIER_CONFIG[subscriptionTier];
+  const tierLabel = t(`memberCard.tier${subscriptionTier.charAt(0).toUpperCase() + subscriptionTier.slice(1)}`);
   const memberSince = new Date(profile.createdAt);
   const memberSinceStr = `${months[memberSince.getMonth()]} ${memberSince.getFullYear()}`;
 

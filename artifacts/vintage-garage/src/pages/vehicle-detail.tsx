@@ -318,6 +318,14 @@ export default function VehicleDetail() {
   const deleteReceipt = useDeleteReceipt();
   const deleteTrip = useDeleteTripLog();
 
+  const categoryCountMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    (services ?? []).forEach(s => {
+      map[s.category] = (map[s.category] ?? 0) + 1;
+    });
+    return map;
+  }, [services]);
+
   if (vehicleLoading) return <VehicleDetailSkeleton />;
   if (vehicleError || !vehicle) return <ErrorState onRetry={() => window.location.reload()} />;
 
@@ -399,14 +407,6 @@ export default function VehicleDetail() {
       }
     });
   };
-
-  const categoryCountMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    (services ?? []).forEach(s => {
-      map[s.category] = (map[s.category] ?? 0) + 1;
-    });
-    return map;
-  }, [services]);
 
   return (
     <div className="space-y-6 pb-24">
