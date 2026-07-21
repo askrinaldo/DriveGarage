@@ -126,7 +126,7 @@ router.get("/clubs/:clubId/marketplace/:listingId", async (req, res): Promise<vo
 
 // ─── Create listing ────────────────────────────────────────────────────────
 router.post(
-  "/api/clubs/:clubId/marketplace",
+  "/clubs/:clubId/marketplace",
   parseAuth,
   requireClubRole("member"),
   validate(createListingSchema),
@@ -165,7 +165,7 @@ router.post(
 
 // ─── Update listing ────────────────────────────────────────────────────────
 router.patch(
-  "/api/clubs/:clubId/marketplace/:listingId",
+  "/clubs/:clubId/marketplace/:listingId",
   parseAuth,
   requireClubRole("member"),
   async (req, res): Promise<void> => {
@@ -224,7 +224,7 @@ router.patch(
 
 // ─── Delete listing ────────────────────────────────────────────────────────
 router.delete(
-  "/api/clubs/:clubId/marketplace/:listingId",
+  "/clubs/:clubId/marketplace/:listingId",
   parseAuth,
   requireClubRole("member"),
   async (req, res): Promise<void> => {
