@@ -130,6 +130,16 @@ interface AuditLog {
   createdAt: string;
 }
 
+interface SubscriptionEvent {
+  id: number;
+  userId: number | null;
+  eventType: string;
+  processingStatus: string;
+  error: string | null;
+  receivedAt: string;
+  processedAt: string | null;
+}
+
 interface FinanceMetrics {
   mrr: number;
   arr: number;
@@ -179,6 +189,7 @@ type Section =
   | "crm"
   | "support"
   | "clubs"
+  | "payments"
   | "system"
   | "audit"
   | "ai";
@@ -194,6 +205,7 @@ const NAV_ITEMS: Array<{
   { id: "crm", label: "Brukere (CRM)", icon: Users },
   { id: "support", label: "Support", icon: MessageSquare },
   { id: "clubs", label: "Klubber", icon: Building2 },
+  { id: "payments", label: "Betalinger", icon: CreditCard },
   { id: "system", label: "System", icon: Server },
   { id: "audit", label: "Audit-logg", icon: ScrollText },
 ];
@@ -1509,6 +1521,152 @@ function AuditSection({ getHeaders }: { getHeaders: GetHeaders }) {
   );
 }
 
+// ─── Payments (Vipps subscription events) section ─────────────────────────────
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  "SUBSCRIPTION_ACTIVATED":  "Aktivert",
+  "SUBSCRIPTION_CANCELLED":  "Kansellert",
+  "SUBSCRIPTION_UPDATED":    "Oppdatert",
+  "SUBSCRIPTION_EXPIRED":    "Utløpt",
+  "CHARGE_CREATED":          "Gebyr opprettet",
+  "CHARGE_RESERVED":         "Gebyr reservert",
+  "CHARGE_CAPTURED":         "Gebyr trukket",
+  "CHARGE_FAILED":           "Gebyr feilet",
+  "CHARGE_CANCELLED":        "Gebyr kansellert",
+  "CHARGE_REFUNDED":         "Refundert",
+};
+
+function eventTypeLabel(raw: string): string {
+  return EVENT_TYPE_LABELS[raw] ?? raw;
+}
+
+const PROCESSING_STATUS_CFG: Record<string, { label: string; className: string }> = {
+  processed: { label: "Behandlet",  className: "text-emerald-300 bg-emerald-500/15 border-emerald-500/25" },
+  pending:   { label: "Venter",     className: "text-amber-300  bg-amber-500/15  border-amber-500/25"  },
+  failed:    { label: "Feilet",     className: "text-red-300    bg-red-500/15    border-red-500/25"    },
+  skipped:   { label: "Hoppet",     className: "text-white/40   bg-white/5       border-white/10"      },
+};
+
+function ProcessingBadge({ status }: { status: string }) {
+  const cfg = PROCESSING_STATUS_CFG[status] ?? PROCESSING_STATUS_CFG.pending!;
+  return (
+    <Badge variant="outline" className={`text-[10px] font-medium ${cfg.className}`}>
+      {cfg.label}
+    </Badge>
+  );
+}
+
+function PaymentsSection({ getHeaders }: { getHeaders: GetHeaders }) {
+  const [events, setEvents] = useState<SubscriptionEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "processed" | "pending" | "failed">("all");
+
+  const load = useCallback(() => {
+    setLoading(true);
+    getHeaders().then(h =>
+      fetch("/api/admin/invoices", { headers: h })
+        .then(r => r.json() as Promise<SubscriptionEvent[]>)
+        .then(data => { setEvents(data); setLoading(false); })
+        .catch(() => setLoading(false))
+    );
+  }, [getHeaders]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = filter === "all" ? events : events.filter(e => e.processingStatus === filter);
+
+  const counts = {
+    all:       events.length,
+    processed: events.filter(e => e.processingStatus === "processed").length,
+    pending:   events.filter(e => e.processingStatus === "pending").length,
+    failed:    events.filter(e => e.processingStatus === "failed").length,
+  };
+
+  return (
+    <div>
+      <SectionHeader
+        title="Betalingshendelser (Vipps)"
+        sub={`Siste ${events.length} subscription_events fra Vipps`}
+        action={
+          <Button size="sm" variant="outline" className="h-8 text-xs text-white/60 border-white/10 hover:bg-white/5 gap-1.5" onClick={load}>
+            <RefreshCw className="w-3 h-3" />
+            Oppdater
+          </Button>
+        }
+      />
+
+      {/* Filter pills */}
+      <div className="flex gap-2 flex-wrap mb-5">
+        {(["all", "processed", "pending", "failed"] as const).map(f => {
+          const labels = { all: "Alle", processed: "Behandlet", pending: "Venter", failed: "Feilet" };
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === f ? "bg-white/15 text-white" : "text-white/40 hover:text-white hover:bg-white/5"}`}
+            >
+              {labels[f]} ({counts[f]})
+            </button>
+          );
+        })}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-32 text-white/30 text-sm">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />Laster hendelser...
+        </div>
+      ) : (
+        <div className="rounded-xl border border-white/6 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
+              <thead>
+                <tr className="bg-white/3 border-b border-white/6">
+                  {["Mottatt", "Hendelsestype", "Bruker-ID", "Status", "Behandlet", "Feil"].map(h => (
+                    <th key={h} className="text-left px-5 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(ev => (
+                  <tr key={ev.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
+                    <td className="px-5 py-3.5 text-[11px] text-white/40 font-mono whitespace-nowrap">
+                      {new Date(ev.receivedAt).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Badge variant="outline" className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 border-indigo-500/20">
+                        {eventTypeLabel(ev.eventType)}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-white/50 font-mono">
+                      {ev.userId ?? <span className="text-white/20">—</span>}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <ProcessingBadge status={ev.processingStatus} />
+                    </td>
+                    <td className="px-5 py-3.5 text-[11px] text-white/30 font-mono whitespace-nowrap">
+                      {ev.processedAt
+                        ? new Date(ev.processedAt).toLocaleString("nb-NO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+                        : <span className="text-white/15">—</span>}
+                    </td>
+                    <td className="px-5 py-3.5 text-[11px] text-red-300/70 max-w-xs truncate">
+                      {ev.error ?? <span className="text-white/15">—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div className="text-center py-12 text-white/30 text-sm">
+                {filter === "all" ? "Ingen betalingshendelser ennå" : `Ingen hendelser med status «${filter}»`}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Finance Insight section ───────────────────────────────────────────────────
 
 const SUGGESTED_QUESTIONS = [
@@ -1955,6 +2113,9 @@ export default function Admin() {
             )}
             {activeSection === "clubs" && (
               <ClubsSection clubs={clubs} getHeaders={getAuthHeaders} onUpdate={load} />
+            )}
+            {activeSection === "payments" && (
+              <PaymentsSection getHeaders={getAuthHeaders} />
             )}
             {activeSection === "system" && (
               <SystemHealthSection getHeaders={getAuthHeaders} />
