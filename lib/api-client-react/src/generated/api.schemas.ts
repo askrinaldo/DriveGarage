@@ -441,6 +441,8 @@ export interface Club {
   memberCount: number;
   isPrivate: boolean;
   joinMode: string;
+  /** The authenticated user's role in this club. Only present when scope=mine. @nullable */
+  userRole?: string | null;
   createdAt: string;
   updatedAt: string;
 }

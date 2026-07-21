@@ -1917,6 +1917,9 @@ components:
           type: string
         memberCount:
           type: integer
+        userRole:
+          type: ["string", "null"]
+          description: "The authenticated user's role in this club: owner, admin, or member. Only present when scope=mine."
         createdAt:
           type: string
           format: date-time

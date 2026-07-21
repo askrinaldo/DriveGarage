@@ -5,6 +5,7 @@ import {
   Car, Wrench, Banknote, Route, ArrowRight, Users,
   ChevronRight, MapPin, Plus, Bike, Gauge, Clock,
   CheckCircle2, Circle, FileText, Search, Receipt,
+  Crown, Shield, User,
 } from "lucide-react";
 import {
   useGetDashboardStats,
@@ -23,6 +24,29 @@ import { useUserAuth } from "@/hooks/use-user-auth";
 import { useTranslation } from "react-i18next";
 import { getCurrentLocale } from "@/i18n";
 import { useSubscription } from "@/hooks/use-subscription";
+
+/* ── Role pill ─────────────────────────────────────────────────── */
+function RolePill({ role }: { role: string | null | undefined }) {
+  if (role === "owner")
+    return (
+      <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/20">
+        <Crown className="w-2 h-2" /> Eier
+      </span>
+    );
+  if (role === "admin")
+    return (
+      <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20">
+        <Shield className="w-2 h-2" /> Admin
+      </span>
+    );
+  if (role === "member")
+    return (
+      <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400/80 border border-emerald-500/20">
+        <User className="w-2 h-2" /> Medlem
+      </span>
+    );
+  return null;
+}
 
 /* ── Category colours ──────────────────────────────────────────── */
 const CATEGORY_DOT: Record<string, string> = {
@@ -788,8 +812,11 @@ export default function Dashboard() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[12.5px] font-bold text-foreground truncate">{club.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <p className="text-[12.5px] font-bold text-foreground truncate">{club.name}</p>
+                              <RolePill role={club.userRole} />
+                            </div>
+                            <div className="flex items-center gap-2">
                               <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
                                 <Users className="w-2.5 h-2.5" />
                                 {club.memberCount}+ {club.memberCount === 1 ? "medlem" : "medlemmer"}

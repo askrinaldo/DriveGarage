@@ -510,6 +510,7 @@ export const ListClubsResponseItem = zod.object({
   clubType: zod.string().describe("car, motorcycle, or both"),
   ownerName: zod.string(),
   memberCount: zod.number(),
+  userRole: zod.string().nullable().optional(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });

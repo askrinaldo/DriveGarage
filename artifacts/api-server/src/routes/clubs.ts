@@ -78,12 +78,25 @@ router.get("/clubs", async (req, res): Promise<void> => {
     const userName = req.userAuth?.name || req.userAuth?.email;
     if (!userName) { res.json([]); return; }
     const memberships = await db
-      .select({ clubId: clubMembersTable.clubId })
+      .select({ clubId: clubMembersTable.clubId, role: clubMembersTable.role })
       .from(clubMembersTable)
       .where(eq(clubMembersTable.memberName, userName));
     const clubIds = memberships.map((m) => m.clubId);
     if (clubIds.length === 0) { res.json([]); return; }
-    clubs = await base.where(inArray(clubsTable.id, clubIds)).groupBy(clubsTable.id);
+    const rawClubs = await base.where(inArray(clubsTable.id, clubIds)).groupBy(clubsTable.id);
+    const roleMap = new Map(memberships.map((m) => [m.clubId, m.role]));
+    const clubsWithRole = rawClubs.map((c) => {
+      const memberRole = roleMap.get(c.id) ?? "member";
+      const userRole =
+        c.ownerName.toLowerCase() === userName.toLowerCase()
+          ? "owner"
+          : memberRole === "admin"
+            ? "admin"
+            : "member";
+      return { ...c, userRole };
+    });
+    res.json(clubsWithRole);
+    return;
   } else if (scope === "discover") {
     // Only public clubs — private clubs are hidden from discovery
     clubs = await base.where(eq(clubsTable.isPrivate, false)).groupBy(clubsTable.id);
