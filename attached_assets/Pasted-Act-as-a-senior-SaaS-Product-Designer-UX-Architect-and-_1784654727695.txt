@@ -1,0 +1,236 @@
+Act as a senior SaaS Product Designer, UX Architect and Senior Frontend Engineer.
+
+IMPORTANT:
+This is NOT a redesign of the visual style.
+The new design system, colors, typography and components are already approved.
+
+Do NOT redesign the app.
+
+Do NOT change colors.
+Do NOT change branding.
+Do NOT remove buttons.
+Do NOT remove functionality.
+Do NOT change routes.
+Do NOT touch backend logic.
+
+Your only task is to improve the INFORMATION ARCHITECTURE and USER EXPERIENCE.
+
+--------------------------------------------------
+PROBLEM
+--------------------------------------------------
+
+Currently "Oversikt" (Dashboard) and "Garasjen min" feel almost identical.
+
+When switching between these pages, the user feels like they are opening the exact same screen twice.
+
+That is confusing.
+
+Each page must have its own clear purpose.
+
+--------------------------------------------------
+NEW INFORMATION ARCHITECTURE
+--------------------------------------------------
+
+OVERSIKT = Home Dashboard
+
+Purpose:
+
+"What is happening in my garage today?"
+
+This page should focus on:
+
+• Recent activity
+• Upcoming service reminders
+• Notifications
+• Clubs
+• Subscription status
+• AI recommendations
+• Quick actions
+• Small preview of vehicles
+
+The dashboard should NOT primarily display one giant vehicle.
+
+Instead it should feel like a modern command center.
+
+The user should immediately understand:
+
+"What should I do next?"
+
+--------------------------------------------------
+GARASJEN MIN
+--------------------------------------------------
+
+This page is NOT a dashboard.
+
+This page is a vehicle manager.
+
+Its only purpose is managing vehicles.
+
+It should feel like browsing your own premium garage.
+
+Top section:
+
+• Page title
+• Search vehicles
+• Filters
+    - All
+    - Cars
+    - Motorcycles
+    - Veteran
+    - Projects
+
+Sorting:
+
+• Recently used
+• Brand
+• Registration
+• Favorites
+
+Display options:
+
+• Card Grid
+• List View
+
+--------------------------------------------------
+VEHICLE CARDS
+--------------------------------------------------
+
+The page should consist of beautiful premium vehicle cards.
+
+Each card should include:
+
+Large image
+
+Vehicle name
+
+Year
+
+Brand
+
+Registration
+
+Mileage
+
+Number of documents
+
+Number of service records
+
+Next service
+
+Small status badges
+
+Clicking the card opens the existing vehicle details page.
+
+Do NOT duplicate the vehicle details page here.
+
+--------------------------------------------------
+EMPTY STATE
+--------------------------------------------------
+
+When there are no vehicles:
+
+Do NOT leave a large empty area.
+
+Instead create a premium onboarding experience.
+
+Example:
+
+Large illustration
+
+Headline
+
+"Start building your digital garage"
+
+Short explanation
+
+Large CTA:
+
+Add vehicle
+
+Secondary CTA:
+
+Explore public clubs
+
+Show 3 small feature cards underneath:
+
+• Service history
+
+• Documents
+
+• Value tracking
+
+This should inspire the user instead of showing empty space.
+
+--------------------------------------------------
+WHEN VEHICLES EXIST
+--------------------------------------------------
+
+Hide the onboarding.
+
+Show the garage immediately.
+
+--------------------------------------------------
+KEEP EXISTING FEATURES
+--------------------------------------------------
+
+Do NOT remove:
+
+Add Vehicle
+
+Import
+
+Vehicle menu
+
+Filters
+
+Existing navigation
+
+Sidebar
+
+Top navigation
+
+Everything must continue working.
+
+Only improve layout and UX.
+
+--------------------------------------------------
+VISUAL STYLE
+--------------------------------------------------
+
+Continue using the current design system.
+
+Dark premium.
+
+Orange accent.
+
+Rounded cards.
+
+Large photography.
+
+High quality spacing.
+
+Consistent margins.
+
+Smooth transitions.
+
+No AI-looking layouts.
+
+--------------------------------------------------
+SUCCESS CRITERIA
+--------------------------------------------------
+
+After this change:
+
+Oversikt should feel like the user's HOME.
+
+Garasjen min should feel like the user's COLLECTION.
+
+The user should instantly understand why both pages exist.
+
+No duplicated layouts.
+
+No duplicated content.
+
+No backend changes.
+
+Frontend only.

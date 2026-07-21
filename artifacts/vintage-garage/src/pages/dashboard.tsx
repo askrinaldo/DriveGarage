@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Car, Wrench, Banknote, Route, ArrowRight, Users,
   ChevronRight, MapPin, Plus, Bike, Gauge, Clock,
-  CheckCircle2, Circle, FileText, Search,
+  CheckCircle2, Circle, FileText, Search, Receipt,
 } from "lucide-react";
 import {
   useGetDashboardStats,
@@ -72,141 +72,153 @@ const StatCard = memo(function StatCard({
   return href ? <Link href={href}>{inner}</Link> : inner;
 });
 
-/* ── Vehicle hero ──────────────────────────────────────────────── */
-function VehicleHero({
-  vehicle, systemOk,
+/* ── Compact vehicle strip (replaces giant hero on dashboard) ──── */
+function CompactVehicleStrip({
+  vehicles, primaryVehicle, systemOk, locale,
 }: {
-  vehicle: { id: number; make: string; model: string; year: number | null; type: string; color?: string | null; mileage?: number | null; imageUrl?: string | null };
+  vehicles: { id: number; make: string; model: string; year: number | null; type: string; color?: string | null; mileage?: number | null; imageUrl?: string | null; registrationNumber?: string | null }[];
+  primaryVehicle: { id: number; make: string; model: string; year: number | null; type: string; color?: string | null; mileage?: number | null; imageUrl?: string | null; registrationNumber?: string | null } | null;
   systemOk: boolean;
+  locale: string;
 }) {
-  const locale = getCurrentLocale();
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const safeIdx = Math.min(selectedIdx, Math.max(0, vehicles.length - 1));
+  const vehicle = vehicles[safeIdx] ?? primaryVehicle;
+  if (!vehicle) return null;
+
   const isMoto = vehicle.type === "motorcycle";
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card group">
-      <div className="relative h-72 md:h-80 lg:h-[400px] overflow-hidden">
-        {vehicle.imageUrl ? (
-          <img
-            src={vehicle.imageUrl}
-            alt={`${vehicle.make} ${vehicle.model}`}
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-muted/30 via-background to-sidebar flex items-center justify-center">
-            <div className="opacity-[0.04] select-none pointer-events-none">
+    <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+      {/* ── Primary vehicle row ── */}
+      <div className="flex items-center gap-4 p-4">
+        {/* Thumbnail */}
+        <div className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 border border-border/30">
+          {vehicle.imageUrl ? (
+            <img
+              src={vehicle.imageUrl}
+              alt={`${vehicle.make} ${vehicle.model}`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className="w-full h-full flex items-center justify-center bg-muted/30"
+              style={vehicle.color ? {
+                background: `color-mix(in srgb, ${vehicle.color} 12%, hsl(220 15% 12%))`,
+              } : undefined}
+            >
               {isMoto
-                ? <Bike style={{ width: 320, height: 320 }} className="text-foreground" />
-                : <Car style={{ width: 320, height: 320 }} className="text-foreground" />}
-            </div>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
-
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 bg-primary/90 rounded-full px-3 py-1">
-            <span className="text-[10px] font-black text-primary-foreground uppercase tracking-widest">Aktivt kjøretøy</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {vehicle.imageUrl && (
-              <Link href={`/vehicles/${vehicle.id}/edit`}>
-                <div className="text-[10px] font-semibold text-white/50 hover:text-white/80 transition-colors uppercase tracking-wider">
-                  Bytt bilde
-                </div>
-              </Link>
-            )}
-            <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1">
-              <div className={`w-1.5 h-1.5 rounded-full ${systemOk ? "bg-emerald-400" : "bg-amber-400"}`} />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-                {systemOk ? "System ok" : "Advarsel"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 flex items-end justify-between">
-          <div>
-            {vehicle.year && (
-              <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1.5">
-                {vehicle.year} · {isMoto ? "Motorsykkel" : "Bil"}
-              </p>
-            )}
-            <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tight leading-none">
-              {vehicle.make} {vehicle.model}
-            </h2>
-          </div>
-          {vehicle.mileage && (
-            <div className="text-right shrink-0 ml-4">
-              <p className="text-[10px] font-bold text-white/35 uppercase tracking-widest mb-1">Kilometerstand</p>
-              <p className="text-2xl font-black text-white tabular-nums">
-                {vehicle.mileage.toLocaleString(locale)}
-                <span className="text-base font-semibold text-white/50 ml-1">km</span>
-              </p>
+                ? <Bike className="w-5 h-5 text-muted-foreground/20" />
+                : <Car className="w-5 h-5 text-muted-foreground/20" />}
             </div>
           )}
         </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[9.5px] font-black text-primary/70 uppercase tracking-widest">Aktivt kjøretøy</span>
+            {vehicle.color && (
+              <span
+                className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0"
+                style={{ backgroundColor: vehicle.color }}
+              />
+            )}
+          </div>
+          <h3 className="text-[17px] font-black text-foreground uppercase tracking-tight leading-tight truncate">
+            {vehicle.make} {vehicle.model}
+          </h3>
+          <p className="text-[11px] text-muted-foreground/45 mt-0.5 flex items-center gap-1.5 flex-wrap">
+            {vehicle.year && <span>{vehicle.year}</span>}
+            {vehicle.registrationNumber && (
+              <>
+                <span className="text-muted-foreground/25">·</span>
+                <span className="font-mono">{vehicle.registrationNumber}</span>
+              </>
+            )}
+            {vehicle.mileage && (
+              <>
+                <span className="text-muted-foreground/25">·</span>
+                <span className="flex items-center gap-1">
+                  <Gauge className="w-2.5 h-2.5" />
+                  {vehicle.mileage.toLocaleString(locale)} km
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Status badge */}
+        <div className={`flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full border ${
+          systemOk ? "border-emerald-500/20 bg-emerald-500/8" : "border-amber-500/20 bg-amber-500/8"
+        }`}>
+          <div className={`w-1.5 h-1.5 rounded-full ${systemOk ? "bg-emerald-400" : "bg-amber-400"}`} />
+          <span className={`text-[9.5px] font-bold uppercase tracking-wider hidden sm:block ${
+            systemOk ? "text-emerald-400/70" : "text-amber-400/70"
+          }`}>
+            {systemOk ? "System OK" : "Advarsel"}
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 px-5 py-3.5 border-t border-border/30">
-        <Link href={`/vehicles/${vehicle.id}/service/new`} className="flex-1">
-          <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[12px] font-bold uppercase tracking-wide">
-            <Wrench className="w-3.5 h-3.5" />
+      {/* ── Quick actions ── */}
+      <div className="flex items-center gap-2 px-4 pb-4 flex-wrap">
+        <Link href={`/vehicles/${vehicle.id}/service/new`}>
+          <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[11px] font-black uppercase tracking-wide">
+            <Wrench className="w-3 h-3" />
             Ny service
           </button>
         </Link>
-        <Link href={`/vehicles/${vehicle.id}`} className="flex-1">
-          <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-border/60 hover:border-border hover:bg-muted/20 transition-colors text-[12px] font-bold uppercase tracking-wide text-foreground/70">
-            <Route className="w-3.5 h-3.5" />
-            Kjørebok
+        <Link href={`/vehicles/${vehicle.id}/receipts/new`}>
+          <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border/50 hover:border-border hover:bg-muted/20 transition-colors text-[11px] font-bold uppercase tracking-wide text-foreground/60">
+            <Receipt className="w-3 h-3" />
+            Legg til dokument
           </button>
         </Link>
         <Link href={`/vehicles/${vehicle.id}`}>
-          <button className="flex items-center justify-center px-3 py-2.5 rounded-lg border border-border/60 hover:border-border hover:bg-muted/20 transition-colors text-foreground/40 hover:text-foreground/70">
-            <ChevronRight className="w-4 h-4" />
+          <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border/50 hover:border-border hover:bg-muted/20 transition-colors text-[11px] font-bold uppercase tracking-wide text-foreground/60">
+            <Route className="w-3 h-3" />
+            Kjørebok
+          </button>
+        </Link>
+        <Link href="/vehicles" className="ml-auto">
+          <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border/40 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 text-[11px] font-bold text-muted-foreground/45 hover:text-primary">
+            Min garasje
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </Link>
       </div>
-    </div>
-  );
-}
 
-/* ── Vehicle gallery selector ──────────────────────────────────── */
-function VehicleGallery({
-  vehicles, selectedIdx, onSelect,
-}: {
-  vehicles: { id: number; make: string; model: string; year: number | null; type: string; imageUrl?: string | null }[];
-  selectedIdx: number;
-  onSelect: (i: number) => void;
-}) {
-  if (vehicles.length <= 1) return null;
-  return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar">
-      {vehicles.map((v, i) => (
-        <button
-          key={v.id}
-          onClick={() => onSelect(i)}
-          className={`shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-full border text-[11px] font-bold uppercase tracking-wide transition-all duration-200 ${
-            i === selectedIdx
-              ? "bg-primary text-primary-foreground border-primary"
-              : "border-border/50 text-muted-foreground hover:border-border hover:text-foreground"
-          }`}
-        >
-          {v.imageUrl ? (
-            <img src={v.imageUrl} alt="" className="w-4 h-4 rounded-full object-cover shrink-0" />
-          ) : (
-            v.type === "motorcycle"
-              ? <Bike className="w-3.5 h-3.5 shrink-0" />
-              : <Car className="w-3.5 h-3.5 shrink-0" />
-          )}
-          {v.year} {v.make} {v.model}
-        </button>
-      ))}
-      <Link href="/vehicles/new">
-        <button className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-dashed border-border/50 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/50 hover:border-border hover:text-muted-foreground transition-all duration-200">
-          <Plus className="w-3.5 h-3.5" />
-          Legg til
-        </button>
-      </Link>
+      {/* ── Other vehicles strip (if multiple) ── */}
+      {vehicles.length > 1 && (
+        <div className="border-t border-border/25 px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar">
+          {vehicles.map((v, i) => {
+            const active = i === safeIdx;
+            return (
+              <button
+                key={v.id}
+                onClick={() => setSelectedIdx(i)}
+                className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wide transition-all duration-200 ${
+                  active
+                    ? "bg-primary/8 border-primary/30 text-primary"
+                    : "border-border/30 text-muted-foreground/45 hover:border-border/60 hover:text-foreground/60"
+                }`}
+              >
+                {v.type === "motorcycle"
+                  ? <Bike className="w-3 h-3 shrink-0" />
+                  : <Car className="w-3 h-3 shrink-0" />}
+                <span className="truncate max-w-[80px]">{v.make} {v.model}</span>
+              </button>
+            );
+          })}
+          <Link href="/vehicles/new">
+            <button className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-border/25 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/30 hover:border-primary/25 hover:text-primary/50 transition-all duration-200">
+              <Plus className="w-3 h-3" />
+              Legg til
+            </button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -220,7 +232,7 @@ function EmptyGarage({ firstName }: { firstName: string }) {
   ];
   return (
     <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
-      <div className="relative h-72 md:h-80 flex flex-col items-center justify-center text-center px-8 bg-gradient-to-br from-muted/20 via-background to-sidebar">
+      <div className="relative h-60 md:h-72 flex flex-col items-center justify-center text-center px-8 bg-gradient-to-br from-muted/20 via-background to-sidebar">
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
           <Car style={{ width: 400, height: 400 }} className="text-foreground" />
         </div>
@@ -252,7 +264,6 @@ function EmptyGarage({ firstName }: { firstName: string }) {
           </div>
         </div>
       </div>
-      {/* Feature highlights strip */}
       <div className="grid grid-cols-3 divide-x divide-border/30 border-t border-border/30">
         {features.map(({ icon: Icon, label, desc }) => (
           <div key={label} className="px-4 py-3.5 flex items-start gap-2.5">
@@ -268,7 +279,7 @@ function EmptyGarage({ firstName }: { firstName: string }) {
   );
 }
 
-/* ── Onboarding timeline (service history empty state) ─────────── */
+/* ── Onboarding timeline ────────────────────────────────────────── */
 function OnboardingTimeline({ hasVehicle, hasService, hasReceipt, primaryVehicleId }: {
   hasVehicle: boolean;
   hasService: boolean;
@@ -316,7 +327,6 @@ function OnboardingTimeline({ hasVehicle, hasService, hasReceipt, primaryVehicle
           const isFuture = i > firstIncomplete && firstIncomplete !== -1;
           return (
             <div key={step.label} className="flex gap-4 py-4">
-              {/* Timeline line + dot */}
               <div className="flex flex-col items-center shrink-0">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                   step.done
@@ -336,7 +346,6 @@ function OnboardingTimeline({ hasVehicle, hasService, hasReceipt, primaryVehicle
                   <div className={`w-px flex-1 mt-1 min-h-[20px] transition-colors duration-300 ${step.done ? "bg-primary/30" : "bg-border/30"}`} />
                 )}
               </div>
-              {/* Content */}
               <div className={`flex-1 min-w-0 pb-2 transition-opacity duration-300 ${isFuture ? "opacity-30" : ""}`}>
                 <p className={`text-[12.5px] font-bold leading-tight ${step.done ? "line-through text-muted-foreground/40" : "text-foreground"}`}>
                   {step.label}
@@ -449,7 +458,6 @@ function QuickStartChecklist({
           <p className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">Kom i gang</p>
           <span className="text-[10px] font-bold text-primary/70">{doneCount}/{steps.length}</span>
         </div>
-        {/* Progress bar */}
         <div className="h-1 bg-muted/40 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-primary rounded-full"
@@ -532,8 +540,6 @@ export default function Dashboard() {
   );
   const { data: subscription } = useSubscription();
 
-  const [selectedVehicleIdx, setSelectedVehicleIdx] = useState(0);
-
   const initialLoading = (statsLoading && !stats) || (activityLoading && !activity) || (vehiclesLoading && !vehicles);
   const isError = statsError || activityError;
 
@@ -546,8 +552,7 @@ export default function Dashboard() {
     : (tenantName ?? "Min Garasje");
 
   const vehicleList = vehicles ?? [];
-  const safeIdx = Math.min(selectedVehicleIdx, Math.max(0, vehicleList.length - 1));
-  const primaryVehicle = vehicleList[safeIdx] ?? null;
+  const primaryVehicle = vehicleList[0] ?? null;
   const myClubs = (clubs ?? []).slice(0, 4);
   const recentActivity = (activity ?? []).slice(0, 8);
 
@@ -561,9 +566,6 @@ export default function Dashboard() {
   const dateStr = new Date().toLocaleDateString(locale, {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
-
-  /* Determine if we're in "new user" mode for layout decisions */
-  const isNewUser = !hasVehicle;
 
   return (
     <div className="space-y-6 pb-12">
@@ -584,46 +586,38 @@ export default function Dashboard() {
           </h1>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <Link href={primaryVehicle ? `/vehicles/${primaryVehicle.id}/service/new` : "/vehicles/new"}>
-            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border/50 hover:border-border bg-transparent hover:bg-muted/20 transition-colors text-[11px] font-bold uppercase tracking-wide text-foreground/70">
-              <Wrench className="w-3.5 h-3.5" />
-              Ny service
-            </button>
-          </Link>
-          <Link href={primaryVehicle ? `/vehicles/${primaryVehicle.id}` : "/vehicles"}>
-            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border/50 hover:border-border bg-transparent hover:bg-muted/20 transition-colors text-[11px] font-bold uppercase tracking-wide text-foreground/70">
-              <Gauge className="w-3.5 h-3.5" />
-              Kjørebok
-            </button>
-          </Link>
           <Link href="/vehicles/new">
             <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-primary/50 hover:border-primary bg-transparent hover:bg-primary/5 transition-all duration-200 text-[11px] font-bold uppercase tracking-wide text-primary hover:scale-[1.02] active:scale-[0.98]">
               <Plus className="w-3.5 h-3.5" />
               Legg til bil
             </button>
           </Link>
+          <Link href="/clubs">
+            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border/50 hover:border-border bg-transparent hover:bg-muted/20 transition-colors text-[11px] font-bold uppercase tracking-wide text-foreground/70">
+              <Users className="w-3.5 h-3.5" />
+              Klubber
+            </button>
+          </Link>
         </div>
       </motion.div>
 
-      {/* ── Vehicle hero ── */}
+      {/* ── Compact vehicle strip OR empty garage ── */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+        transition={{ delay: 0.05, duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
       >
-        {primaryVehicle ? (
-          <VehicleHero vehicle={primaryVehicle} systemOk={systemOk} />
+        {hasVehicle ? (
+          <CompactVehicleStrip
+            vehicles={vehicleList}
+            primaryVehicle={primaryVehicle}
+            systemOk={systemOk}
+            locale={locale}
+          />
         ) : (
           <EmptyGarage firstName={firstName} />
         )}
       </motion.div>
-
-      {/* ── Vehicle gallery (multi-vehicle) ── */}
-      {vehicleList.length > 1 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
-          <VehicleGallery vehicles={vehicleList} selectedIdx={safeIdx} onSelect={setSelectedVehicleIdx} />
-        </motion.div>
-      )}
 
       {/* ── Stats bar ── */}
       <motion.div
@@ -669,7 +663,7 @@ export default function Dashboard() {
       {/* ── Main content ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* Left: service history / onboarding timeline */}
+        {/* Left: recent activity / onboarding */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -678,7 +672,7 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
-              {recentActivity.length > 0 ? "Servicehistorikk" : "Kom i gang"}
+              {recentActivity.length > 0 ? "Siste aktivitet" : "Kom i gang"}
             </h2>
             {primaryVehicle && recentActivity.length > 0 && (
               <Link href={`/vehicles/${primaryVehicle.id}/service/new`}>
@@ -691,7 +685,6 @@ export default function Dashboard() {
 
           <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
             {recentActivity.length === 0 ? (
-              /* Onboarding timeline */
               <OnboardingTimeline
                 hasVehicle={hasVehicle}
                 hasService={hasService}
@@ -715,6 +708,18 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* View all activity link */}
+          {recentActivity.length > 0 && primaryVehicle && (
+            <div className="mt-3">
+              <Link href="/vehicles">
+                <button className="w-full flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/40 hover:text-primary transition-colors py-2 group">
+                  Se alle kjøretøy og historikk
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </Link>
+            </div>
+          )}
         </motion.div>
 
         {/* Right: clubs + checklist */}
@@ -748,7 +753,6 @@ export default function Dashboard() {
             </div>
 
             {myClubs.length === 0 ? (
-              /* Club discovery panel */
               <ClubDiscovery />
             ) : (
               <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
