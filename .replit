@@ -31,6 +31,17 @@ args = "pnpm run typecheck"
 [workflows.workflow.metadata]
 isValidation = true
 
+[[workflows.workflow]]
+name = "error-message-tests"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/api-client-react run test && pnpm --filter @workspace/vintage-garage run test"
+
+[workflows.workflow.metadata]
+isValidation = true
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
