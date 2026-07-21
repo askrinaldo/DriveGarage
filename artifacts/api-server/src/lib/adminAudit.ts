@@ -32,10 +32,6 @@ const REDACTED_KEYS = new Set([
   "password_hash",
   "token",
   "secret",
-  "stripeCustomerId",
-  "stripe_customer_id",
-  "stripeSubscriptionId",
-  "stripe_subscription_id",
   "vippsAgreementId",
   "vipps_agreement_id",
 ]);

@@ -23,7 +23,6 @@ router.get("/admin/users-detailed", parseUserAuth, requireSuperAdmin, async (req
       isActive: usersTable.isActive,
       subscriptionTier: usersTable.subscriptionTier,
       subscriptionStatus: usersTable.subscriptionStatus,
-      stripeCustomerId: usersTable.stripeCustomerId,
       createdAt: usersTable.createdAt,
     })
     .from(usersTable)

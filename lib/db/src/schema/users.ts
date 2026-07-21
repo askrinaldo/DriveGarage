@@ -25,9 +25,6 @@ export const usersTable = pgTable("users", {
   themeAccent: text("theme_accent"),
   themeMode: text("theme_mode"),
 
-  // ── Legacy Stripe columns (kept for backward compat, no new writes) ──────
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionTier: text("subscription_tier", { enum: ["free", "standard", "premium"] }).notNull().default("free"),
 
   // ── Vipps subscription fields ────────────────────────────────────────────

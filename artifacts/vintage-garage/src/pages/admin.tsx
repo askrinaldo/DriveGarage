@@ -39,7 +39,6 @@ interface DetailedUser {
   isActive: boolean;
   subscriptionTier: "free" | "standard" | "premium";
   subscriptionStatus: string | null;
-  stripeCustomerId: string | null;
   vehicleCount: number;
   createdAt: string;
 }
@@ -107,8 +106,6 @@ interface Subscription {
   email: string;
   subscriptionTier: "free" | "standard" | "premium";
   subscriptionStatus: string | null;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
   createdAt: string;
   stripe: {
     status: string;
@@ -465,7 +462,6 @@ function UserDetailPanel({
             { label: "Kjøretøy", value: user.vehicleCount, icon: Car },
             { label: "Rolle", value: user.role === "super_admin" ? "Admin" : "Bruker", icon: Shield },
             { label: "Registrert", value: new Date(user.createdAt).toLocaleDateString("nb-NO"), icon: Clock },
-            { label: "Stripe ID", value: user.stripeCustomerId ? user.stripeCustomerId.slice(0, 14) + "…" : "—", icon: CreditCard },
           ].map(item => (
             <div key={item.label} className="rounded-xl bg-white/3 border border-white/6 p-3">
               <div className="flex items-center gap-1.5 mb-1">
@@ -991,7 +987,7 @@ function CrmSection({
           <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-white/3 border-b border-white/6">
-                {["Bruker", "Abonnement", "Status", "Kjøretøy", "Stripe ID", "Registrert", ""].map(h => (
+                {["Bruker", "Abonnement", "Status", "Kjøretøy", "Registrert", ""].map(h => (
                   <th key={h} className="text-left px-5 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
                     {h}
                   </th>
@@ -1035,9 +1031,6 @@ function CrmSection({
                       </Badge>
                     </td>
                     <td className="px-5 py-3.5 text-xs text-white/60">{user.vehicleCount}</td>
-                    <td className="px-5 py-3.5 text-[11px] text-white/30 font-mono">
-                      {user.stripeCustomerId ? user.stripeCustomerId.slice(0, 12) + "…" : "—"}
-                    </td>
                     <td className="px-5 py-3.5 text-xs text-white/40">
                       {new Date(user.createdAt).toLocaleDateString("nb-NO")}
                     </td>
