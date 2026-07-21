@@ -1,12 +1,32 @@
 import { Router } from "express";
 import { eq, and, ne } from "drizzle-orm";
 import { randomBytes } from "crypto";
+import { z } from "zod/v4";
 import {
   db, usersTable, tenantsTable, tenantMembershipsTable, tenantInvitationsTable, vehiclesTable,
 } from "@workspace/db";
 import { parseUserAuth, requireUser, signUserToken, resolvePersonalTenant } from "../middleware/userAuth";
+import { validate } from "../middleware/validate";
 
 const router = Router();
+
+// ─── Schemas ───────────────────────────────────────────────────────────────
+const createTenantSchema = z.object({
+  name: z.string().min(1, "Navn er påkrevd").trim(),
+});
+
+const updateTenantSchema = z.object({
+  name: z.string().min(1, "Navn er påkrevd").trim(),
+});
+
+const inviteSchema = z.object({
+  email: z.email("Ugyldig e-postadresse"),
+  role: z.enum(["admin", "member"]).optional().default("member"),
+});
+
+const switchTenantSchema = z.object({
+  tenantId: z.number().int().positive("Ugyldig tenantId"),
+});
 
 // ─── GET /tenants/mine — all tenants for current user ─────────────────────
 router.get("/tenants/mine", parseUserAuth, requireUser, async (req, res): Promise<void> => {
@@ -67,14 +87,9 @@ router.get("/tenants/:id", parseUserAuth, requireUser, async (req, res): Promise
 });
 
 // ─── POST /tenants — create a new org tenant ──────────────────────────────
-router.post("/tenants", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.post("/tenants", parseUserAuth, requireUser, validate(createTenantSchema), async (req, res): Promise<void> => {
   const userId = req.userAuth!.userId;
-  const { name } = req.body as { name?: string };
-
-  if (!name?.trim()) {
-    res.status(400).json({ error: "Navn er påkrevd" });
-    return;
-  }
+  const { name } = req.body as z.infer<typeof createTenantSchema>;
 
   const slug = `org-${userId}-${Date.now()}`;
 
@@ -95,10 +110,10 @@ router.post("/tenants", parseUserAuth, requireUser, async (req, res): Promise<vo
 });
 
 // ─── PATCH /tenants/:id — update tenant name ──────────────────────────────
-router.patch("/tenants/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.patch("/tenants/:id", parseUserAuth, requireUser, validate(updateTenantSchema), async (req, res): Promise<void> => {
   const tenantId = parseInt(String(req.params.id), 10);
   const userId = req.userAuth!.userId;
-  const { name } = req.body as { name?: string };
+  const { name } = req.body as z.infer<typeof updateTenantSchema>;
 
   const [membership] = await db
     .select({ role: tenantMembershipsTable.role })
@@ -120,15 +135,10 @@ router.patch("/tenants/:id", parseUserAuth, requireUser, async (req, res): Promi
 });
 
 // ─── POST /tenants/:id/invite — invite user by email ─────────────────────
-router.post("/tenants/:id/invite", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.post("/tenants/:id/invite", parseUserAuth, requireUser, validate(inviteSchema), async (req, res): Promise<void> => {
   const tenantId = parseInt(String(req.params.id), 10);
   const userId = req.userAuth!.userId;
-  const { email, role = "member" } = req.body as { email?: string; role?: "admin" | "member" };
-
-  if (!email?.trim()) {
-    res.status(400).json({ error: "E-post er påkrevd" });
-    return;
-  }
+  const { email, role } = req.body as z.infer<typeof inviteSchema>;
 
   const [membership] = await db
     .select({ role: tenantMembershipsTable.role })
@@ -263,9 +273,9 @@ router.delete("/tenants/:id/members/:memberId", parseUserAuth, requireUser, asyn
 });
 
 // ─── POST /auth/switch-tenant — switch active tenant, returns new JWT ─────
-router.post("/auth/switch-tenant", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.post("/auth/switch-tenant", parseUserAuth, requireUser, validate(switchTenantSchema), async (req, res): Promise<void> => {
   const userId = req.userAuth!.userId;
-  const { tenantId } = req.body as { tenantId: number };
+  const { tenantId } = req.body as z.infer<typeof switchTenantSchema>;
 
   const [membership] = await db
     .select({ role: tenantMembershipsTable.role })

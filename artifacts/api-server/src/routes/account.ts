@@ -25,13 +25,20 @@
 
 import { Router } from "express";
 import { eq } from "drizzle-orm";
+import { z } from "zod/v4";
 import { db, usersTable } from "@workspace/db";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
+import { validate } from "../middleware/validate";
 import { getEffectiveSubscription } from "../lib/subscription";
 import { isVippsConfigured } from "../lib/vipps/config";
 import { stopVippsAgreement } from "../lib/vipps/agreements";
 
 const router = Router();
+
+// ─── Schemas ───────────────────────────────────────────────────────────────
+const requestDeletionSchema = z.object({
+  confirmPhrase: z.string().min(1, "Bekreftelsesfransen er påkrevd"),
+});
 
 /** Required confirmation phrase for account deletion. */
 const DELETION_CONFIRM_PHRASE = "slett kontoen min";
@@ -49,11 +56,12 @@ router.post(
   "/account/request-deletion",
   parseUserAuth,
   requireUser,
+  validate(requestDeletionSchema),
   async (req, res): Promise<void> => {
     const userId = req.userAuth!.userId;
-    const { confirmPhrase } = req.body as { confirmPhrase?: string };
+    const { confirmPhrase } = req.body as z.infer<typeof requestDeletionSchema>;
 
-    if (!confirmPhrase || confirmPhrase.trim().toLowerCase() !== DELETION_CONFIRM_PHRASE) {
+    if (confirmPhrase.trim().toLowerCase() !== DELETION_CONFIRM_PHRASE) {
       res.status(400).json({
         error: "confirm_phrase_mismatch",
         message: `Skriv inn "${DELETION_CONFIRM_PHRASE}" for å bekrefte.`,

@@ -1,10 +1,17 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { z } from "zod/v4";
 import { db, vehiclesTable, vehicleTransfersTable, vehicleOwnershipHistoryTable, usersTable } from "@workspace/db";
 import { parseUserAuth, requireUser, requireSuperAdmin } from "../middleware/userAuth";
+import { validate } from "../middleware/validate";
 import { randomBytes } from "crypto";
 
 const router: IRouter = Router();
+
+// ─── Schemas ───────────────────────────────────────────────────────────────
+const createTransferSchema = z.object({
+  toEmail: z.email("Ugyldig e-postadresse for mottaker"),
+});
 
 function generateCode(): string {
   return randomBytes(4).toString("hex").toUpperCase(); // e.g. "A1B2C3D4"
@@ -21,14 +28,9 @@ function expiresAt(): Date {
 }
 
 // ─── Create transfer ──────────────────────────────────────────────────────────
-router.post("/vehicles/:vehicleId/transfer", parseUserAuth, requireUser, async (req, res): Promise<void> => {
+router.post("/vehicles/:vehicleId/transfer", parseUserAuth, requireUser, validate(createTransferSchema), async (req, res): Promise<void> => {
   const vehicleId = parseInt(String(req.params.vehicleId), 10);
-  const { toEmail } = req.body as { toEmail?: string };
-
-  if (!toEmail?.trim()) {
-    res.status(400).json({ error: "Mottakerens e-post er påkrevd" });
-    return;
-  }
+  const { toEmail } = req.body as z.infer<typeof createTransferSchema>;
 
   if (toEmail.toLowerCase() === req.userAuth!.email.toLowerCase()) {
     res.status(400).json({ error: "Du kan ikke overføre til deg selv" });

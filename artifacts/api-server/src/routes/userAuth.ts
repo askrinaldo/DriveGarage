@@ -1,12 +1,14 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, count } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { z } from "zod/v4";
 import {
   db, usersTable, clubsTable, vehiclesTable, forumPostsTable, forumCommentsTable,
   tenantsTable, tenantMembershipsTable,
 } from "@workspace/db";
 import { signUserToken, requireUser, requireSuperAdmin, parseUserAuth, resolvePersonalTenant } from "../middleware/userAuth";
 import { authRateLimit } from "../middleware/rateLimiter";
+import { validate } from "../middleware/validate";
 
 const router: IRouter = Router();
 
@@ -36,23 +38,36 @@ async function getOrCreatePersonalTenant(userId: number, userName: string): Prom
   return { tenantId: tenant.id, tenantName, tenantRole: "owner", isPersonalTenant: true };
 }
 
+// ─── Schemas ───────────────────────────────────────────────────────────────
+const registerSchema = z.object({
+  name: z.string().min(1, "Navn er påkrevd").trim(),
+  email: z.email("Ugyldig e-postadresse"),
+  password: z.string().min(6, "Passordet må være minst 6 tegn"),
+});
+
+const loginSchema = z.object({
+  email: z.email("Ugyldig e-postadresse"),
+  password: z.string().min(1, "Passord er påkrevd"),
+});
+
+const preferencesSchema = z.object({
+  themeAccent: z.enum(["kobber", "blå", "rød", "grønn", "gul", "lilla", "grå"]).optional(),
+  themeMode: z.enum(["dark", "light", "auto"]).optional(),
+}).strict();
+
+const adminUpdateUserSchema = z.object({
+  isActive: z.boolean().optional(),
+  role: z.enum(["user", "super_admin"]).optional(),
+});
+
+const adminSuspendClubSchema = z.object({
+  suspend: z.boolean(),
+  reason: z.string().optional(),
+});
+
 // ─── Register ──────────────────────────────────────────────────────────────
-router.post("/users/register", authRateLimit, async (req, res): Promise<void> => {
-  const { name, email, password } = req.body as {
-    name?: string;
-    email?: string;
-    password?: string;
-  };
-
-  if (!name?.trim() || !email?.trim() || !password) {
-    res.status(400).json({ error: "Navn, e-post og passord er påkrevd" });
-    return;
-  }
-
-  if (password.length < 6) {
-    res.status(400).json({ error: "Passordet må være minst 6 tegn" });
-    return;
-  }
+router.post("/users/register", authRateLimit, validate(registerSchema), async (req, res): Promise<void> => {
+  const { name, email, password } = req.body as z.infer<typeof registerSchema>;
 
   const existing = await db
     .select({ id: usersTable.id })
@@ -110,13 +125,8 @@ router.post("/users/register", authRateLimit, async (req, res): Promise<void> =>
 });
 
 // ─── Login ─────────────────────────────────────────────────────────────────
-router.post("/users/login", authRateLimit, async (req, res): Promise<void> => {
-  const { email, password } = req.body as { email?: string; password?: string };
-
-  if (!email?.trim() || !password) {
-    res.status(400).json({ error: "E-post og passord er påkrevd" });
-    return;
-  }
+router.post("/users/login", authRateLimit, validate(loginSchema), async (req, res): Promise<void> => {
+  const { email, password } = req.body as z.infer<typeof loginSchema>;
 
   const [user] = await db
     .select()
@@ -194,21 +204,8 @@ router.get("/users/me", parseUserAuth, requireUser, async (req, res): Promise<vo
 });
 
 // ─── Update preferences ────────────────────────────────────────────────────
-const VALID_THEME_MODES = new Set(["dark", "light", "auto"]);
-const VALID_THEME_ACCENTS = new Set(["kobber", "blå", "rød", "grønn", "gul", "lilla", "grå"]);
-
-router.patch("/users/me/preferences", parseUserAuth, requireUser, async (req, res): Promise<void> => {
-  const { themeAccent, themeMode } = req.body as { themeAccent?: string; themeMode?: string };
-
-  if (themeMode !== undefined && !VALID_THEME_MODES.has(themeMode)) {
-    res.status(400).json({ error: `Ugyldig fargemodus. Gyldige verdier: ${[...VALID_THEME_MODES].join(", ")}` });
-    return;
-  }
-
-  if (themeAccent !== undefined && !VALID_THEME_ACCENTS.has(themeAccent)) {
-    res.status(400).json({ error: `Ugyldig aksentfarge. Gyldige verdier: ${[...VALID_THEME_ACCENTS].join(", ")}` });
-    return;
-  }
+router.patch("/users/me/preferences", parseUserAuth, requireUser, validate(preferencesSchema), async (req, res): Promise<void> => {
+  const { themeAccent, themeMode } = req.body as z.infer<typeof preferencesSchema>;
 
   const [updated] = await db
     .update(usersTable)
@@ -245,9 +242,9 @@ router.get("/admin/users", parseUserAuth, requireSuperAdmin, async (req, res): P
 });
 
 // ─── Admin: update user ────────────────────────────────────────────────────
-router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/users/:id", parseUserAuth, requireSuperAdmin, validate(adminUpdateUserSchema), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
-  const { isActive, role } = req.body as { isActive?: boolean; role?: "user" | "super_admin" };
+  const { isActive, role } = req.body as z.infer<typeof adminUpdateUserSchema>;
 
   const [updated] = await db
     .update(usersTable)
@@ -273,9 +270,9 @@ router.get("/admin/clubs", parseUserAuth, requireSuperAdmin, async (req, res): P
 });
 
 // ─── Admin: suspend / unsuspend club ──────────────────────────────────────
-router.patch("/admin/clubs/:id/suspend", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/clubs/:id/suspend", parseUserAuth, requireSuperAdmin, validate(adminSuspendClubSchema), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
-  const { suspend, reason } = req.body as { suspend: boolean; reason?: string };
+  const { suspend, reason } = req.body as z.infer<typeof adminSuspendClubSchema>;
 
   const [updated] = await db
     .update(clubsTable)
