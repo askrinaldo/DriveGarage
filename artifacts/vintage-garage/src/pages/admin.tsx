@@ -23,8 +23,8 @@ import {
   MessageSquare, Crown, Ban, CircleCheck, Lightbulb, ChevronDown, ChevronUp,
   CreditCard, BarChart3, Activity, ScrollText, CheckCircle2, Clock, AlertCircle,
   RefreshCw, DollarSign, Star, Zap, Server, Database, Wifi, ArrowLeft,
-  X, ExternalLink, LayoutDashboard, Receipt, Settings, Bell,
-  ArrowUpRight, ArrowDownRight, Minus, ChevronRight, Hash,
+  X, LayoutDashboard,
+  ArrowUpRight, ArrowDownRight, Minus, ChevronRight,
   Bot, Send, Loader2,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
@@ -90,31 +90,6 @@ interface BillingStats {
 }
 
 interface MrrPoint { month: string; mrr: number; newSubs: number; churned: number }
-
-interface Invoice {
-  id: string;
-  customerEmail: string;
-  amount: number;
-  status: string;
-  created: number;
-  hostedUrl: string | null;
-}
-
-interface Subscription {
-  id: number;
-  name: string;
-  email: string;
-  subscriptionTier: "free" | "standard" | "premium";
-  subscriptionStatus: string | null;
-  createdAt: string;
-  stripe: {
-    status: string;
-    currentPeriodEnd: number;
-    cancelAtPeriodEnd: boolean;
-    amount: number;
-    interval: string;
-  } | null;
-}
 
 interface AdminTicket {
   id: number;
@@ -202,8 +177,6 @@ interface SystemHealth {
 type Section =
   | "overview"
   | "crm"
-  | "payments"
-  | "subscriptions"
   | "support"
   | "clubs"
   | "system"
@@ -219,8 +192,6 @@ const NAV_ITEMS: Array<{
   { id: "overview", label: "Oversikt", icon: LayoutDashboard },
   { id: "ai", label: "Økonomi AI", icon: Bot },
   { id: "crm", label: "Brukere (CRM)", icon: Users },
-  { id: "payments", label: "Betalinger", icon: Receipt },
-  { id: "subscriptions", label: "Abonnementer", icon: CreditCard },
   { id: "support", label: "Support", icon: MessageSquare },
   { id: "clubs", label: "Klubber", icon: Building2 },
   { id: "system", label: "System", icon: Server },
@@ -1068,244 +1039,6 @@ function CrmSection({
           </>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-// ─── Payments section ─────────────────────────────────────────────────────────
-
-function PaymentsSection({ getHeaders }: { getHeaders: GetHeaders }) {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    setLoading(true);
-    getHeaders().then(h =>
-      fetch("/api/admin/invoices", { headers: h })
-        .then(r => r.json() as Promise<Invoice[]>)
-        .then(data => { setInvoices(data); setLoading(false); })
-        .catch(() => setLoading(false))
-    );
-  }, [getHeaders]);
-
-  const filtered = invoices.filter(inv => {
-    const matchSearch = !search || inv.customerEmail.toLowerCase().includes(search.toLowerCase()) || inv.id.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || inv.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
-
-  const totalPaid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0);
-  const countPaid = invoices.filter(i => i.status === "paid").length;
-  const countFailed = invoices.filter(i => i.status === "uncollectible" || i.status === "open").length;
-
-  const statusCfg: Record<string, { label: string; className: string }> = {
-    paid: { label: "Betalt", className: "text-emerald-300 bg-emerald-500/15 border-emerald-500/25" },
-    open: { label: "Åpen", className: "text-amber-300 bg-amber-500/15 border-amber-500/25" },
-    void: { label: "Annullert", className: "text-white/40 bg-white/5 border-white/10" },
-    uncollectible: { label: "Mislyktes", className: "text-red-300 bg-red-500/15 border-red-500/25" },
-    draft: { label: "Utkast", className: "text-white/40 bg-white/5 border-white/10" },
-  };
-
-  return (
-    <div>
-      <SectionHeader
-        title="Betalinger"
-        sub="Stripe faktura-historikk"
-      />
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        {[
-          { label: "Totalt innbetalt", value: formatNOK(totalPaid), icon: DollarSign, color: "text-emerald-400" },
-          { label: "Betalte fakturaer", value: countPaid, icon: CheckCircle2, color: "text-blue-400" },
-          { label: "Mislykkede", value: countFailed, icon: AlertCircle, color: "text-red-400" },
-        ].map(item => (
-          <div key={item.label} className="rounded-xl border border-white/6 bg-white/2 p-4 flex items-center gap-3">
-            <item.icon className={`w-5 h-5 ${item.color} shrink-0`} />
-            <div>
-              <p className="text-xs text-white/40 mb-0.5">{item.label}</p>
-              <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-2 mb-4 flex-wrap">
-        <div className="relative flex-1 min-w-[180px]">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <Input
-            placeholder="Søk e-post eller faktura-ID..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 bg-white/5 border-white/10 text-white placeholder:text-white/25 text-sm"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-9 w-36 text-xs bg-white/5 border-white/10 text-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle statuser</SelectItem>
-            <SelectItem value="paid">Betalt</SelectItem>
-            <SelectItem value="open">Åpen</SelectItem>
-            <SelectItem value="uncollectible">Mislyktes</SelectItem>
-            <SelectItem value="void">Annullert</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center h-32 text-white/30 text-sm">Laster betalinger...</div>
-      ) : (
-        <div className="rounded-xl border border-white/6 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[700px]">
-              <thead>
-                <tr className="bg-white/3 border-b border-white/6">
-                  {["Faktura ID", "Kunde", "Beløp", "Status", "Dato", ""].map(h => (
-                    <th key={h} className="text-left px-5 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(inv => {
-                  const cfg = statusCfg[inv.status] ?? { label: inv.status, className: "text-white/40 bg-white/5 border-white/10" };
-                  return (
-                    <tr key={inv.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                      <td className="px-5 py-3.5 font-mono text-[11px] text-white/40">
-                        <div className="flex items-center gap-1">
-                          <Hash className="w-3 h-3" />
-                          {inv.id.slice(-12)}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-white/70">{inv.customerEmail}</td>
-                      <td className="px-5 py-3.5 text-sm font-semibold text-white">{formatNOK(inv.amount)}</td>
-                      <td className="px-5 py-3.5">
-                        <Badge variant="outline" className={`text-[10px] ${cfg.className}`}>{cfg.label}</Badge>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-white/40">
-                        {inv.created ? new Date(inv.created * 1000).toLocaleDateString("nb-NO") : "—"}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {inv.hostedUrl && (
-                          <a href={inv.hostedUrl} target="_blank" rel="noreferrer">
-                            <ExternalLink className="w-3.5 h-3.5 text-white/20 hover:text-white/60 transition-colors" />
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {filtered.length === 0 && (
-              <div className="text-center py-12 text-white/30 text-sm">
-                {invoices.length === 0 ? "Ingen betalinger ennå (Stripe-webhooks synkroniserer snart)" : "Ingen betalinger matcher søket"}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Subscriptions section ────────────────────────────────────────────────────
-
-function SubscriptionsSection({ getHeaders }: { getHeaders: GetHeaders }) {
-  const [subs, setSubs] = useState<Subscription[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getHeaders().then(h =>
-      fetch("/api/admin/subscriptions", { headers: h })
-        .then(r => r.json() as Promise<Subscription[]>)
-        .then(data => { setSubs(data); setLoading(false); })
-        .catch(() => setLoading(false))
-    );
-  }, [getHeaders]);
-
-  const active = subs.filter(s => s.stripe?.status === "active").length;
-  const canceling = subs.filter(s => s.stripe?.cancelAtPeriodEnd).length;
-  const pastDue = subs.filter(s => s.stripe?.status === "past_due").length;
-
-  return (
-    <div>
-      <SectionHeader title="Abonnementer" sub="Oversikt over alle betalte planer" />
-
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        {[
-          { label: "Aktive", value: active, color: "text-emerald-400" },
-          { label: "Avsluttes", value: canceling, color: "text-amber-400" },
-          { label: "Forfalt", value: pastDue, color: "text-red-400" },
-        ].map(item => (
-          <div key={item.label} className="rounded-xl border border-white/6 bg-white/2 p-4 text-center">
-            <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
-            <p className="text-xs text-white/40 mt-1">{item.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center h-32 text-white/30 text-sm">Laster abonnementer...</div>
-      ) : (
-        <div className="rounded-xl border border-white/6 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[750px]">
-              <thead>
-                <tr className="bg-white/3 border-b border-white/6">
-                  {["Bruker", "Nivå", "Stripe-status", "Beløp", "Neste fornyelse", "Registrert"].map(h => (
-                    <th key={h} className="text-left px-5 py-3 text-[10px] font-semibold text-white/40 uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {subs.map(sub => (
-                  <tr key={sub.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <p className="font-medium text-white text-sm">{sub.name}</p>
-                      <p className="text-[11px] text-white/40">{sub.email}</p>
-                    </td>
-                    <td className="px-5 py-3.5"><TierBadge tier={sub.subscriptionTier} /></td>
-                    <td className="px-5 py-3.5">
-                      {sub.stripe ? (
-                        <Badge variant="outline" className={`text-[10px] ${
-                          sub.stripe.status === "active"
-                            ? "text-emerald-300 bg-emerald-500/15 border-emerald-500/25"
-                            : sub.stripe.status === "past_due"
-                            ? "text-red-300 bg-red-500/15 border-red-500/25"
-                            : "text-white/40 bg-white/5 border-white/10"}`}>
-                          {sub.stripe.status === "active" ? "Aktiv" : sub.stripe.status === "past_due" ? "Forfalt" : sub.stripe.status}
-                          {sub.stripe.cancelAtPeriodEnd && " · Avsluttes"}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px] text-white/40 bg-white/5 border-white/10">Manuell</Badge>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs font-semibold text-white">
-                      {sub.stripe ? `${formatNOK(sub.stripe.amount)}/${sub.stripe.interval === "year" ? "år" : "mnd"}` : "—"}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-white/40">
-                      {sub.stripe?.currentPeriodEnd
-                        ? new Date(sub.stripe.currentPeriodEnd * 1000).toLocaleDateString("nb-NO")
-                        : "—"}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-white/40">
-                      {new Date(sub.createdAt).toLocaleDateString("nb-NO")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {subs.length === 0 && (
-              <div className="text-center py-12 text-white/30 text-sm">Ingen abonnementer ennå</div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -2211,12 +1944,6 @@ export default function Admin() {
             )}
             {activeSection === "crm" && (
               <CrmSection users={users} getHeaders={getAuthHeaders} onUpdate={load} />
-            )}
-            {activeSection === "payments" && (
-              <PaymentsSection getHeaders={getAuthHeaders} />
-            )}
-            {activeSection === "subscriptions" && (
-              <SubscriptionsSection getHeaders={getAuthHeaders} />
             )}
             {activeSection === "support" && (
               <SupportSection
