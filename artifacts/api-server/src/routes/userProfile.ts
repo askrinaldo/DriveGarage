@@ -43,7 +43,6 @@ router.get("/profile/leaderboard", async (req, res): Promise<void> => {
     .select({
       id: usersTable.id,
       name: usersTable.name,
-      subscriptionTier: usersTable.subscriptionTier,
       createdAt: usersTable.createdAt,
     })
     .from(usersTable)
@@ -86,7 +85,6 @@ router.get("/garage/:username", async (req, res): Promise<void> => {
     .select({
       id: usersTable.id,
       name: usersTable.name,
-      subscriptionTier: usersTable.subscriptionTier,
       createdAt: usersTable.createdAt,
     })
     .from(usersTable)
