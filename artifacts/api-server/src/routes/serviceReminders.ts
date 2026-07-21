@@ -8,9 +8,7 @@ import { validate } from "../middleware/validate";
 
 const router: IRouter = Router();
 
-const isoDateString = z
-  .string()
-  .refine((s) => !isNaN(new Date(s).getTime()), { message: "Ugyldig dato" });
+const isoDateString = z.string().date();
 
 const CreateReminderSchema = z.object({
   title:           z.string().trim().min(1, "Tittel er påkrevd").max(200),
