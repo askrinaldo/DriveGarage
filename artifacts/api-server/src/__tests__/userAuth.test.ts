@@ -245,6 +245,56 @@ async function makeToken(userId = 1) {
   });
 }
 
+async function makeAdminToken(userId = 99) {
+  const { signUserToken } = await import("../middleware/userAuth");
+  return signUserToken({
+    userId,
+    email:           "admin@example.com",
+    name:            "Super Admin",
+    role:            "super_admin",
+    tenantId:        1,
+    tenantName:      "Admin's Garasje",
+    tenantRole:      "owner",
+    isPersonalTenant: true,
+  });
+}
+
+/**
+ * Configure db mocks for a super_admin user check used by requireSuperAdmin.
+ * Optionally configure what the update call returns.
+ */
+function mockDbForAdminUserUpdate(returnedUser: Record<string, unknown>) {
+  mockDbSelect.mockImplementation(() => ({
+    from: () => ({
+      where: () => Promise.resolve([{ isActive: true, role: "super_admin" }]),
+    }),
+  }));
+
+  mockDbUpdate.mockImplementation((_table: unknown) => ({
+    set: (_values: unknown) => ({
+      where: () => ({
+        returning: () => Promise.resolve([returnedUser]),
+      }),
+    }),
+  }));
+}
+
+function mockDbForAdminClubUpdate(returnedClub: Record<string, unknown>) {
+  mockDbSelect.mockImplementation(() => ({
+    from: () => ({
+      where: () => Promise.resolve([{ isActive: true, role: "super_admin" }]),
+    }),
+  }));
+
+  mockDbUpdate.mockImplementation((_table: unknown) => ({
+    set: (_values: unknown) => ({
+      where: () => ({
+        returning: () => Promise.resolve([returnedClub]),
+      }),
+    }),
+  }));
+}
+
 // ─── Test suites ──────────────────────────────────────────────────────────────
 
 describe("POST /api/users/register", () => {
@@ -462,5 +512,185 @@ describe("PATCH /api/users/me/preferences", () => {
       .send({ themeMode: "dark" });
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe("PATCH /api/admin/users/:id", () => {
+  let app: express.Express;
+
+  beforeAll(async () => {
+    app = await buildTestApp();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("200 with valid isActive payload — validate middleware passes through", async () => {
+    mockDbForAdminUserUpdate({
+      id: 2, name: "Other User", email: "other@example.com", role: "user", isActive: false,
+    });
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/users/2")
+      .set("x-user-token", token)
+      .send({ isActive: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.isActive).toBe(false);
+  });
+
+  it("200 with valid role payload — validate middleware passes through", async () => {
+    mockDbForAdminUserUpdate({
+      id: 2, name: "Other User", email: "other@example.com", role: "super_admin", isActive: true,
+    });
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/users/2")
+      .set("x-user-token", token)
+      .send({ role: "super_admin" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.role).toBe("super_admin");
+  });
+
+  it("400 when role has an invalid value (validate middleware fires)", async () => {
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/users/2")
+      .set("x-user-token", token)
+      .send({ role: "god_mode" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("validation_error");
+  });
+
+  it("400 when isActive is not a boolean (validate middleware fires)", async () => {
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/users/2")
+      .set("x-user-token", token)
+      .send({ isActive: "yes" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("validation_error");
+  });
+
+  it("401 without authentication token", async () => {
+    const res = await request(app)
+      .patch("/api/admin/users/2")
+      .send({ isActive: false });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("403 when authenticated as regular user (not super_admin)", async () => {
+    mockDbSelect.mockImplementation(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "user" }]),
+      }),
+    }));
+    const token = await makeToken(1);
+
+    const res = await request(app)
+      .patch("/api/admin/users/2")
+      .set("x-user-token", token)
+      .send({ isActive: false });
+
+    expect(res.status).toBe(403);
+  });
+});
+
+describe("PATCH /api/admin/clubs/:id/suspend", () => {
+  let app: express.Express;
+
+  beforeAll(async () => {
+    app = await buildTestApp();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("200 with valid suspend=true payload — validate middleware passes through", async () => {
+    mockDbForAdminClubUpdate({
+      id: 5, name: "Test Club", isSuspended: true, suspendedReason: "violation", suspendedAt: new Date().toISOString(),
+    });
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/clubs/5/suspend")
+      .set("x-user-token", token)
+      .send({ suspend: true, reason: "violation" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.isSuspended).toBe(true);
+  });
+
+  it("200 with valid suspend=false payload (unsuspend) — validate middleware passes through", async () => {
+    mockDbForAdminClubUpdate({
+      id: 5, name: "Test Club", isSuspended: false, suspendedReason: null, suspendedAt: null,
+    });
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/clubs/5/suspend")
+      .set("x-user-token", token)
+      .send({ suspend: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.isSuspended).toBe(false);
+  });
+
+  it("400 when suspend field is missing (validate middleware fires)", async () => {
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/clubs/5/suspend")
+      .set("x-user-token", token)
+      .send({ reason: "some reason" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("validation_error");
+  });
+
+  it("400 when suspend is not a boolean (validate middleware fires)", async () => {
+    const token = await makeAdminToken();
+
+    const res = await request(app)
+      .patch("/api/admin/clubs/5/suspend")
+      .set("x-user-token", token)
+      .send({ suspend: "true" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("validation_error");
+  });
+
+  it("401 without authentication token", async () => {
+    const res = await request(app)
+      .patch("/api/admin/clubs/5/suspend")
+      .send({ suspend: true });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("403 when authenticated as regular user (not super_admin)", async () => {
+    mockDbSelect.mockImplementation(() => ({
+      from: () => ({
+        where: () => Promise.resolve([{ isActive: true, role: "user" }]),
+      }),
+    }));
+    const token = await makeToken(1);
+
+    const res = await request(app)
+      .patch("/api/admin/clubs/5/suspend")
+      .set("x-user-token", token)
+      .send({ suspend: true });
+
+    expect(res.status).toBe(403);
   });
 });
