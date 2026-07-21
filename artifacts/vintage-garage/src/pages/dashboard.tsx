@@ -523,7 +523,7 @@ function ActivityItem({ item, locale }: {
 /* ── Main Dashboard ───────────────────────────────────────────── */
 export default function Dashboard() {
   const { isSignedIn } = useAuth();
-  const { name, tenantName, isPersonalTenant } = useUserAuth();
+  const { name, tenantName, isPersonalTenant, isAuthLoading } = useUserAuth();
   const { t } = useTranslation();
   const locale = getCurrentLocale();
 
@@ -583,9 +583,13 @@ export default function Dashboard() {
           <p className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-widest mb-1.5">
             {dateStr}
           </p>
-          <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase tracking-tight leading-none">
-            {garageTitle}
-          </h1>
+          {isAuthLoading && !name ? (
+            <div className="animate-pulse h-9 md:h-10 w-48 rounded bg-muted" />
+          ) : (
+            <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase tracking-tight leading-none">
+              {garageTitle}
+            </h1>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Link href="/vehicles/new">
