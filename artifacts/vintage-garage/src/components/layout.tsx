@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Car, Wrench, Plus, Users, LogOut, Crown,
   User, HelpCircle, CreditCard,
   IdCard, Settings, Menu,
-  Scale, FileText, Mail, Palette, Globe, Sun, Moon,
+  Scale, FileText, Mail, Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
@@ -12,9 +12,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemePanel, ThemeControls } from "@/components/theme-panel";
+import { ThemePanel } from "@/components/theme-panel";
 import { CompanyInfo } from "@/components/company-info";
-import { useTheme } from "@/contexts/theme";
 import { useTranslation } from "react-i18next";
 import { FlagSwitcher } from "@/components/language-switcher";
 
@@ -26,10 +25,6 @@ export function Layout({ children }: LayoutProps) {
     isAuthenticated, isSuperAdmin, name, logout,
   } = useUserAuth();
   const { t } = useTranslation();
-  const { mode, setMode } = useTheme();
-  const isDark = mode === "dark" || (mode === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  function toggleDarkMode() { setMode(isDark ? "light" : "dark"); }
-
   const navItems = [
     { href: "/dashboard",       label: t("nav.overview"),       icon: LayoutDashboard },
     { href: "/vehicles",        label: t("nav.myGarage"),       icon: Car             },
@@ -133,14 +128,6 @@ export function Layout({ children }: LayoutProps) {
                 <User className="w-4 h-4" />
                 {t("auth.myProfile")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/vehicles/new")} className="gap-2">
-                <Plus className="w-4 h-4" />
-                {t("vehicle.addVehicle")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/billing")} className="gap-2">
-                <CreditCard className="w-4 h-4" />
-                {t("nav.subscription")}
-              </DropdownMenuItem>
               {isSuperAdmin && (
                 <>
                   <DropdownMenuSeparator />
@@ -151,14 +138,6 @@ export function Layout({ children }: LayoutProps) {
                 </>
               )}
               <DropdownMenuSeparator />
-              <div className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Palette className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t("nav.theme")}</span>
-                </div>
-                <ThemeControls />
-              </div>
-              <DropdownMenuSeparator />
               <div className="px-2 py-1.5">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Globe className="w-3 h-3 text-muted-foreground" />
@@ -167,16 +146,6 @@ export function Layout({ children }: LayoutProps) {
                 <div onPointerDown={(e) => e.stopPropagation()}>
                   <FlagSwitcher />
                 </div>
-              </div>
-              <DropdownMenuSeparator />
-              <div className="px-2 py-1 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Modus</span>
-                <button
-                  onClick={toggleDarkMode}
-                  className="p-1.5 rounded-md hover:bg-muted/50 transition-colors"
-                >
-                  {isDark ? <Sun className="w-3.5 h-3.5 text-muted-foreground" /> : <Moon className="w-3.5 h-3.5 text-muted-foreground" />}
-                </button>
               </div>
               <DropdownMenuSeparator />
               <div className="px-2 py-1">
