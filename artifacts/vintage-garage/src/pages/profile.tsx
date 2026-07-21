@@ -186,7 +186,7 @@ export default function Profile() {
               <Shield className="w-4 h-4 text-cyan-400" /> {t("profile.security")}
             </h3>
 
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] light:border-border/40 bg-white/[0.02] light:bg-muted/30">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 flex items-center justify-center shrink-0">
                 <Mail className="w-4 h-4 text-indigo-300" />
               </div>
@@ -196,7 +196,7 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] light:border-border/40 bg-white/[0.02] light:bg-muted/30">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/30 to-purple-500/30 flex items-center justify-center shrink-0">
                 <Lock className="w-4 h-4 text-violet-300" />
               </div>
@@ -225,7 +225,7 @@ export default function Profile() {
               Tilkoblede påloggingsmetoder (e-post, Google, Apple) administreres via din Clerk-konto.
               Du kan legge til eller fjerne metoder i kontoinnstillingene dine.
             </p>
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] light:border-border/40 bg-white/[0.02] light:bg-muted/30">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0">
                 <Shield className="w-4 h-4 text-primary/60" />
               </div>

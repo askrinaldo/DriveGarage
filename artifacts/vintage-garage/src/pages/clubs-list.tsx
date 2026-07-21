@@ -95,7 +95,7 @@ function RolePill({ role }: { role: "owner" | "admin" | "member" | null }) {
 function ClubCardSkeleton() {
   return (
     <div className="rounded-2xl border border-border/40 bg-card overflow-hidden flex flex-col animate-pulse">
-      <div className="h-44 bg-muted/60" />
+      <div className="h-44 bg-muted/60 light:bg-muted" />
       <div className="px-5 pt-4 pb-5 flex flex-col gap-3">
         <div className="flex items-center gap-3 -mt-9">
           <div className="w-14 h-14 rounded-2xl bg-muted border-4 border-card shrink-0" />

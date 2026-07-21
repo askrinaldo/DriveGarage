@@ -61,7 +61,7 @@ export function EmptyState({
 
 /* ── Skeleton primitives ─────────────────────────────────────── */
 function Bone({ className = "" }: { className?: string }) {
-  return <div className={`bg-muted/50 rounded-xl ${className}`} />;
+  return <div className={`bg-muted/50 light:bg-muted rounded-xl ${className}`} />;
 }
 
 export function PageSkeleton() {
@@ -135,7 +135,7 @@ export function VehicleListSkeleton() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Bone key={i} className="h-52 rounded-xl border border-border/30" />
+          <Bone key={i} className="h-52 rounded-xl border border-border/30 light:border-border/60" />
         ))}
       </div>
     </div>
