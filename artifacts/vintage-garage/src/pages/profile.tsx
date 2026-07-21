@@ -16,8 +16,6 @@ interface ProfileData {
   id: number;
   name: string;
   email: string;
-  subscriptionTier: "free" | "standard" | "premium";
-  subscriptionStatus: string;
   createdAt: string;
   stats: { vehicleCount: number; serviceCount: number; score: number };
 }

@@ -14,8 +14,6 @@ router.get("/profile/me", parseUserAuth, requireUser, async (req, res): Promise<
       id: usersTable.id,
       name: usersTable.name,
       email: usersTable.email,
-      subscriptionTier: usersTable.subscriptionTier,
-      subscriptionStatus: usersTable.subscriptionStatus,
       createdAt: usersTable.createdAt,
     })
     .from(usersTable)
