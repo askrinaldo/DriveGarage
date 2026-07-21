@@ -360,7 +360,7 @@ function OnboardingTimeline({ hasVehicle, hasService, hasReceipt, primaryVehicle
                     transition={{ delay: 0.2 }}
                     className="mt-2.5"
                   >
-                    <Link href={step.href}>
+                    <Link href={step.href} className="inline-flex">
                       <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 hover:border-primary/40 transition-all duration-200 text-[11px] font-bold text-primary uppercase tracking-wide">
                         {step.cta}
                         <ArrowRight className="w-3 h-3" />
@@ -731,12 +731,20 @@ export default function Dashboard() {
         >
           {/* Quick start checklist — only when not all done */}
           {(!hasVehicle || !hasService || !hasClub) && (
-            <QuickStartChecklist
-              hasVehicle={hasVehicle}
-              hasService={hasService}
-              hasClub={hasClub}
-              primaryVehicleId={primaryVehicle?.id}
-            />
+            <div>
+              {/* Heading matches the left column's h2 + mb-4 for vertical alignment */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
+                  Fremdrift
+                </h2>
+              </div>
+              <QuickStartChecklist
+                hasVehicle={hasVehicle}
+                hasService={hasService}
+                hasClub={hasClub}
+                primaryVehicleId={primaryVehicle?.id}
+              />
+            </div>
           )}
 
           {/* Clubs */}
