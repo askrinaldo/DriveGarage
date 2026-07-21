@@ -7,7 +7,8 @@ import {
   useGetVehicle, 
   getGetVehicleQueryKey,
   useCreateVehicle,
-  useUpdateVehicle
+  useUpdateVehicle,
+  getListVehiclesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -118,6 +119,7 @@ export default function VehicleForm() {
     if (isNew) {
       createMutation.mutate({ data: formattedData as any }, {
         onSuccess: (newVehicle) => {
+          queryClient.invalidateQueries({ queryKey: getListVehiclesQueryKey() });
           toast({ title: t("vehicleForm.addedSuccess") });
           setLocation(`/vehicles/${newVehicle.id}`);
         },

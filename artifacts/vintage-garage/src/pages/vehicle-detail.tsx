@@ -13,6 +13,7 @@ import {
   useDeleteServiceRecord,
   useDeleteReceipt,
   useDeleteTripLog,
+  getListVehiclesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -363,6 +364,7 @@ export default function VehicleDetail() {
   const handleDeleteVehicle = () => {
     deleteVehicle.mutate({ id }, {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListVehiclesQueryKey() });
         toast({ title: "Kjøretøy slettet" });
         setLocation("/vehicles");
       },
