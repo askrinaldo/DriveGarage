@@ -12,10 +12,20 @@ import {
 import { emitToClub } from "../socket";
 import { parseAuth, requireClubRole } from "../middleware/auth";
 import { audit } from "../lib/audit";
+import { validate } from "../middleware/validate";
 
 const router: IRouter = Router();
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
+const createForumPostSchema = z.object({
+  category: z.enum(["general", "technical_help", "restoration", "meetup", "parts_for_sale"]).optional(),
+  postType: z.enum(["text", "image", "video", "project_update", "maintenance"]).optional(),
+  title: z.string().trim().max(300).nullable().optional(),
+  content: z.string().trim().min(1, "Innhold er påkrevd").max(10000),
+  imageUrl: z.string().trim().max(2000).nullable().optional(),
+  videoUrl: z.string().trim().max(2000).nullable().optional(),
+});
+
 const updateForumPostSchema = z.object({
   title: z.string().trim().nullable().optional(),
   content: z.string().min(1, "Innhold kan ikke være tomt").trim().optional(),
@@ -95,30 +105,19 @@ router.get("/clubs/:clubId/forum/posts/:postId", requireClubRole("member"), asyn
 router.post(
   "/clubs/:clubId/forum/posts",
   requireClubRole("member"),
+  validate(createForumPostSchema),
   async (req, res): Promise<void> => {
     const clubId = parseInt(String(req.params.clubId), 10);
     const actor = req.auth!;
-    const { category, postType, title, content, imageUrl, videoUrl } = req.body as {
-      category?: string;
-      postType?: string;
-      title?: string;
-      content: string;
-      imageUrl?: string;
-      videoUrl?: string;
-    };
-
-    if (!content?.trim()) {
-      res.status(400).json({ error: "Innhold er påkrevd" });
-      return;
-    }
+    const { category, postType, title, content, imageUrl, videoUrl } = req.body as z.infer<typeof createForumPostSchema>;
 
     const [post] = await db
       .insert(forumPostsTable)
       .values({
         clubId,
         memberName: actor.memberName,
-        category: (category as "general" | "technical_help" | "restoration" | "meetup" | "parts_for_sale") ?? "general",
-        postType: (postType as "text" | "image" | "video" | "project_update" | "maintenance") ?? "text",
+        category: category ?? "general",
+        postType: postType ?? "text",
         title: title?.trim() || null,
         content: content.trim(),
         imageUrl: imageUrl?.trim() || null,

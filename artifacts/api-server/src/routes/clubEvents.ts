@@ -11,10 +11,27 @@ import {
 } from "@workspace/db";
 import { parseAuth, requireClubRole } from "../middleware/auth";
 import { audit } from "../lib/audit";
+import { validate } from "../middleware/validate";
 
 const router: IRouter = Router();
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
+const isoDateString = z
+  .string()
+  .refine((s) => !isNaN(new Date(s).getTime()), { message: "Ugyldig dato" });
+
+const createClubEventSchema = z.object({
+  title: z.string().trim().min(1, "Tittel er påkrevd").max(300),
+  description: z.string().trim().max(5000).nullable().optional(),
+  location: z.string().trim().max(500).nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  startAt: isoDateString,
+  endAt: isoDateString.nullable().optional(),
+  maxAttendees: z.number().int().positive().nullable().optional(),
+  imageUrl: z.string().trim().max(2000).nullable().optional(),
+});
+
 const updateClubEventSchema = z.object({
   title: z.string().min(1, "Tittel er påkrevd").trim().optional(),
   description: z.string().trim().nullable().optional(),
@@ -138,33 +155,14 @@ router.post(
   "/clubs/:clubId/events",
   parseAuth,
   requireClubRole("member"),
+  validate(createClubEventSchema),
   async (req, res): Promise<void> => {
     const clubId = parseInt(String(req.params.clubId), 10);
     const actor = req.auth!;
-
     const {
       title, description, location, latitude, longitude,
       startAt, endAt, maxAttendees, imageUrl,
-    } = req.body as {
-      title: string;
-      description?: string;
-      location?: string;
-      latitude?: number;
-      longitude?: number;
-      startAt: string;
-      endAt?: string;
-      maxAttendees?: number;
-      imageUrl?: string;
-    };
-
-    if (!title?.trim()) {
-      res.status(400).json({ error: "Tittel er påkrevd" });
-      return;
-    }
-    if (!startAt) {
-      res.status(400).json({ error: "Startdato er påkrevd" });
-      return;
-    }
+    } = req.body as z.infer<typeof createClubEventSchema>;
 
     const [event] = await db
       .insert(clubEventsTable)

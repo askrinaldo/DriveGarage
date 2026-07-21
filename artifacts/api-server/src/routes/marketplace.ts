@@ -3,10 +3,26 @@ import { eq, and, desc, or, ilike } from "drizzle-orm";
 import { z } from "zod/v4";
 import { db, marketplaceListingsTable } from "@workspace/db";
 import { parseAuth, requireClubRole } from "../middleware/auth";
+import { validate } from "../middleware/validate";
 
 const router: IRouter = Router();
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
+const createListingSchema = z.object({
+  title: z.string().trim().min(1, "Tittel er påkrevd").max(300),
+  description: z.string().trim().max(5000).nullable().optional(),
+  price: z.number().nonnegative().nullable().optional(),
+  condition: z.enum(["new", "excellent", "good", "fair", "parts_only"]).optional(),
+  category: z.string().trim().max(100).nullable().optional(),
+  make: z.string().trim().max(100).nullable().optional(),
+  model: z.string().trim().max(100).nullable().optional(),
+  year: z.number().int().min(1885).max(2100).nullable().optional(),
+  imageUrl: z.string().trim().max(2000).nullable().optional(),
+  contactInfo: z.string().trim().max(500).nullable().optional(),
+  location: z.string().trim().max(500).nullable().optional(),
+  isFree: z.boolean().optional(),
+});
+
 const updateListingSchema = z.object({
   title: z.string().min(1, "Tittel er påkrevd").trim().optional(),
   description: z.string().trim().nullable().optional(),
@@ -113,32 +129,14 @@ router.post(
   "/api/clubs/:clubId/marketplace",
   parseAuth,
   requireClubRole("member"),
+  validate(createListingSchema),
   async (req, res): Promise<void> => {
     const clubId = parseInt(String(req.params.clubId), 10);
     const actor = req.auth!;
-
     const {
       title, description, price, condition, category,
       make, model, year, imageUrl, contactInfo, location, isFree,
-    } = req.body as {
-      title: string;
-      description?: string;
-      price?: number;
-      condition?: "new" | "excellent" | "good" | "fair" | "parts_only";
-      category?: string;
-      make?: string;
-      model?: string;
-      year?: number;
-      imageUrl?: string;
-      contactInfo?: string;
-      location?: string;
-      isFree?: boolean;
-    };
-
-    if (!title?.trim()) {
-      res.status(400).json({ error: "Tittel er påkrevd" });
-      return;
-    }
+    } = req.body as z.infer<typeof createListingSchema>;
 
     const [listing] = await db
       .insert(marketplaceListingsTable)
