@@ -18,6 +18,7 @@ import { parseAuth, requireClubRole } from "../middleware/auth";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { audit } from "../lib/audit";
 import { logger } from "../lib/logger";
+import { ERRORS } from "../lib/errors";
 
 const router: IRouter = Router();
 
@@ -135,7 +136,7 @@ router.post("/clubs", parseUserAuth, requireUser, async (req, res): Promise<void
 router.get("/clubs/:id", parseAuth, async (req, res): Promise<void> => {
   const params = GetClubParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const club = await getClubWithCount(params.data.id);
@@ -184,7 +185,7 @@ router.patch(
   async (req, res): Promise<void> => {
     const params = UpdateClubParams.safeParse(req.params);
     if (!params.success) {
-      res.status(400).json({ error: params.error.message });
+      res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
       return;
     }
     const parsed = UpdateClubBody.safeParse(req.body);
@@ -218,7 +219,7 @@ router.delete(
   async (req, res): Promise<void> => {
     const params = DeleteClubParams.safeParse(req.params);
     if (!params.success) {
-      res.status(400).json({ error: params.error.message });
+      res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
       return;
     }
     const [club] = await db.select().from(clubsTable).where(eq(clubsTable.id, params.data.id));
@@ -239,7 +240,7 @@ router.delete(
 router.get("/clubs/:clubId/members", parseAuth, async (req, res): Promise<void> => {
   const params = ListClubMembersParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
 
@@ -274,7 +275,7 @@ router.get("/clubs/:clubId/members", parseAuth, async (req, res): Promise<void> 
 router.post("/clubs/:clubId/members", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = JoinClubParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const parsed = JoinClubBody.safeParse(req.body);
@@ -334,7 +335,7 @@ router.patch(
   async (req, res): Promise<void> => {
     const params = UpdateClubMemberParams.safeParse(req.params);
     if (!params.success) {
-      res.status(400).json({ error: params.error.message });
+      res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
       return;
     }
     const parsed = UpdateClubMemberBody.safeParse(req.body);
@@ -403,7 +404,7 @@ router.patch(
 router.delete("/clubs/:clubId/members/:memberId", async (req, res): Promise<void> => {
   const params = LeaveClubParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
 

@@ -8,7 +8,9 @@ import {
   getActivePaymentExemptionForUser,
   createPaymentExemption,
   revokePaymentExemption,
+  NoActiveExemptionError,
 } from "../lib/paymentExemptions";
+import { ERRORS } from "../lib/errors";
 
 const router = Router();
 
@@ -399,8 +401,8 @@ router.post("/admin/users/:id/payment-exemption", parseUserAuth, requireSuperAdm
     );
     res.status(201).json({ exemption: created });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Ukjent feil";
-    res.status(400).json({ error: message });
+    req.log.error({ err }, "Failed to create payment exemption");
+    res.status(400).json({ error: "Kunne ikke opprette betalingsunntak" });
   }
 });
 
@@ -418,9 +420,12 @@ router.delete("/admin/users/:id/payment-exemption", parseUserAuth, requireSuperA
     const revoked = await revokePaymentExemption(req, id, reason);
     res.json({ exemption: revoked });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Ukjent feil";
-    const status = message.includes("no active exemption") ? 404 : 400;
-    res.status(status).json({ error: message });
+    if (err instanceof NoActiveExemptionError) {
+      res.status(404).json({ error: "Ingen aktivt betalingsunntak funnet for denne brukeren" });
+      return;
+    }
+    req.log.error({ err }, "Failed to revoke payment exemption");
+    res.status(400).json({ error: "Kunne ikke tilbakekalle betalingsunntak" });
   }
 });
 
@@ -445,7 +450,7 @@ router.post("/admin/billing/run-monthly-charges", parseUserAuth, requireSuperAdm
     res.json({ ok: true, result });
   } catch (err) {
     req.log.error({ err }, "Monthly billing job error");
-    res.status(500).json({ error: "Billing job failed", detail: String(err) });
+    res.status(500).json({ error: "Faktureringsjobb feilet" });
   }
 });
 
@@ -459,7 +464,7 @@ router.post("/admin/billing/reconcile-charges", parseUserAuth, requireSuperAdmin
     res.json({ ok: true, result });
   } catch (err) {
     req.log.error({ err }, "Charge reconciliation error");
-    res.status(500).json({ error: "Reconciliation failed", detail: String(err) });
+    res.status(500).json({ error: "Avstemming feilet" });
   }
 });
 

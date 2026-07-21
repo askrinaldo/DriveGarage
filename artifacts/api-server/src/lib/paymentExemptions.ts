@@ -5,6 +5,10 @@ import { eq, isNull, or, gt, and } from "drizzle-orm";
 import { logAdminAction } from "./adminAudit";
 import { logger } from "./logger";
 
+export class NoActiveExemptionError extends Error {
+  constructor() { super("no active exemption for this user"); this.name = "NoActiveExemptionError"; }
+}
+
 /**
  * Returns the active payment exemption for a user, or null if none.
  * Active = revokedAt IS NULL AND (expiresAt IS NULL OR expiresAt > now)
@@ -106,7 +110,7 @@ export async function revokePaymentExemption(
   if (!actor) throw new Error("unauthenticated");
 
   const active = await getActivePaymentExemptionForUser(userId);
-  if (!active) throw new Error("no active exemption for this user");
+  if (!active) throw new NoActiveExemptionError();
 
   const [target] = await db
     .select({ id: usersTable.id, email: usersTable.email })

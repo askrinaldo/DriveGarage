@@ -17,6 +17,7 @@ import { Router } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, usersTable, subscriptionsTable, subscriptionEventsTable, billingChargesTable } from "@workspace/db";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
+import { ERRORS } from "../lib/errors";
 import {
   getEffectiveSubscription,
   getOrCreateSubscriptionRow,
@@ -147,7 +148,7 @@ router.post("/billing/vipps/start-agreement", parseUserAuth, requireUser, async 
     res.json({ redirectUrl: vippsConfirmationUrl });
   } catch (err) {
     if (err instanceof VippsNotConfiguredError) {
-      res.status(503).json({ error: err.message, code: err.code });
+      res.status(503).json({ error: "Betalingstjenesten er ikke tilgjengelig for øyeblikket.", code: err.code });
       return;
     }
 
@@ -306,7 +307,7 @@ router.post("/billing/vipps/cancel", parseUserAuth, requireUser, async (req, res
     });
   } catch (err) {
     if (err instanceof VippsNotConfiguredError) {
-      res.status(503).json({ error: err.message, code: err.code });
+      res.status(503).json({ error: "Betalingstjenesten er ikke tilgjengelig for øyeblikket.", code: err.code });
       return;
     }
     throw err;
@@ -322,7 +323,7 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
 
   if (!Buffer.isBuffer(rawBody) || rawBody.length === 0) {
     req.log.warn({ type: typeof req.body }, "Vipps webhook: body is not a Buffer — check app.ts raw body middleware");
-    res.status(400).json({ error: "Raw body required" });
+    res.status(400).json({ error: "Ugyldig webhook-forespørsel." });
     return;
   }
 
@@ -332,7 +333,7 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
   } catch (err) {
     if (err instanceof VippsWebhookAuthError) {
       req.log.warn({ ip: req.ip }, "Rejected Vipps webhook: HMAC verification failed");
-      res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: ERRORS.UNAUTHORIZED });
       return;
     }
     throw err;
@@ -343,7 +344,7 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
     event = parseVippsWebhookEvent(rawBody);
   } catch (parseErr) {
     req.log.warn({ err: parseErr }, "Rejected Vipps webhook: parse error");
-    res.status(400).json({ error: "Malformed payload" });
+    res.status(400).json({ error: "Ugyldig innhold i webhook-forespørsel." });
     return;
   }
 

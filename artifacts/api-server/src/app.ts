@@ -9,6 +9,7 @@ import {
 } from "./middleware/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { ERRORS } from "./lib/errors";
 import { validateEnv } from "./lib/envValidation";
 import { parseAuth, resolveClubActorFromUser } from "./middleware/auth";
 import { parseUserAuth } from "./middleware/userAuth";
@@ -171,11 +172,11 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   logger.error({ err, method: req.method, url: req.url?.split("?")[0] }, "Unhandled error");
 
   if (IS_PROD) {
-    // Never expose internal details in production
-    res.status(status).json({ error: status === 500 ? "Internal server error" : (err as { message?: string })?.message ?? "Error" });
+    // Never expose internal details in production — always return safe Norwegian fallback
+    res.status(status).json({ error: ERRORS.INTERNAL });
   } else {
     res.status(status).json({
-      error: (err as { message?: string })?.message ?? "Error",
+      error: (err as { message?: string })?.message ?? ERRORS.INTERNAL,
       stack: (err as { stack?: string })?.stack,
     });
   }

@@ -12,6 +12,7 @@ import {
 import { sql, count } from "drizzle-orm";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { FAIR_USE_LIMITS } from "../lib/subscription";
+import { ERRORS } from "../lib/errors";
 
 const router: IRouter = Router();
 
@@ -33,7 +34,7 @@ router.get("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<vo
 router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const parsed = CreateVehicleBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
 
@@ -65,7 +66,7 @@ router.post("/vehicles", parseUserAuth, requireUser, async (req, res): Promise<v
 router.get("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = GetVehicleParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
@@ -74,7 +75,7 @@ router.get("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promis
     .from(vehiclesTable)
     .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)));
   if (!vehicle) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   res.json(vehicle);
@@ -83,7 +84,7 @@ router.get("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promis
 router.get("/vehicles/:id/export", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = ExportVehicleDataParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
@@ -92,7 +93,7 @@ router.get("/vehicles/:id/export", parseUserAuth, requireUser, async (req, res):
     .from(vehiclesTable)
     .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)));
   if (!vehicle) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
 
@@ -119,12 +120,12 @@ router.get("/vehicles/:id/export", parseUserAuth, requireUser, async (req, res):
 router.patch("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = UpdateVehicleParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const parsed = UpdateVehicleBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
@@ -134,7 +135,7 @@ router.patch("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Prom
     .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)))
     .returning();
   if (!vehicle) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   res.json(vehicle);
@@ -143,7 +144,7 @@ router.patch("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Prom
 router.delete("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = DeleteVehicleParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
@@ -152,7 +153,7 @@ router.delete("/vehicles/:id", parseUserAuth, requireUser, async (req, res): Pro
     .where(and(eq(vehiclesTable.id, params.data.id), ownershipClause(tenantId, userId)))
     .returning();
   if (!vehicle) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   res.sendStatus(204);

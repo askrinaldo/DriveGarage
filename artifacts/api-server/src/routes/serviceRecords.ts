@@ -12,19 +12,20 @@ import {
 } from "@workspace/api-zod";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { assertVehicleOwnership } from "../lib/vehicleOwnership";
+import { ERRORS } from "../lib/errors";
 
 const router: IRouter = Router();
 
 router.get("/vehicles/:vehicleId/service-records", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = ListServiceRecordsParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
   const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
   if (!owned) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   const records = await db
@@ -38,18 +39,18 @@ router.get("/vehicles/:vehicleId/service-records", parseUserAuth, requireUser, a
 router.post("/vehicles/:vehicleId/service-records", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = CreateServiceRecordParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const parsed = CreateServiceRecordBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
   const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
   if (!owned) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   const [record] = await db
@@ -66,13 +67,13 @@ router.post("/vehicles/:vehicleId/service-records", parseUserAuth, requireUser, 
 router.get("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = GetServiceRecordParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
   const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
   if (!owned) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   const [record] = await db
@@ -80,7 +81,7 @@ router.get("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUse
     .from(serviceRecordsTable)
     .where(and(eq(serviceRecordsTable.id, params.data.id), eq(serviceRecordsTable.vehicleId, params.data.vehicleId)));
   if (!record) {
-    res.status(404).json({ error: "Service record not found" });
+    res.status(404).json({ error: "Serviceoppføring ikke funnet" });
     return;
   }
   res.json(record);
@@ -89,18 +90,18 @@ router.get("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUse
 router.patch("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = UpdateServiceRecordParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const parsed = UpdateServiceRecordBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
   const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
   if (!owned) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   const [record] = await db
@@ -112,7 +113,7 @@ router.patch("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireU
     .where(and(eq(serviceRecordsTable.id, params.data.id), eq(serviceRecordsTable.vehicleId, params.data.vehicleId)))
     .returning();
   if (!record) {
-    res.status(404).json({ error: "Service record not found" });
+    res.status(404).json({ error: "Serviceoppføring ikke funnet" });
     return;
   }
   res.json(record);
@@ -121,13 +122,13 @@ router.patch("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireU
 router.delete("/vehicles/:vehicleId/service-records/:id", parseUserAuth, requireUser, async (req, res): Promise<void> => {
   const params = DeleteServiceRecordParams.safeParse(req.params);
   if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+    res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
     return;
   }
   const { tenantId, userId } = req.userAuth!;
   const owned = await assertVehicleOwnership(params.data.vehicleId, tenantId, userId);
   if (!owned) {
-    res.status(404).json({ error: "Vehicle not found" });
+    res.status(404).json({ error: "Kjøretøy ikke funnet" });
     return;
   }
   const [record] = await db
@@ -135,7 +136,7 @@ router.delete("/vehicles/:vehicleId/service-records/:id", parseUserAuth, require
     .where(and(eq(serviceRecordsTable.id, params.data.id), eq(serviceRecordsTable.vehicleId, params.data.vehicleId)))
     .returning();
   if (!record) {
-    res.status(404).json({ error: "Service record not found" });
+    res.status(404).json({ error: "Serviceoppføring ikke funnet" });
     return;
   }
   res.sendStatus(204);
