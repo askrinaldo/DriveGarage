@@ -9,6 +9,7 @@ import {
   useCreateVehicle,
   useUpdateVehicle,
   getListVehiclesQueryKey,
+  extractMutationError,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -123,8 +124,8 @@ export default function VehicleForm() {
           toast({ title: t("vehicleForm.addedSuccess") });
           setLocation(`/vehicles/${newVehicle.id}`);
         },
-        onError: () => {
-          toast({ title: t("vehicleForm.addError"), variant: "destructive" });
+        onError: (err) => {
+          toast({ title: extractMutationError(err, t("vehicleForm.addError")), variant: "destructive" });
         }
       });
     } else {
@@ -134,8 +135,8 @@ export default function VehicleForm() {
           queryClient.invalidateQueries({ queryKey: getGetVehicleQueryKey(id!) });
           setLocation(`/vehicles/${id}`);
         },
-        onError: () => {
-          toast({ title: t("vehicleForm.updateError"), variant: "destructive" });
+        onError: (err) => {
+          toast({ title: extractMutationError(err, t("vehicleForm.updateError")), variant: "destructive" });
         }
       });
     }

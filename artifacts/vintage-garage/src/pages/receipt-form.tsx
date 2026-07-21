@@ -6,7 +6,8 @@ import {
   useCreateReceipt,
   getListReceiptsQueryKey,
   useGetVehicle,
-  getGetVehicleQueryKey
+  getGetVehicleQueryKey,
+  extractMutationError,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -82,8 +83,8 @@ export default function ReceiptForm() {
         queryClient.invalidateQueries({ queryKey: getListReceiptsQueryKey(vehicleId) });
         setLocation(`/vehicles/${vehicleId}`);
       },
-      onError: () => {
-        toast({ title: "Kunne ikke legge til kvittering", variant: "destructive" });
+      onError: (err) => {
+        toast({ title: extractMutationError(err, "Kunne ikke legge til kvittering"), variant: "destructive" });
       }
     });
   };

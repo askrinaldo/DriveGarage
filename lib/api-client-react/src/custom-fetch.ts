@@ -397,6 +397,27 @@ export function getErrorMessage(err: unknown): string {
   return "Noe gikk galt";
 }
 
+/**
+ * Extracts the Norwegian error message from a failed mutation.
+ *
+ * When the backend returns a structured `{ error: string }` body (surfaced via
+ * ApiError.data.error), that string is returned so the user sees the specific
+ * server-side message.  If the error is not an ApiError or has no .data.error
+ * field, the provided `fallback` string is returned instead.
+ *
+ * Usage in onError callbacks:
+ *   toast({ title: extractMutationError(err, t("vehicleForm.addError")), variant: "destructive" })
+ */
+export function extractMutationError(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) {
+    const data = err.data as { error?: unknown } | null;
+    if (data && typeof data.error === "string" && data.error.trim() !== "") {
+      return data.error;
+    }
+  }
+  return fallback;
+}
+
 export async function customFetch<T = unknown>(
   input: RequestInfo | URL,
   options: CustomFetchOptions = {},

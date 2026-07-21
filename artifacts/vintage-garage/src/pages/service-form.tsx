@@ -10,7 +10,8 @@ import {
   useUpdateServiceRecord,
   getListServiceRecordsQueryKey,
   useGetVehicle,
-  getGetVehicleQueryKey
+  getGetVehicleQueryKey,
+  extractMutationError,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -118,8 +119,8 @@ export default function ServiceForm() {
           queryClient.invalidateQueries({ queryKey: getListServiceRecordsQueryKey(vehicleId) });
           setLocation(`/vehicles/${vehicleId}`);
         },
-        onError: () => {
-          toast({ title: "Kunne ikke legge til servicepost", variant: "destructive" });
+        onError: (err) => {
+          toast({ title: extractMutationError(err, "Kunne ikke legge til servicepost"), variant: "destructive" });
         }
       });
     } else {
@@ -130,8 +131,8 @@ export default function ServiceForm() {
           queryClient.invalidateQueries({ queryKey: getGetServiceRecordQueryKey(vehicleId, serviceId!) });
           setLocation(`/vehicles/${vehicleId}`);
         },
-        onError: () => {
-          toast({ title: "Kunne ikke oppdatere", variant: "destructive" });
+        onError: (err) => {
+          toast({ title: extractMutationError(err, "Kunne ikke oppdatere"), variant: "destructive" });
         }
       });
     }
