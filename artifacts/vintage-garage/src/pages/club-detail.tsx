@@ -593,14 +593,18 @@ export default function ClubDetail() {
                       <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
                     </Link>
                   </DropdownMenuItem>
+                </>
+              )}
+              {canAdmin && (
+                <>
                   <DropdownMenuItem asChild>
                     <Link href={`/clubs/${clubId}/audit-log`}>
                       <ClipboardList className="w-4 h-4 mr-2" /> Revisjonslogg
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                 </>
               )}
+              {(accessible || canAdmin) && <DropdownMenuSeparator />}
               {isMember && myMemberName && myRole !== "owner" && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
