@@ -1,0 +1,80 @@
+**Create a complete implementation summary since the last production publish.**
+
+Do not modify any code.
+
+Do not create commits.
+
+Do not change files.
+
+Read the project and generate a comprehensive report only.
+
+Focus on:
+
+**Implemented features**
+
+* List every new feature that has been added since the last production publish.
+* Describe what each feature does.
+* Mention which pages or components were affected.
+
+**Bug fixes**
+
+* List every bug that has been fixed.
+* Explain the original issue.
+* Explain how it was resolved.
+
+**UI / UX improvements**
+
+* List all visual improvements.
+* Include layout, spacing, responsiveness, animations, typography, navigation and usability improvements.
+
+**Performance improvements**
+
+* List any optimizations.
+* Mention lazy loading, rendering improvements, bundle size, caching or other performance-related work if applicable.
+
+**Backend changes**
+
+* Summarize any backend improvements.
+* Include database, APIs, authentication, storage, business logic or integrations.
+
+**Database changes**
+
+* List new tables, columns, migrations, indexes or schema updates.
+
+**Security improvements**
+
+* Mention any authentication, authorization, validation or security-related changes.
+
+**Refactoring**
+
+* List important code cleanups or architectural improvements.
+
+**Known issues**
+
+* List anything still unfinished.
+* Mention any TODOs or known limitations.
+
+**Deployment readiness**
+
+* State whether the application appears ready for production.
+* Mention anything that should be verified before publishing.
+
+Goal:
+
+Produce a complete changelog that accurately reflects everything implemented since the last production release.
+
+Do not guess or invent changes. Base the report only on the repository history, commits, pull requests, issue references and code differences available in the project.
+
+Return only:
+
+* Executive summary
+* New features
+* Bug fixes
+* UI/UX improvements
+* Backend changes
+* Database changes
+* Performance improvements
+* Security improvements
+* Refactoring
+* Known issues
+* Production readiness assessment
