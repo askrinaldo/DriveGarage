@@ -128,6 +128,10 @@ export function Layout({ children }: LayoutProps) {
                 <User className="w-4 h-4" />
                 {t("auth.myProfile")}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")} className="gap-2">
+                <Settings className="w-4 h-4" />
+                Innstillinger
+              </DropdownMenuItem>
               {isSuperAdmin && (
                 <>
                   <DropdownMenuSeparator />

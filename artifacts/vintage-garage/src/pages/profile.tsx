@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
-  User, Mail, Shield, Car, Wrench,
-  Calendar, Edit2, Check, X, Lock,
+  User, Shield, Car, Wrench,
+  Calendar, Edit2, Check, X,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
@@ -172,69 +172,13 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* ── Account settings ── */}
+        {/* ── Right column: Privacy + Settings shortcut ── */}
         <motion.div
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.45 }}
           className="lg:col-span-2 space-y-4"
         >
-
-          {/* Security & account */}
-          <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
-            <h3 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-1">
-              <Shield className="w-4 h-4 text-cyan-400" /> {t("profile.security")}
-            </h3>
-
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] light:border-border/40 bg-white/[0.02] light:bg-muted/30">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/30 to-cyan-500/30 flex items-center justify-center shrink-0">
-                <Mail className="w-4 h-4 text-indigo-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground/60">{t("profile.emailLabel")}</p>
-                <p className="text-sm text-foreground/80 truncate">{profile.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] light:border-border/40 bg-white/[0.02] light:bg-muted/30">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/30 to-purple-500/30 flex items-center justify-center shrink-0">
-                <Lock className="w-4 h-4 text-violet-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground/60">{t("profile.passwordLabel")}</p>
-                <p className="text-sm text-muted-foreground/70">••••••••</p>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate("/sign-in")}
-                className="text-xs text-muted-foreground hover:text-foreground/70 hover:bg-muted/30 h-7"
-              >
-                {t("profile.changePassword")}
-              </Button>
-            </div>
-
-          </div>
-
-          {/* Connected providers note */}
-          <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
-            <h3 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-1">
-              <User className="w-4 h-4 text-primary/70" /> Påloggingsmetoder
-            </h3>
-            <p className="text-[12px] text-muted-foreground/55 leading-relaxed">
-              Tilkoblede påloggingsmetoder (e-post, Google, Apple) administreres via din Clerk-konto.
-              Du kan legge til eller fjerne metoder i kontoinnstillingene dine.
-            </p>
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.05] light:border-border/40 bg-white/[0.02] light:bg-muted/30">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0">
-                <Shield className="w-4 h-4 text-primary/60" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground/60">Konto administrert av</p>
-                <p className="text-sm text-foreground/70">Clerk Authentication</p>
-              </div>
-            </div>
-          </div>
 
           {/* Privacy */}
           <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
@@ -252,15 +196,17 @@ export default function Profile() {
               <Button size="sm" variant="outline" onClick={() => navigate("/terms")} className="text-xs h-7">
                 Vilkår for bruk
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.open("mailto:drivegarage@evolvit.no?subject=Personvern%20-%20Datainnsyn%2FSletting", "_blank")}
-                className="text-xs h-7"
-              >
-                Slett mine data
-              </Button>
             </div>
+          </div>
+
+          {/* Settings shortcut */}
+          <div className="rounded-2xl border border-border/50 bg-card p-5">
+            <p className="text-[12px] text-muted-foreground/55 leading-relaxed mb-3">
+              Konto- og sikkerhetsinnstillinger, påloggingsmetoder og utseendevalg finner du på Innstillinger-siden.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => navigate("/settings")} className="text-xs h-7">
+              Gå til innstillinger
+            </Button>
           </div>
 
         </motion.div>

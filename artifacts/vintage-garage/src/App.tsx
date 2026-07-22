@@ -53,6 +53,7 @@ const CookiesPage      = lazy(() => import("@/pages/cookies"));
 const ContactPage      = lazy(() => import("@/pages/contact"));
 const PricingPage      = lazy(() => import("@/pages/pricing"));
 const Billing          = lazy(() => import("@/pages/billing"));
+const SettingsPage     = lazy(() => import("@/pages/settings"));
 const NotFound         = lazy(() => import("@/pages/not-found"));
 
 // ── React Query client ────────────────────────────────────────
@@ -159,6 +160,7 @@ function AppRoutes() {
           <Route path="/admin" component={Admin} />
           <Route path="/membership-card" component={MembershipCard} />
           <Route path="/profile" component={Profile} />
+          <Route path="/settings" component={SettingsPage} />
           <Route path="/help" component={Help} />
           <Route path="/billing" component={Billing} />
           <Route path="/garage/:username" component={PublicGarage} />
