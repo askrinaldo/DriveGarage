@@ -1,9 +1,9 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   Settings, Shield, Lock, Mail,
   Chrome, Apple, AtSign, ExternalLink,
-  Palette, CheckCircle2, Circle,
+  Palette, CheckCircle2, Circle, ArrowLeft,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { useUser } from "@clerk/react";
@@ -74,6 +74,10 @@ export default function SettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
+        <Link href="/profile" className="inline-flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground/70 hover:text-primary transition-colors mb-3">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Min Profil
+        </Link>
         <div className="flex items-center gap-2 mb-1">
           <Settings className="w-4 h-4 text-primary/70" />
           <span className="text-[11px] font-bold text-primary/70 uppercase tracking-widest">Innstillinger</span>
