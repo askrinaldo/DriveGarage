@@ -642,8 +642,19 @@ export default function ClubDetail() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Slett klubb?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Dette vil permanent slette <strong>{club.name}</strong> og alle tilknyttede data. Kan ikke angres.
+                      <AlertDialogDescription asChild>
+                        <div>
+                          <p className="mb-2">Dette vil permanent slette <strong>{club.name}</strong> og følgende data:</p>
+                          <ul className="list-disc list-inside space-y-1 mb-3 text-sm">
+                            <li>Forum-poster og kommentarer</li>
+                            <li>Arrangementer og påmeldinger</li>
+                            <li>Markedsplassannonser</li>
+                            <li>Garasjebiler knyttet til klubben</li>
+                            <li>Alle medlemmer og roller</li>
+                            <li>Invitasjoner og deltakelsesforespørsler</li>
+                          </ul>
+                          <p className="font-semibold text-destructive">Dette kan ikke angres.</p>
+                        </div>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
