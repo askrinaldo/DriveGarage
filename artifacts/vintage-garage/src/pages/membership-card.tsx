@@ -300,7 +300,7 @@ export default function MembershipCard() {
             {/* Content layer */}
             <div className="relative z-10 flex flex-col h-full p-7">
 
-              {/* Top row: logo + tier badge */}
+              {/* Top row: logo */}
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div
@@ -312,17 +312,6 @@ export default function MembershipCard() {
                   <div className="text-[9px] tracking-[0.25em] uppercase mt-0.5" style={{ color: `${tier.color}80` }}>
                     {t("memberCard.cardLabel")}
                   </div>
-                </div>
-                <div
-                  className="px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
-                  style={{
-                    background: `${tier.color}18`,
-                    color: tier.color,
-                    border: `1px solid ${tier.color}50`,
-                    boxShadow: `0 0 12px ${tier.glow}`,
-                  }}
-                >
-                  {tierLabel}
                 </div>
               </div>
 
