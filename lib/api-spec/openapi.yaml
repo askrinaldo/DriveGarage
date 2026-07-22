@@ -546,6 +546,29 @@ paths:
         "204":
           description: Deleted
 
+  /clubs/{id}/deletion-summary:
+    get:
+      operationId: getClubDeletionSummary
+      tags: [clubs]
+      summary: Get deletion impact counts for a club
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deletion summary with counts per category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubDeletionSummary"
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
   /clubs/{clubId}/members:
     get:
       operationId: listClubMembers
@@ -2060,3 +2083,26 @@ components:
           description: "admin, moderator, or member"
       required:
         - role
+
+    ClubDeletionSummary:
+      type: object
+      properties:
+        forumPostsAndComments:
+          type: integer
+        eventsAndSignups:
+          type: integer
+        marketplaceAds:
+          type: integer
+        garageVehicles:
+          type: integer
+        members:
+          type: integer
+        invitationsAndRequests:
+          type: integer
+      required:
+        - forumPostsAndComments
+        - eventsAndSignups
+        - marketplaceAds
+        - garageVehicles
+        - members
+        - invitationsAndRequests

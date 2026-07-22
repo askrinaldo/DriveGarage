@@ -20,6 +20,7 @@ import type {
   ActivityItem,
   AddToClubGarageBody,
   Club,
+  ClubDeletionSummary,
   ClubGaragePage,
   ClubGarageVehicle,
   ClubInvitation,
@@ -2221,6 +2222,80 @@ export const useDeleteClub = <
 > => {
   return useMutation(getDeleteClubMutationOptions(options));
 };
+
+export const getGetClubDeletionSummaryUrl = (id: number) => {
+  return `/api/clubs/${id}/deletion-summary`;
+};
+
+export const getClubDeletionSummary = async (
+  id: number,
+  options?: RequestInit,
+): Promise<ClubDeletionSummary> => {
+  return customFetch<ClubDeletionSummary>(getGetClubDeletionSummaryUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetClubDeletionSummaryQueryKey = (id: number) => {
+  return [`/api/clubs/${id}/deletion-summary`] as const;
+};
+
+export const getGetClubDeletionSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getClubDeletionSummary>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getClubDeletionSummary>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetClubDeletionSummaryQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClubDeletionSummary>>> = ({
+    signal,
+  }) => getClubDeletionSummary(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getClubDeletionSummary>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetClubDeletionSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getClubDeletionSummary>>
+>;
+export type GetClubDeletionSummaryQueryError = ErrorType<void>;
+
+/**
+ * @summary Get deletion impact counts for a club
+ */
+
+export function useGetClubDeletionSummary<
+  TData = Awaited<ReturnType<typeof getClubDeletionSummary>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getClubDeletionSummary>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetClubDeletionSummaryQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List members of a club

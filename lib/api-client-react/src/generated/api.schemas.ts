@@ -550,3 +550,12 @@ export type ListClubGarageParams = {
 export type DeclineClubInvitation200 = {
   message: string;
 };
+
+export interface ClubDeletionSummary {
+  forumPostsAndComments: number;
+  eventsAndSignups: number;
+  marketplaceAds: number;
+  garageVehicles: number;
+  members: number;
+  invitationsAndRequests: number;
+}

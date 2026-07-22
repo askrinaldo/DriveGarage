@@ -1,6 +1,18 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql, inArray } from "drizzle-orm";
-import { db, clubsTable, clubMembersTable } from "@workspace/db";
+import {
+  db,
+  clubsTable,
+  clubMembersTable,
+  forumPostsTable,
+  forumCommentsTable,
+  clubEventsTable,
+  clubEventRsvpsTable,
+  marketplaceListingsTable,
+  clubGarageEntriesTable,
+  clubInvitationsTable,
+  clubJoinRequestsTable,
+} from "@workspace/db";
 import {
   CreateClubBody,
   UpdateClubBody,
@@ -246,6 +258,80 @@ router.delete(
       targetName: club?.name ?? String(params.data.id),
     });
     res.status(204).send();
+  }
+);
+
+// ─── GET /clubs/:id/deletion-summary — requires owner ────────────────────────
+router.get(
+  "/clubs/:id/deletion-summary",
+  requireClubRole("owner"),
+  async (req, res): Promise<void> => {
+    const params = DeleteClubParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: ERRORS.VALIDATION_ERROR });
+      return;
+    }
+    const clubId = params.data.id;
+
+    const [
+      forumPostsRow,
+      forumCommentsRow,
+      eventsRow,
+      rsvpsRow,
+      marketplaceRow,
+      garageRow,
+      membersRow,
+      invitationsRow,
+      joinRequestsRow,
+    ] = await Promise.all([
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(forumPostsTable)
+        .where(eq(forumPostsTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(forumCommentsTable)
+        .innerJoin(forumPostsTable, eq(forumCommentsTable.postId, forumPostsTable.id))
+        .where(eq(forumPostsTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(clubEventsTable)
+        .where(eq(clubEventsTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(clubEventRsvpsTable)
+        .innerJoin(clubEventsTable, eq(clubEventRsvpsTable.eventId, clubEventsTable.id))
+        .where(eq(clubEventsTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(marketplaceListingsTable)
+        .where(eq(marketplaceListingsTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(clubGarageEntriesTable)
+        .where(eq(clubGarageEntriesTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(clubMembersTable)
+        .where(eq(clubMembersTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(clubInvitationsTable)
+        .where(eq(clubInvitationsTable.clubId, clubId)),
+      db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(clubJoinRequestsTable)
+        .where(eq(clubJoinRequestsTable.clubId, clubId)),
+    ]);
+
+    res.json({
+      forumPostsAndComments: (forumPostsRow[0]?.count ?? 0) + (forumCommentsRow[0]?.count ?? 0),
+      eventsAndSignups: (eventsRow[0]?.count ?? 0) + (rsvpsRow[0]?.count ?? 0),
+      marketplaceAds: marketplaceRow[0]?.count ?? 0,
+      garageVehicles: garageRow[0]?.count ?? 0,
+      members: membersRow[0]?.count ?? 0,
+      invitationsAndRequests: (invitationsRow[0]?.count ?? 0) + (joinRequestsRow[0]?.count ?? 0),
+    });
   }
 );
 

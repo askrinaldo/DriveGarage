@@ -3,6 +3,7 @@ import { useParams, useLocation, Link } from "wouter";
 import {
   useGetClub,
   useDeleteClub,
+  useGetClubDeletionSummary,
   useJoinClub,
   useLeaveClub,
   useUpdateClubMember,
@@ -10,6 +11,7 @@ import {
   useCreateClubInvitation,
   useRevokeClubInvitation,
   getGetClubQueryKey,
+  getGetClubDeletionSummaryQueryKey,
   getListClubInvitationsQueryKey,
   getListClubsQueryKey,
   getErrorMessage,
@@ -215,6 +217,8 @@ export default function ClubDetail() {
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
   const [memberSearch, setMemberSearch] = useState("");
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   // Join request state (for non-members)
   const [joinReqStatus, setJoinReqStatus] = useState<"none" | "pending" | "accepted" | "declined">("none");
   const [joinReqOpen, setJoinReqOpen] = useState(false);
@@ -253,6 +257,11 @@ export default function ClubDetail() {
   const { data: invitations, refetch: refetchInvitations } = useListClubInvitations(clubId, {
     query: { queryKey: getListClubInvitationsQueryKey(clubId), enabled: canAdmin },
   });
+
+  const { data: deletionSummary, isLoading: deletionSummaryLoading } = useGetClubDeletionSummary(
+    clubId,
+    { query: { queryKey: getGetClubDeletionSummaryQueryKey(clubId), enabled: deleteDialogOpen && isOwner } },
+  );
 
   const deleteMutation = useDeleteClub();
   const joinMutation = useJoinClub();
@@ -633,7 +642,7 @@ export default function ClubDetail() {
                 </AlertDialog>
               )}
               {isOwner && (
-                <AlertDialog>
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                   <AlertDialogTrigger asChild>
                     <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={(e) => e.preventDefault()}>
                       <Trash2 className="w-4 h-4 mr-2" /> Slett klubb
@@ -645,14 +654,34 @@ export default function ClubDetail() {
                       <AlertDialogDescription asChild>
                         <div>
                           <p className="mb-2">Dette vil permanent slette <strong>{club.name}</strong> og følgende data:</p>
-                          <ul className="list-disc list-inside space-y-1 mb-3 text-sm">
-                            <li>Forum-poster og kommentarer</li>
-                            <li>Arrangementer og påmeldinger</li>
-                            <li>Markedsplassannonser</li>
-                            <li>Garasjebiler knyttet til klubben</li>
-                            <li>Alle medlemmer og roller</li>
-                            <li>Invitasjoner og deltakelsesforespørsler</li>
-                          </ul>
+                          {deletionSummaryLoading ? (
+                            <ul className="list-disc list-inside space-y-1 mb-3 text-sm animate-pulse">
+                              <li className="h-4 bg-muted rounded w-48" />
+                              <li className="h-4 bg-muted rounded w-44" />
+                              <li className="h-4 bg-muted rounded w-36" />
+                              <li className="h-4 bg-muted rounded w-52" />
+                              <li className="h-4 bg-muted rounded w-40" />
+                            </ul>
+                          ) : (
+                            <ul className="list-disc list-inside space-y-1 mb-3 text-sm">
+                              {(deletionSummary?.forumPostsAndComments ?? 0) > 0 && (
+                                <li>{deletionSummary!.forumPostsAndComments} forum-poster og kommentarer</li>
+                              )}
+                              {(deletionSummary?.eventsAndSignups ?? 0) > 0 && (
+                                <li>{deletionSummary!.eventsAndSignups} arrangementer og påmeldinger</li>
+                              )}
+                              {(deletionSummary?.marketplaceAds ?? 0) > 0 && (
+                                <li>{deletionSummary!.marketplaceAds} markedsplassannonser</li>
+                              )}
+                              {(deletionSummary?.garageVehicles ?? 0) > 0 && (
+                                <li>{deletionSummary!.garageVehicles} garasjebiler knyttet til klubben</li>
+                              )}
+                              <li>{deletionSummary?.members ?? "..."} medlemmer og roller</li>
+                              {(deletionSummary?.invitationsAndRequests ?? 0) > 0 && (
+                                <li>{deletionSummary!.invitationsAndRequests} invitasjoner og deltakelsesforespørsler</li>
+                              )}
+                            </ul>
+                          )}
                           <p className="font-semibold text-destructive">Dette kan ikke angres.</p>
                         </div>
                       </AlertDialogDescription>
