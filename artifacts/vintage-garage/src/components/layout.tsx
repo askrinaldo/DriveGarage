@@ -4,6 +4,7 @@ import {
   User, HelpCircle, CreditCard,
   IdCard, Settings, Menu,
   Scale, FileText, Mail, Globe,
+  Sun, Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserAuth } from "@/hooks/use-user-auth";
@@ -12,10 +13,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ThemePanel } from "@/components/theme-panel";
 import { CompanyInfo } from "@/components/company-info";
 import { useTranslation } from "react-i18next";
 import { FlagSwitcher } from "@/components/language-switcher";
+import { useTheme, type ColorMode } from "@/contexts/theme";
 
 interface LayoutProps { children: React.ReactNode }
 
@@ -24,7 +25,13 @@ export function Layout({ children }: LayoutProps) {
   const {
     isAuthenticated, isSuperAdmin, name, logout,
   } = useUserAuth();
+  const { mode, setMode } = useTheme();
   const { t } = useTranslation();
+
+  const MODE_OPTIONS: { id: ColorMode; icon: React.ReactNode; label: string }[] = [
+    { id: "light", icon: <Sun className="w-3.5 h-3.5" />,  label: t("theme.light") },
+    { id: "dark",  icon: <Moon className="w-3.5 h-3.5" />, label: t("theme.dark")  },
+  ];
   const navItems = [
     { href: "/dashboard",       label: t("nav.overview"),       icon: LayoutDashboard },
     { href: "/vehicles",        label: t("nav.myGarage"),       icon: Car             },
@@ -98,10 +105,6 @@ export function Layout({ children }: LayoutProps) {
           </Link>
         )}
 
-        {/* Theme picker — stays accessible */}
-        <div className="pt-2 pb-1">
-          <ThemePanel />
-        </div>
       </nav>
 
       {/* Profile */}
@@ -141,6 +144,30 @@ export function Layout({ children }: LayoutProps) {
                   </DropdownMenuItem>
                 </>
               )}
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Sun className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t("theme.lightMode")}</span>
+                </div>
+                <div className="flex gap-0.5 p-0.5 rounded-md bg-muted w-fit" onPointerDown={(e) => e.stopPropagation()}>
+                  {MODE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      title={opt.label}
+                      onClick={() => setMode(opt.id)}
+                      className={cn(
+                        "p-1.5 rounded transition-colors",
+                        mode === opt.id
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {opt.icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <DropdownMenuSeparator />
               <div className="px-2 py-1.5">
                 <div className="flex items-center gap-1.5 mb-2">
