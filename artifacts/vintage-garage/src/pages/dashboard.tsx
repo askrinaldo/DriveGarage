@@ -619,7 +619,7 @@ export default function Dashboard() {
           <Link href="/vehicles/new">
             <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-primary/50 hover:border-primary bg-transparent hover:bg-primary/5 transition-all duration-200 text-[11px] font-bold uppercase tracking-wide text-primary hover:scale-[1.02] active:scale-[0.98]">
               <Plus className="w-3.5 h-3.5" />
-              Legg til bil
+              Legg til kjøretøy
             </button>
           </Link>
           <Link href="/clubs">
