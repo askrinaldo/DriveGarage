@@ -529,7 +529,7 @@ function ActivityItem({ item, locale }: {
         <p className="text-[12.5px] font-semibold text-foreground truncate">{item.title}</p>
         <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">{item.vehicleName}</p>
       </div>
-      <div className="text-right shrink-0">
+      <div className="text-right shrink-0 pl-3 border-l border-border/30">
         {item.cost != null && (
           <p className="text-[12px] font-mono text-foreground/80 font-semibold">
             kr {item.cost.toLocaleString(locale)}
@@ -690,162 +690,168 @@ export default function Dashboard() {
         />
       </motion.div>
 
-      {/* ── Main content ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* ── Main content ──
+           Flat grid: headings share row-1, cards share row-2, footers share row-3.
+           Same-row items are guaranteed to start at the same y by CSS Grid. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-x-5">
 
-        {/* Left: recent activity / onboarding */}
+        {/* ── Row 1 left: "Siste aktivitet" heading ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.45 }}
-          className="lg:col-span-2"
+          className="lg:col-start-1 lg:col-span-2 lg:row-start-1 flex items-center mb-4"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
-              {recentActivity.length > 0 ? "Siste aktivitet" : "Kom i gang"}
-            </h2>
-            {primaryVehicle && recentActivity.length > 0 && (
-              <Link href={`/vehicles/${primaryVehicle.id}/service/new`}>
-                <button className="text-[11px] font-bold uppercase tracking-wide text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-                  Legg til post <Plus className="w-3 h-3" />
-                </button>
-              </Link>
-            )}
-          </div>
-
-          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-            {recentActivity.length === 0 ? (
-              <OnboardingTimeline
-                hasVehicle={hasVehicle}
-                hasService={hasService}
-                hasReceipt={hasReceipt}
-                primaryVehicleId={primaryVehicle?.id}
-              />
-            ) : (
-              <div className="divide-y divide-border/30 px-5">
-                <AnimatePresence>
-                  {recentActivity.map((item, i) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.18 + i * 0.04, duration: 0.3 }}
-                    >
-                      <ActivityItem item={item} locale={locale} />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
-
-          {/* View all activity link */}
-          {recentActivity.length > 0 && primaryVehicle && (
-            <div className="mt-3">
-              <Link href="/vehicles">
-                <button className="w-full flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/40 hover:text-primary transition-colors py-2 group">
-                  Se alle kjøretøy og historikk
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </Link>
-            </div>
-          )}
+          <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
+            {recentActivity.length > 0 ? "Siste aktivitet" : "Kom i gang"}
+          </h2>
         </motion.div>
 
-        {/* Right: clubs + checklist */}
+        {/* ── Row 1 right: "Mine Klubber" heading ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.45 }}
-          className="space-y-4"
+          className="lg:col-start-3 lg:row-start-1 flex items-center justify-between mb-4 mt-5 lg:mt-0"
         >
-          {/* Quick start checklist — only when not all done */}
-          {(!hasVehicle || !hasService || !hasClub) && (
-            <div>
-              {/* Heading matches the left column's h2 + mb-4 for vertical alignment */}
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
-                  Fremdrift
-                </h2>
-              </div>
-              <QuickStartChecklist
-                hasVehicle={hasVehicle}
-                hasService={hasService}
-                hasClub={hasClub}
-                primaryVehicleId={primaryVehicle?.id}
-              />
+          <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
+            {myClubs.length > 0 ? "Mine Klubber" : "Klubber"}
+          </h2>
+          <Link href="/clubs">
+            <button className="text-sidebar-foreground/30 hover:text-sidebar-foreground/60 transition-colors leading-none">
+              <span className="text-[18px] leading-none tracking-widest">···</span>
+            </button>
+          </Link>
+        </motion.div>
+
+        {/* ── Row 2 left: activity card ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.45 }}
+          className="lg:col-start-1 lg:col-span-2 lg:row-start-2 self-start rounded-xl border border-border/50 bg-card overflow-hidden"
+        >
+          {recentActivity.length === 0 ? (
+            <OnboardingTimeline
+              hasVehicle={hasVehicle}
+              hasService={hasService}
+              hasReceipt={hasReceipt}
+              primaryVehicleId={primaryVehicle?.id}
+            />
+          ) : (
+            <div className="divide-y divide-border/30 px-5">
+              <AnimatePresence>
+                {recentActivity.map((item, i) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.18 + i * 0.04, duration: 0.3 }}
+                  >
+                    <ActivityItem item={item} locale={locale} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
+        </motion.div>
 
-          {/* Clubs */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
-                {myClubs.length > 0 ? "Mine Klubber" : "Klubber"}
-              </h2>
-              <Link href="/clubs">
-                <button className="text-sidebar-foreground/30 hover:text-sidebar-foreground/60 transition-colors">
-                  <span className="text-[18px] leading-none tracking-widest">···</span>
-                </button>
-              </Link>
-            </div>
-
-            {myClubs.length === 0 ? (
-              <ClubDiscovery />
-            ) : (
-              <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-                <div className="divide-y divide-border/30">
-                  {myClubs.map((club, i) => (
-                    <motion.div
-                      key={club.id}
-                      initial={{ opacity: 0, x: 6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.22 + i * 0.06 }}
-                    >
-                      <Link href={`/clubs/${club.id}`}>
-                        <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 transition-colors cursor-pointer group">
-                          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-[12px] font-black text-primary shrink-0 overflow-hidden border border-primary/15">
-                            {club.logoUrl ? (
-                              <img src={club.logoUrl} alt={club.name} className="w-full h-full object-cover" />
-                            ) : (
-                              club.name.charAt(0).toUpperCase()
+        {/* ── Row 2 right: clubs card ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.45 }}
+          className="lg:col-start-3 lg:row-start-2 self-start mt-4 lg:mt-0"
+        >
+          {myClubs.length === 0 ? (
+            <ClubDiscovery />
+          ) : (
+            <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+              <div className="divide-y divide-border/30">
+                {myClubs.map((club, i) => (
+                  <motion.div
+                    key={club.id}
+                    initial={{ opacity: 0, x: 6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.22 + i * 0.06 }}
+                  >
+                    <Link href={`/clubs/${club.id}`}>
+                      <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 transition-colors cursor-pointer group">
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-[12px] font-black text-primary shrink-0 overflow-hidden border border-primary/15">
+                          {club.logoUrl ? (
+                            <img src={club.logoUrl} alt={club.name} className="w-full h-full object-cover" />
+                          ) : (
+                            club.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <p className="text-[12.5px] font-bold text-foreground truncate">{club.name}</p>
+                            <RolePill role={club.userRole} />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
+                              <Users className="w-2.5 h-2.5" />
+                              {club.memberCount}+ {club.memberCount === 1 ? "medlem" : "medlemmer"}
+                            </span>
+                            {club.location && (
+                              <span className="text-[10px] text-muted-foreground/40 flex items-center gap-1">
+                                <MapPin className="w-2.5 h-2.5" />
+                                {club.location}
+                              </span>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <p className="text-[12.5px] font-bold text-foreground truncate">{club.name}</p>
-                              <RolePill role={club.userRole} />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
-                                <Users className="w-2.5 h-2.5" />
-                                {club.memberCount}+ {club.memberCount === 1 ? "medlem" : "medlemmer"}
-                              </span>
-                              {club.location && (
-                                <span className="text-[10px] text-muted-foreground/40 flex items-center gap-1">
-                                  <MapPin className="w-2.5 h-2.5" />
-                                  {club.location}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/25 group-hover:text-primary/50 transition-colors" />
                         </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                  <div className="px-4 py-3">
-                    <Link href="/clubs">
-                      <button className="w-full flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/40 hover:text-muted-foreground transition-colors py-1">
-                        Utforsk klubber <ArrowRight className="w-3 h-3" />
-                      </button>
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/25 group-hover:text-primary/50 transition-colors" />
+                      </div>
                     </Link>
-                  </div>
+                  </motion.div>
+                ))}
+                <div className="px-4 py-3">
+                  <Link href="/clubs">
+                    <button className="w-full flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/40 hover:text-muted-foreground transition-colors py-1">
+                      Utforsk klubber <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </Link>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </motion.div>
+
+        {/* ── Row 3 left: "Se alle / Legg til post" footer ── */}
+        {recentActivity.length > 0 && primaryVehicle && (
+          <div className="lg:col-start-1 lg:col-span-2 lg:row-start-3 mt-3 flex items-center justify-between gap-2">
+            <Link href="/vehicles">
+              <button className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/40 hover:text-primary transition-colors py-2 group">
+                Se alle kjøretøy og historikk
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </Link>
+            <Link href={`/vehicles/${primaryVehicle.id}/service/new`}>
+              <button className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/30 hover:text-primary transition-colors py-2">
+                Legg til post <Plus className="w-3 h-3" />
+              </button>
+            </Link>
+          </div>
+        )}
+
+        {/* ── Row 3 right: Fremdrift checklist (only while onboarding incomplete) ── */}
+        {(!hasVehicle || !hasService || !hasClub) && (
+          <div className="lg:col-start-3 lg:row-start-3 mt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest">
+                Fremdrift
+              </h2>
+            </div>
+            <QuickStartChecklist
+              hasVehicle={hasVehicle}
+              hasService={hasService}
+              hasClub={hasClub}
+              primaryVehicleId={primaryVehicle?.id}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Footer ── */}
