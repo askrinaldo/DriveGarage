@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   User, Shield, Car, Wrench,
   Calendar, Edit2, Check, X,
+  Users, Crown, Bike, AlertCircle,
 } from "lucide-react";
 import { useUserAuth } from "@/hooks/use-user-auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui-states";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 interface ProfileData {
   id: number;
@@ -20,6 +22,14 @@ interface ProfileData {
   stats: { vehicleCount: number; serviceCount: number; score: number };
 }
 
+interface MyClub {
+  id: number;
+  name: string;
+  clubType: string;
+  userRole: string;
+  memberCount: number;
+  isPrivate: boolean;
+}
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -28,6 +38,50 @@ function getInitials(name: string) {
 function formatMemberSince(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleDateString("no-NO", { month: "long", year: "numeric" });
+}
+
+const typeLabel: Record<string, string> = {
+  car:        "Bil",
+  motorcycle: "Motorsykkel",
+  both:       "Bil & MC",
+};
+
+const typePillColor: Record<string, string> = {
+  car:        "bg-blue-500/20 text-blue-300 border border-blue-500/20",
+  motorcycle: "bg-amber-500/20 text-amber-300 border border-amber-500/20",
+  both:       "bg-emerald-500/20 text-emerald-300 border border-emerald-500/20",
+};
+
+function ClubTypeIcon({ type, className }: { type: string; className?: string }) {
+  const cls = cn("w-3.5 h-3.5", className);
+  if (type === "car") return <Car className={cls} />;
+  if (type === "motorcycle") return <Bike className={cls} />;
+  return (
+    <span className="inline-flex gap-0.5">
+      <Car className={cls} />
+      <Bike className={cls} />
+    </span>
+  );
+}
+
+function RolePill({ role, t }: { role: string; t: (k: string) => string }) {
+  if (role === "owner")
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/20">
+        <Crown className="w-2.5 h-2.5" /> {t("profile.roleOwner")}
+      </span>
+    );
+  if (role === "admin")
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20">
+        <Shield className="w-2.5 h-2.5" /> {t("profile.roleAdmin")}
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
+      <User className="w-2.5 h-2.5" /> {t("profile.roleMember")}
+    </span>
+  );
 }
 
 export default function Profile() {
@@ -39,6 +93,10 @@ export default function Profile() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [clubs, setClubs] = useState<MyClub[]>([]);
+  const [clubsLoading, setClubsLoading] = useState(true);
+  const [clubsError, setClubsError] = useState(false);
+
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -48,13 +106,25 @@ export default function Profile() {
     if (!isAuthenticated) { navigate("/sign-in"); return; }
     void (async () => {
       const headers = await getAuthHeaders();
-      const prof = await fetch("/api/profile/me", { headers })
-        .then(r => r.ok ? r.json() as Promise<ProfileData> : null);
+
+      const [prof, clubsRes] = await Promise.all([
+        fetch("/api/profile/me", { headers })
+          .then(r => r.ok ? r.json() as Promise<ProfileData> : null),
+        fetch("/api/clubs?scope=mine", { headers })
+          .then(r => r.ok ? r.json() as Promise<MyClub[]> : null),
+      ]);
+
       if (prof) {
         setProfile(prof);
         setNewName(prof.name);
       }
+      if (clubsRes !== null) {
+        setClubs(clubsRes);
+      } else {
+        setClubsError(true);
+      }
       setLoading(false);
+      setClubsLoading(false);
     })();
   }, [isAuthenticated, isAuthLoading, getAuthHeaders, navigate]);
 
@@ -172,13 +242,77 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* ── Right column: Privacy + Settings shortcut ── */}
+        {/* ── Right column ── */}
         <motion.div
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.45 }}
           className="lg:col-span-2 space-y-4"
         >
+
+          {/* ── My Clubs ── */}
+          <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
+            <h3 className="text-[11px] font-black text-muted-foreground/70 uppercase tracking-widest flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary/60" /> {t("profile.myClubs")}
+            </h3>
+
+            {clubsLoading ? (
+              <div className="space-y-2">
+                {[0, 1].map(i => (
+                  <div key={i} className="h-12 rounded-xl bg-muted/40 animate-pulse" />
+                ))}
+              </div>
+            ) : clubsError ? (
+              <div className="flex items-center gap-2 text-[12px] text-destructive/70 py-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                {t("profile.clubsLoadError")}
+              </div>
+            ) : clubs.length === 0 ? (
+              <div className="py-2 space-y-2">
+                <p className="text-[12px] text-muted-foreground/55">{t("profile.noClubs")}</p>
+                <Link href="/clubs" className="text-[12px] text-primary/70 hover:text-primary transition-colors font-medium">
+                  {t("profile.browseClubs")}
+                </Link>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {clubs.map(club => (
+                  <li key={club.id}>
+                    <Link
+                      href={`/clubs/${club.id}`}
+                      className="flex items-center gap-3 rounded-xl border border-border/40 bg-background/40 hover:bg-muted/30 px-3 py-2.5 transition-colors group"
+                    >
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                        club.clubType === "car" ? "bg-blue-500/15 text-blue-300" :
+                        club.clubType === "motorcycle" ? "bg-amber-500/15 text-amber-300" :
+                        "bg-emerald-500/15 text-emerald-300"
+                      )}>
+                        <ClubTypeIcon type={club.clubType} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[13px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                            {club.name}
+                          </span>
+                          <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full", typePillColor[club.clubType] ?? typePillColor.both)}>
+                            {typeLabel[club.clubType] ?? club.clubType}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <RolePill role={club.userRole} t={t} />
+                          <span className="text-[10px] text-muted-foreground/50 flex items-center gap-0.5">
+                            <Users className="w-2.5 h-2.5" /> {club.memberCount}
+                          </span>
+                        </div>
+                      </div>
+                      <X className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-muted-foreground/60 rotate-45 transition-colors shrink-0" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           {/* Privacy */}
           <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">

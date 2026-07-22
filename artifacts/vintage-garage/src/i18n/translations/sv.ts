@@ -374,6 +374,13 @@ export const sv: Translations = {
     tierFree: "Gratis",
     tierStandard: "Standard",
     tierPremium: "Premium",
+    myClubs: "Mina klubbar",
+    noClubs: "Du är inte med i några klubbar ännu",
+    browseClubs: "Utforska klubbar →",
+    clubsLoadError: "Kunde inte ladda klubbar",
+    roleOwner: "Ägare",
+    roleAdmin: "Admin",
+    roleMember: "Medlem",
   },
   reminders: {
     loading: "Laddar påminnelser...",

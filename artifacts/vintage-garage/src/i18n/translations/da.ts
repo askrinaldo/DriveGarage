@@ -374,6 +374,13 @@ export const da: Translations = {
     tierFree: "Gratis",
     tierStandard: "Standard",
     tierPremium: "Premium",
+    myClubs: "Mine klubber",
+    noClubs: "Du er ikke med i nogen klubber endnu",
+    browseClubs: "Udforsk klubber →",
+    clubsLoadError: "Kunne ikke indlæse klubber",
+    roleOwner: "Ejer",
+    roleAdmin: "Admin",
+    roleMember: "Medlem",
   },
   reminders: {
     loading: "Indlæser påmindelser...",

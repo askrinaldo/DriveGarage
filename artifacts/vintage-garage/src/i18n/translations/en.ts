@@ -374,6 +374,13 @@ export const en: Translations = {
     tierFree: "Free",
     tierStandard: "Standard",
     tierPremium: "Premium",
+    myClubs: "My Clubs",
+    noClubs: "You are not a member of any clubs yet",
+    browseClubs: "Browse clubs →",
+    clubsLoadError: "Could not load clubs",
+    roleOwner: "Owner",
+    roleAdmin: "Admin",
+    roleMember: "Member",
   },
   reminders: {
     loading: "Loading reminders...",

@@ -372,6 +372,13 @@ export const no = {
     tierFree: "Gratis",
     tierStandard: "Standard",
     tierPremium: "Premium",
+    myClubs: "Mine klubber",
+    noClubs: "Du er ikke med i noen klubber ennå",
+    browseClubs: "Utforsk klubber →",
+    clubsLoadError: "Kunne ikke laste klubber",
+    roleOwner: "Eier",
+    roleAdmin: "Admin",
+    roleMember: "Medlem",
   },
   reminders: {
     loading: "Laster påminnelser...",
