@@ -195,7 +195,8 @@ export type VippsWebhookEventType =
   | "recurring.charge-reserved.v1"
   | "recurring.charge-captured.v1"
   | "recurring.charge-failed.v1"
-  | "recurring.charge-canceled.v1";
+  | "recurring.charge-canceled.v1"
+  | "recurring.charge-refunded.v1";
 
 /**
  * Vipps webhook event payload.

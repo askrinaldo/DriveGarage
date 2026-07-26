@@ -355,9 +355,23 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
   }
 
   req.log.info(
-    { eventType: event.eventType, agreementId: event.agreementId, ref: event.reference },
+    {
+      eventType:   event.eventType,
+      agreementId: event.agreementId,
+      chargeId:    event.chargeId,
+      ref:         event.reference,
+      timestamp:   event.timestamp,
+    },
     "Vipps webhook received",
   );
+
+  // Development-only: log full payload for debugging. Never in production.
+  if (process.env.NODE_ENV !== "production") {
+    req.log.debug(
+      { payload: JSON.parse(rawBody.toString("utf8")) },
+      "Vipps webhook full payload (dev only)",
+    );
+  }
 
   // 2. Find subscription by Vipps agreementId
   const agreementId = event.agreementId ?? event.reference;
@@ -462,6 +476,19 @@ router.post("/billing/vipps/webhook", async (req, res): Promise<void> => {
         .update(billingChargesTable)
         .set({ status: "cancelled", cancelledAt: now, updatedAt: now })
         .where(eq(billingChargesTable.vippsChargeId, chargeId));
+
+    } else if (event.eventType === "recurring.charge-reserved.v1" && chargeId) {
+      // Reserved = charge authorized by user but not yet captured (RESERVE_CAPTURE mode).
+      // No local billing_charges status change — DriveGarage uses DIRECT_CAPTURE, so
+      // charges move directly from DUE → CHARGED. We acknowledge the event and log it.
+      req.log.info({ userId: sub.userId, chargeId }, "Charge reserved — acknowledged, no local status change");
+
+    } else if (event.eventType === "recurring.charge-refunded.v1" && chargeId) {
+      await db
+        .update(billingChargesTable)
+        .set({ status: "refunded", updatedAt: now })
+        .where(eq(billingChargesTable.vippsChargeId, chargeId));
+      req.log.info({ userId: sub.userId, chargeId }, "Charge refunded — billing_charges updated");
 
     } else {
       // ── Agreement-level events ─────────────────────────────────────────────
