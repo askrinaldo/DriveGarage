@@ -80,34 +80,12 @@ Logg inn som super_admin i DriveGarage-appen og hent tokenet fra localStorage/co
 eller kall API-et direkte:
 
 ```bash
-curl -X POST https://<din-produksjonsdomain>/api/users/login \
+curl -X POST https://<din-produksjonsdomain>/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"<super_admin_email>","password":"<password>"}'
 ```
 
-Tokenet i response-en er din `DRIVEGARAGE_ADMIN_TOKEN`.
-
-> ⚠️ **Tokenet utløper etter 30 dager.** Sett en gjentakende kalenderpåminnelse slik at du fornyer det før det løper ut. Et utløpt token medfører at månedlig billing feiler stille og brukere får gratis tilgang uten varsel.
-
-#### Slik fornyer du admin-token
-
-Gjenta steget over for å generere et nytt token, og oppdater så secreten i GitHub:
-
-1. Kall `POST /api/users/login` med super_admin-legitimasjonen for å få et nytt token.
-2. Gå til GitHub repo **Settings → Secrets and variables → Actions**.
-3. Klikk **Edit** ved siden av `DRIVEGARAGE_ADMIN_TOKEN` og lim inn det nye tokenet.
-4. Verifiser at tokenet er gyldig ved å kjøre billing-workflow manuelt med `dryRun=true`.
-
-#### Verifisere at tokenet er gyldig
-
-```bash
-curl -s -o /dev/null -w "%{http_code}" \
-  -H "x-user-token: <admin-token>" \
-  https://<din-produksjonsdomain>/api/auth/user
-# Forventet: 200
-```
-
-GitHub Actions-workflowen sjekker tokenets gyldighet automatisk som første steg og feiler med en tydelig feilmelding og instruksjoner for fornyelse dersom tokenet er utløpt.
+Tokenet i response-en er din `DRIVEGARAGE_ADMIN_TOKEN`. Det varer i 30 dager — husk å fornye det.
 
 ### Alternativ: cron-job.org
 

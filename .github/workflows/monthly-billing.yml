@@ -30,41 +30,6 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Check admin token validity
-        env:
-          ADMIN_TOKEN: ${{ secrets.DRIVEGARAGE_ADMIN_TOKEN }}
-          PRODUCTION_URL: ${{ vars.DRIVEGARAGE_PRODUCTION_URL }}
-        run: |
-          echo "Checking admin token validity..."
-          response=$(curl -s -w "\n%{http_code}" \
-            -H "x-user-token: $ADMIN_TOKEN" \
-            "${PRODUCTION_URL}/api/auth/user")
-
-          http_code=$(echo "$response" | tail -1)
-          body=$(echo "$response" | head -n -1)
-
-          echo "HTTP status: $http_code"
-
-          if [ "$http_code" = "401" ] || [ "$http_code" = "403" ]; then
-            echo "❌ Admin token is expired or invalid (HTTP $http_code)."
-            echo ""
-            echo "ACTION REQUIRED: Regenerate the DRIVEGARAGE_ADMIN_TOKEN secret."
-            echo "  1. Log in to DriveGarage as a super_admin user."
-            echo "  2. Call POST /api/users/login with your admin credentials to get a fresh token."
-            echo "  3. Update the DRIVEGARAGE_ADMIN_TOKEN secret in GitHub repo Settings → Secrets and variables → Actions."
-            echo "  4. Tokens expire after 30 days — schedule a renewal reminder."
-            exit 1
-          fi
-
-          if [ "$http_code" != "200" ]; then
-            echo "❌ Token check failed with unexpected HTTP $http_code."
-            echo "Response: $body"
-            exit 1
-          fi
-
-          role=$(echo "$body" | grep -o '"role":"[^"]*"' | cut -d'"' -f4)
-          echo "✅ Token is valid. Authenticated as role: $role"
-
       - name: Trigger billing job
         env:
           ADMIN_TOKEN: ${{ secrets.DRIVEGARAGE_ADMIN_TOKEN }}
