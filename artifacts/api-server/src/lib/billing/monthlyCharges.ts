@@ -34,6 +34,7 @@ import crypto from "crypto";
 import { eq, and, sql } from "drizzle-orm";
 import { db, subscriptionsTable, billingChargesTable, usersTable } from "@workspace/db";
 import { createVippsCharge, getVippsCharge, listVippsCharges } from "../vipps/charges";
+import { PLAN_PRICE_NOK } from "../subscription";
 import { logger } from "../logger";
 
 export interface BillingJobResult {
@@ -142,7 +143,7 @@ export async function runMonthlyBillingJob(options: {
 
     try {
       const orderId = generateOrderId(userId, billingPeriod, 1);
-      const amountNok = 100;
+      const amountNok = PLAN_PRICE_NOK; // 50 NOK — must match the agreement amount in agreements.ts
 
       // Insert pending row first — DB unique index rejects race condition duplicates.
       const [chargeRow] = await db

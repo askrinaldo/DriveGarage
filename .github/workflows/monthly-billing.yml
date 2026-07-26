@@ -1,0 +1,83 @@
+name: Monthly Billing Job
+
+# Runs on the 1st of every month at 06:00 UTC.
+# Requires DRIVEGARAGE_ADMIN_TOKEN set as a GitHub Actions secret — this is a
+# signed super_admin JWT for the DriveGarage API. Generate it via the
+# /api/auth/admin-login endpoint or the seedAdmin script.
+#
+# The job is idempotent: running it more than once on the same day is safe.
+# Charges that already exist for the current billing period are skipped.
+#
+# To test without charging anyone, add `"dryRun": true` to the curl body.
+
+on:
+  schedule:
+    # 1st of each month at 06:00 UTC
+    - cron: '0 6 1 * *'
+  # Allow manual trigger from the GitHub Actions UI for testing
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no charges created)'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  run-monthly-charges:
+    name: Create monthly Vipps charges
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Trigger billing job
+        env:
+          ADMIN_TOKEN: ${{ secrets.DRIVEGARAGE_ADMIN_TOKEN }}
+          PRODUCTION_URL: ${{ vars.DRIVEGARAGE_PRODUCTION_URL }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          echo "Triggering monthly billing job (dryRun=$DRY_RUN)..."
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-user-token: $ADMIN_TOKEN" \
+            -d "{\"dryRun\": $DRY_RUN}" \
+            "${PRODUCTION_URL}/api/admin/billing/run-monthly-charges")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "HTTP status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" != "200" ]; then
+            echo "❌ Billing job failed with HTTP $http_code"
+            exit 1
+          fi
+
+          echo "✅ Billing job completed successfully"
+
+      - name: Reconcile stale charges
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          ADMIN_TOKEN: ${{ secrets.DRIVEGARAGE_ADMIN_TOKEN }}
+          PRODUCTION_URL: ${{ vars.DRIVEGARAGE_PRODUCTION_URL }}
+        run: |
+          echo "Running charge reconciliation..."
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-user-token: $ADMIN_TOKEN" \
+            "${PRODUCTION_URL}/api/admin/billing/reconcile-charges")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "HTTP status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" != "200" ]; then
+            echo "⚠️ Reconciliation failed with HTTP $http_code (non-fatal)"
+          else
+            echo "✅ Reconciliation completed"
+          fi
