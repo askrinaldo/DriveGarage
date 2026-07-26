@@ -1521,6 +1521,145 @@ function AuditSection({ getHeaders }: { getHeaders: GetHeaders }) {
   );
 }
 
+// ─── Vipps connection status card ─────────────────────────────────────────────
+
+interface VippsStatus {
+  status: "connected" | "misconfigured" | "auth_failed";
+  environment: "test" | "production";
+  lastTokenRefreshAt: string | null;
+  tokenExpiresAt?: string | null;
+  checkedAt: string;
+  error: string | null;
+}
+
+function VippsStatusCard({ getHeaders }: { getHeaders: GetHeaders }) {
+  const [status, setStatus] = useState<VippsStatus | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const check = useCallback(async () => {
+    setChecking(true);
+    setError(null);
+    try {
+      const h = await getHeaders();
+      const res = await fetch("/api/admin/billing/vipps-status", { headers: h });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStatus(await res.json() as VippsStatus);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ukjent feil");
+    } finally {
+      setChecking(false);
+    }
+  }, [getHeaders]);
+
+  useEffect(() => { void check(); }, [check]);
+
+  const isConnected = status?.status === "connected";
+  const isMisconfigured = status?.status === "misconfigured";
+
+  const statusCfg = {
+    connected:    { label: "Tilkoblet",       dot: "bg-emerald-400", border: "border-emerald-500/30", bg: "bg-emerald-500/8",  text: "text-emerald-300" },
+    misconfigured:{ label: "Ikke konfigurert",dot: "bg-red-400",     border: "border-red-500/30",     bg: "bg-red-500/8",      text: "text-red-300"     },
+    auth_failed:  { label: "Auth feilet",     dot: "bg-red-400",     border: "border-red-500/30",     bg: "bg-red-500/8",      text: "text-red-300"     },
+  };
+
+  const cfg = status ? statusCfg[status.status] : null;
+
+  return (
+    <div className={`rounded-xl border ${cfg ? cfg.border : "border-white/10"} ${cfg ? cfg.bg : "bg-white/3"} p-5 mb-6`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* animated dot */}
+          <div className="relative shrink-0">
+            {checking ? (
+              <Loader2 className="w-4 h-4 text-white/40 animate-spin" />
+            ) : (
+              <>
+                <span className={`block w-3 h-3 rounded-full ${cfg ? cfg.dot : "bg-white/20"}`} />
+                {isConnected && (
+                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-40" />
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-white">Vipps-tilkobling</span>
+              {cfg && (
+                <span className={`text-[11px] font-medium ${cfg.text}`}>{cfg.label}</span>
+              )}
+              {status?.environment === "production" && (
+                <Badge className="text-[9px] font-bold bg-orange-500/20 text-orange-300 border border-orange-500/30 px-1.5 py-0 h-4">
+                  PROD
+                </Badge>
+              )}
+              {status?.environment === "test" && (
+                <Badge className="text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0 h-4">
+                  TEST
+                </Badge>
+              )}
+            </div>
+
+            {/* Details */}
+            {status && (
+              <div className="mt-1.5 space-y-0.5">
+                {isConnected && status.lastTokenRefreshAt && (
+                  <p className="text-[11px] text-white/40">
+                    Token hentet:{" "}
+                    <span className="text-white/60">
+                      {new Date(status.lastTokenRefreshAt).toLocaleString("nb-NO", {
+                        day: "2-digit", month: "2-digit", year: "2-digit",
+                        hour: "2-digit", minute: "2-digit", second: "2-digit",
+                      })}
+                    </span>
+                  </p>
+                )}
+                {isConnected && status.tokenExpiresAt && (
+                  <p className="text-[11px] text-white/40">
+                    Utløper:{" "}
+                    <span className="text-white/60">
+                      {new Date(status.tokenExpiresAt).toLocaleString("nb-NO", {
+                        day: "2-digit", month: "2-digit", year: "2-digit",
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                    </span>
+                  </p>
+                )}
+                {!isConnected && status.error && (
+                  <p className="text-[11px] text-red-300/70 max-w-md truncate">{status.error}</p>
+                )}
+                {isMisconfigured && (
+                  <p className="text-[11px] text-white/30">
+                    Sett VIPPS_CLIENT_ID, VIPPS_CLIENT_SECRET, VIPPS_SUBSCRIPTION_KEY, VIPPS_MERCHANT_SERIAL_NUMBER, VIPPS_CALLBACK_URL og VIPPS_RETURN_URL.
+                  </p>
+                )}
+                <p className="text-[10px] text-white/20">
+                  Sjekket: {new Date(status.checkedAt).toLocaleString("nb-NO", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                </p>
+              </div>
+            )}
+            {error && !status && (
+              <p className="mt-1 text-[11px] text-red-300/70">{error}</p>
+            )}
+          </div>
+        </div>
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={checking}
+          onClick={() => void check()}
+          className="shrink-0 h-8 text-xs text-white/60 border-white/10 hover:bg-white/5 gap-1.5"
+        >
+          {checking ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wifi className="w-3 h-3" />}
+          Test tilkobling
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Payments (Vipps subscription events) section ─────────────────────────────
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
@@ -1591,6 +1730,8 @@ function PaymentsSection({ getHeaders }: { getHeaders: GetHeaders }) {
           </Button>
         }
       />
+
+      <VippsStatusCard getHeaders={getHeaders} />
 
       {/* Filter pills */}
       <div className="flex gap-2 flex-wrap mb-5">

@@ -5,6 +5,8 @@ import { db, usersTable, vehiclesTable, auditLogsTable, clubsTable, subscription
 import { parseUserAuth, requireSuperAdmin } from "../middleware/userAuth";
 import { runMonthlyBillingJob, reconcileCharges, currentBillingPeriod } from "../lib/billing/monthlyCharges";
 import { logAdminAction } from "../lib/adminAudit";
+import { getVippsAccessToken, clearVippsTokenCache, getVippsTokenCacheInfo } from "../lib/vipps/auth";
+import { getVippsEnv, isVippsConfigured } from "../lib/vipps/config";
 import {
   getActivePaymentExemptionForUser,
   createPaymentExemption,
@@ -407,6 +409,52 @@ router.post("/admin/billing/reconcile-charges", parseUserAuth, requireSuperAdmin
   } catch (err) {
     req.log.error({ err }, "Charge reconciliation error");
     res.status(500).json({ error: "Avstemming feilet" });
+  }
+});
+
+// ── GET /admin/billing/vipps-status ──────────────────────────────────────────
+// Checks Vipps credential validity and returns connection status + environment.
+// Uses the live token endpoint on every call to give a fresh result.
+
+router.get("/admin/billing/vipps-status", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const environment = getVippsEnv();
+  const configured  = isVippsConfigured();
+
+  if (!configured) {
+    res.json({
+      status:          "misconfigured",
+      environment,
+      lastTokenRefreshAt: null,
+      checkedAt:       new Date().toISOString(),
+      error:           "Én eller flere Vipps-miljøvariabler mangler",
+    });
+    return;
+  }
+
+  try {
+    // Force a fresh token fetch by clearing cache first so the check is live
+    clearVippsTokenCache();
+    await getVippsAccessToken();
+    const cacheInfo = getVippsTokenCacheInfo();
+
+    res.json({
+      status:             "connected",
+      environment,
+      lastTokenRefreshAt: cacheInfo.lastRefreshedAt,
+      tokenExpiresAt:     cacheInfo.expiresAt,
+      checkedAt:          new Date().toISOString(),
+      error:              null,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Ukjent feil";
+    req.log.warn({ err }, "Vipps status check failed");
+    res.json({
+      status:             "auth_failed",
+      environment,
+      lastTokenRefreshAt: null,
+      checkedAt:          new Date().toISOString(),
+      error:              message,
+    });
   }
 });
 

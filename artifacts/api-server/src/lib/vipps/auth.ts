@@ -18,9 +18,32 @@ interface CachedToken {
   value: string;
   /** Unix timestamp (ms) after which the token must be refreshed. */
   expiresAtMs: number;
+  /** Unix timestamp (ms) when the token was last fetched from Vipps. */
+  refreshedAtMs: number;
 }
 
 let tokenCache: CachedToken | null = null;
+
+export interface VippsTokenCacheInfo {
+  /** Whether a valid cached token exists. */
+  hasCachedToken: boolean;
+  /** ISO string of the last successful token refresh, or null if never refreshed. */
+  lastRefreshedAt: string | null;
+  /** ISO string of token expiry, or null if no cached token. */
+  expiresAt: string | null;
+}
+
+/** Returns current in-memory token cache state without triggering a refresh. */
+export function getVippsTokenCacheInfo(): VippsTokenCacheInfo {
+  if (!tokenCache) {
+    return { hasCachedToken: false, lastRefreshedAt: null, expiresAt: null };
+  }
+  return {
+    hasCachedToken: true,
+    lastRefreshedAt: new Date(tokenCache.refreshedAtMs).toISOString(),
+    expiresAt: new Date(tokenCache.expiresAtMs).toISOString(),
+  };
+}
 
 /** Refresh margin before token expiry (30 seconds). */
 const REFRESH_MARGIN_MS = 30_000;
@@ -66,6 +89,7 @@ export async function getVippsAccessToken(): Promise<string> {
     expiresAtMs: data.expires_on
       ? data.expires_on * 1000
       : now + (data.expires_in ?? 3600) * 1000,
+    refreshedAtMs: now,
   };
 
   logger.info("Vipps access token refreshed");
