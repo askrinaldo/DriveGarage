@@ -62,10 +62,20 @@ export async function resolvePersonalTenant(userId: number): Promise<{ tenantId:
 }
 
 export function parseUserAuth(req: Request, _res: Response, next: NextFunction): void {
-  const header = req.headers["x-user-token"];
-  const token = Array.isArray(header) ? header[0] : header;
-  if (token) {
-    const payload = verifyUserToken(token);
+  // Accept token from x-user-token header (browser/app) OR Authorization: Bearer (external schedulers / GitHub Actions)
+  const xUserToken = req.headers["x-user-token"];
+  const bearerHeader = req.headers["authorization"];
+
+  let rawToken: string | undefined;
+
+  if (xUserToken) {
+    rawToken = Array.isArray(xUserToken) ? xUserToken[0] : xUserToken;
+  } else if (typeof bearerHeader === "string" && bearerHeader.startsWith("Bearer ")) {
+    rawToken = bearerHeader.slice("Bearer ".length).trim();
+  }
+
+  if (rawToken) {
+    const payload = verifyUserToken(rawToken);
     if (payload) req.userAuth = payload;
   }
   next();

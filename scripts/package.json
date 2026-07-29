@@ -7,13 +7,16 @@
     "hello": "tsx ./src/hello.ts",
     "seed-products": "tsx ./src/seed-products.ts",
     "migrate:tenants": "tsx ./src/migrate-to-tenants.ts",
+    "generate-admin-token": "tsx ./src/generate-admin-token.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@workspace/db": "workspace:*",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "catalog:",
     "stripe": "^22.2.0",
     "stripe-replit-sync": "^1.0.0",
