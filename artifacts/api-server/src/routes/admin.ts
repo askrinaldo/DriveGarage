@@ -373,6 +373,58 @@ router.delete("/admin/users/:id/payment-exemption", parseUserAuth, requireSuperA
   }
 });
 
+// ── POST /admin/users/:id/reset-subscription ─────────────────────────────────
+// Resets a user's subscription back to pending_payment_setup (clean slate).
+// Clears all Vipps agreement state, billing timestamps, and deletes any
+// billing_charges rows for the user. Intended for testing and support.
+
+router.post("/admin/users/:id/reset-subscription", parseUserAuth, requireSuperAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Ugyldig bruker-ID" }); return; }
+
+  const now = new Date();
+
+  // Reset users table
+  await db
+    .update(usersTable)
+    .set({
+      subscriptionStatus:  "pending_payment_setup",
+      subscriptionTier:    "free",
+      vippsAgreementId:    null,
+      subscriptionPlan:    null,
+      currentPeriodEndsAt: null,
+      canceledAt:          null,
+      expiresAt:           null,
+      updatedAt:           now,
+    })
+    .where(eq(usersTable.id, id));
+
+  // Reset subscriptions table
+  await db
+    .update(subscriptionsTable)
+    .set({
+      status:               "pending_payment_setup",
+      vippsAgreementId:     null,
+      currentPeriodStartsAt: null,
+      currentPeriodEndsAt:  null,
+      canceledAt:           null,
+      cancelAtPeriodEnd:    false,
+      pastDueAt:            null,
+      expiresAt:            null,
+      updatedAt:            now,
+    })
+    .where(eq(subscriptionsTable.userId, id));
+
+  // Remove billing charges (clean test slate)
+  await db
+    .delete(billingChargesTable)
+    .where(eq(billingChargesTable.userId, id));
+
+  req.log.info({ userId: id }, "Subscription reset to pending_payment_setup by admin");
+
+  res.json({ ok: true, message: "Abonnement tilbakestilt. Brukeren kan nå starte en ny Vipps-avtale." });
+});
+
 // ── POST /admin/billing/run-monthly-charges ───────────────────────────────────
 // Triggers the monthly charge creation job. Idempotent — safe to run multiple
 // times; existing charges for the current period are skipped.

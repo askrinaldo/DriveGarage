@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Users, Car, Building2, Search, Shield, ShieldOff, TrendingUp, TrendingDown,
-  MessageSquare, Crown, Ban, CircleCheck, Lightbulb, ChevronDown, ChevronUp,
+  MessageSquare, Crown, Ban, CircleCheck, Lightbulb, ChevronDown, ChevronUp, RotateCcw,
   CreditCard, BarChart3, Activity, ScrollText, CheckCircle2, Clock, AlertCircle,
   RefreshCw, DollarSign, Star, Zap, Server, Database, Wifi, ArrowLeft,
   X, LayoutDashboard,
@@ -333,6 +333,7 @@ function UserDetailPanel({
 }) {
   const [changingTier, setChangingTier] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resettingSubscription, setResettingSubscription] = useState(false);
   const [activeExemption, setActiveExemption] = useState<PaymentExemption | null>(null);
   const [exemptionLoading, setExemptionLoading] = useState(true);
   const [grantType, setGrantType] = useState("internal");
@@ -352,6 +353,17 @@ function UserDetailPanel({
     );
     return () => { cancelled = true; };
   }, [user.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function resetSubscription() {
+    setResettingSubscription(true);
+    await fetch(`/api/admin/users/${user.id}/reset-subscription`, {
+      method: "POST",
+      headers: { ...await getHeaders() },
+    });
+    setResettingSubscription(false);
+    onUpdate();
+    onClose();
+  }
 
   async function toggleActive() {
     setSaving(true);
@@ -572,6 +584,38 @@ function UserDetailPanel({
         {user.role !== "super_admin" && (
           <div className="space-y-2 pt-2 border-t border-white/8">
             <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Handlinger</p>
+
+            {/* Reset subscription */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full h-9 text-sm justify-start gap-2 text-amber-300 border-amber-500/20 hover:bg-amber-500/10"
+                  disabled={resettingSubscription}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Tilbakestill abonnement
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-[#0d1117] border-white/10">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-white">Tilbakestill abonnement?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-white/50">
+                    Dette sletter alle Vipps-avtaledata og faktureringsrader for {user.name}, og setter statusen tilbake til «ingen abonnement». Brukeren kan deretter starte en ny Vipps-avtale.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Avbryt</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={resetSubscription}
+                    className="bg-amber-600 hover:bg-amber-700"
+                  >
+                    Tilbakestill
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
