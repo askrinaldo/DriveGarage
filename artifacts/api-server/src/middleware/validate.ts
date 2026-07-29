@@ -103,7 +103,10 @@ function toNorwegianMessage(issue: z.ZodIssue): string {
  */
 export function validate<T>(schema: z.ZodType<T>) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const result = schema.safeParse(req.body);
+    // Fall back to {} when no body was sent (e.g. POST with no Content-Type header).
+    // This allows routes using EmptyBodySchema to work with bodyless POST requests.
+    const body = req.body !== undefined ? req.body : {};
+    const result = schema.safeParse(body);
     if (!result.success) {
       const fields: Record<string, string> = {};
       for (const issue of result.error.issues) {

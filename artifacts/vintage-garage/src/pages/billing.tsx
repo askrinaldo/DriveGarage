@@ -195,7 +195,7 @@ function SubscriptionStatusCard() {
         message?: string;
       }>(
         "/api/billing/vipps/start-agreement",
-        { method: "POST" },
+        { method: "POST", body: JSON.stringify({}), headers: { "Content-Type": "application/json" } },
       );
       if (result.recovered) {
         await invalidate();
@@ -218,7 +218,7 @@ function SubscriptionStatusCard() {
     setCanceling(true);
     setActionError(null);
     try {
-      await customFetch("/api/billing/vipps/cancel", { method: "POST" });
+      await customFetch("/api/billing/vipps/cancel", { method: "POST", body: JSON.stringify({}), headers: { "Content-Type": "application/json" } });
       setCancelConfirm(false);
       await invalidate();
     } catch (err: unknown) {
