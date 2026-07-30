@@ -15,7 +15,7 @@
 import crypto from "crypto";
 import { Router } from "express";
 import { z } from "zod/v4";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { db, usersTable, subscriptionsTable, subscriptionEventsTable, billingChargesTable } from "@workspace/db";
 import { parseUserAuth, requireUser } from "../middleware/userAuth";
 import { ERRORS } from "../lib/errors";
@@ -41,6 +41,48 @@ const EmptyBodySchema = z.object({});
 
 const router = Router();
 
+/**
+ * Finds an ACTIVE DriveGarage agreement at Vipps that can safely be adopted by
+ * `userId`. Agreements from listVippsAgreements are merchant-wide, NOT per-user,
+ * so blindly adopting one can attach another user's agreement to this account.
+ * An agreement is only adoptable when NO other user references it in either
+ * usersTable or subscriptionsTable.
+ */
+async function findAdoptableActiveAgreement(
+  userId: number,
+  log: { warn: (obj: Record<string, unknown>, msg: string) => void },
+): Promise<{ id: string } | undefined> {
+  const agreements = await listVippsAgreements("ACTIVE");
+  const candidates = agreements.filter(a => a.productName === "DriveGarage");
+
+  for (const candidate of candidates) {
+    const [userOwner] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(and(
+        eq(usersTable.vippsAgreementId, candidate.id),
+        ne(usersTable.id, userId),
+      ))
+      .limit(1);
+    const [subOwner] = await db
+      .select({ userId: subscriptionsTable.userId })
+      .from(subscriptionsTable)
+      .where(and(
+        eq(subscriptionsTable.vippsAgreementId, candidate.id),
+        ne(subscriptionsTable.userId, userId),
+      ))
+      .limit(1);
+
+    if (!userOwner && !subOwner) return candidate;
+
+    log.warn(
+      { userId, agreementId: candidate.id, ownerUserId: userOwner?.id ?? subOwner?.userId },
+      "Skipping active Vipps agreement — belongs to another user",
+    );
+  }
+  return undefined;
+}
+
 // ── GET /billing/subscription ─────────────────────────────────────────────────
 
 router.get("/billing/subscription", parseUserAuth, requireUser, async (req, res): Promise<void> => {
@@ -52,8 +94,7 @@ router.get("/billing/subscription", parseUserAuth, requireUser, async (req, res)
   // Only runs when status is pending — active/canceled/expired users skip this.
   if (sub.status === "pending_payment_setup" && isVippsConfigured()) {
     try {
-      const agreements = await listVippsAgreements("ACTIVE");
-      const found      = agreements.find(a => a.productName === "DriveGarage");
+      const found = await findAdoptableActiveAgreement(userId, req.log);
       if (found) {
         const subRow = await getOrCreateSubscriptionRow(userId);
         const now    = new Date();
@@ -166,8 +207,7 @@ router.post("/billing/vipps/start-agreement", parseUserAuth, requireUser, valida
     if (isVippsDuplicate || isVipps409) {
       req.log.info({ userId }, "409 from Vipps — attempting to reconcile existing active agreement");
       try {
-        const agreements = await listVippsAgreements("ACTIVE");
-        const found      = agreements.find(a => a.productName === "DriveGarage");
+        const found = await findAdoptableActiveAgreement(userId, req.log);
         if (found) {
           const subRow = await getOrCreateSubscriptionRow(userId);
           const now    = new Date();
@@ -243,8 +283,7 @@ router.get("/billing/vipps/status", parseUserAuth, requireUser, async (req, res)
     // Stored agreementId is STOPPED/EXPIRED — try listing to find a different ACTIVE agreement.
     // This happens when the user approved a later agreement that superseded a stopped one.
     if (agreement.status !== "ACTIVE" && sub.status !== "active") {
-      const allActive = await listVippsAgreements("ACTIVE");
-      const found     = allActive.find(a => a.productName === "DriveGarage");
+      const found = await findAdoptableActiveAgreement(userId, req.log);
       if (found) {
         const subRow = await getOrCreateSubscriptionRow(userId);
         const now    = new Date();
@@ -288,7 +327,25 @@ router.post("/billing/vipps/cancel", parseUserAuth, requireUser, validate(EmptyB
 
   try {
     if (sub.vippsAgreementId && isVippsConfigured()) {
-      await stopVippsAgreement(sub.vippsAgreementId, crypto.randomUUID());
+      try {
+        await stopVippsAgreement(sub.vippsAgreementId, crypto.randomUUID());
+      } catch (stopErr) {
+        // Vipps returns 400 when the agreement is already STOPPED/EXPIRED.
+        // Treat that as success — the goal (no active agreement) is achieved.
+        if (stopErr instanceof VippsApiError && stopErr.statusCode === 400) {
+          const agreement = await getVippsAgreement(sub.vippsAgreementId).catch(() => null);
+          if (agreement && (agreement.status === "STOPPED" || agreement.status === "EXPIRED")) {
+            req.log.info(
+              { userId, agreementId: sub.vippsAgreementId, agreementStatus: agreement.status },
+              "Vipps agreement already stopped — proceeding with local cancellation",
+            );
+          } else {
+            throw stopErr;
+          }
+        } else {
+          throw stopErr;
+        }
+      }
     }
 
     const now            = new Date();
